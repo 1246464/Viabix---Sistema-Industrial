@@ -22,8 +22,7 @@ $arquivosIncluir = @(
     "database.sql",
     "usuarios.sql",
     "setup.php",
-    "remover_bom.ps1",
-    "SOLUCAO_BOM.md"
+    "remover_bom.ps1"
 )
 
 # Verificar se todos os arquivos existem
