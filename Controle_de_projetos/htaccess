@@ -1,0 +1,23 @@
+# Configurações para evitar problemas com BOM e charset
+php_flag output_buffering Off
+php_value default_charset "UTF-8"
+
+# Configurar charset para JSON
+<FilesMatch "\.(php)$">
+    Header set Content-Type "application/json; charset=utf-8"
+</FilesMatch>
+
+# Desabilitar exibição de erros em produção
+php_flag display_errors Off
+php_flag display_startup_errors Off
+
+# Aumentar tempo de execução para SSE
+<Files "sse.php">
+    php_value max_execution_time 300
+</Files>
+
+# Proteger arquivos sensíveis
+<FilesMatch "^(config\.php|auth\.php|setup\.php|limpar_projeto\.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

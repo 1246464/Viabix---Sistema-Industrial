@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Grátis - Viabix</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest: #0c3b2d;
+            --forest-soft: #1f6b53;
+            --lime: #9edb5a;
+            --sand: #f7f2e8;
+            --ink: #17211d;
+            --muted: #5b6a61;
+            --danger: #c62828;
+            --success: #2e7d32;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(158, 219, 90, 0.22), transparent 28%),
+                linear-gradient(145deg, #082f24 0%, #114535 42%, #1a5c45 100%);
+            color: white;
+            padding: 28px;
+        }
+
+        .layout {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .hero,
+        .panel {
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .hero {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 45%),
+                linear-gradient(160deg, rgba(12, 59, 45, 0.96), rgba(7, 23, 18, 0.96));
+            padding: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 720px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(158, 219, 90, 0.12);
+            color: #d7efb9;
+            border: 1px solid rgba(158, 219, 90, 0.24);
+            font-size: 0.9rem;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 5vw, 4.2rem);
+            line-height: 1.02;
+            margin-top: 22px;
+            max-width: 12ch;
+        }
+
+        .hero p {
+            font-size: 1.02rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.86);
+            max-width: 56ch;
+            margin-top: 18px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 34px;
+        }
+
+        .hero-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .hero-card strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .hero-card span {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .hero-footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        .kpi {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 16px 18px;
+            min-width: 160px;
+        }
+
+        .kpi strong {
+            display: block;
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .kpi span {
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 0.9rem;
+        }
+
+        .panel {
+            background: var(--sand);
+            color: var(--ink);
+            padding: 34px 32px 30px;
+        }
+
+        .panel-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .panel-header p {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 22px;
+        }
+
+        .alert {
+            display: none;
+            margin-bottom: 18px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .alert-error {
+            background: #fdecea;
+            color: var(--danger);
+            border: 1px solid #f7c2bd;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: var(--success);
+            border: 1px solid #b7ddb9;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #27332e;
+        }
+
+        .input-shell {
+            position: relative;
+        }
+
+        .input-shell i {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            color: #6e7b73;
+        }
+
+        .form-control {
+            width: 100%;
+            border: 1px solid #d9d2c5;
+            border-radius: 14px;
+            padding: 13px 14px 13px 42px;
+            background: rgba(255, 255, 255, 0.94);
+            color: var(--ink);
+            font-size: 0.96rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--forest-soft);
+            box-shadow: 0 0 0 4px rgba(31, 107, 83, 0.12);
+        }
+
+        .hint {
+            font-size: 0.82rem;
+            color: #6d786f;
+            line-height: 1.45;
+        }
+
+        .trial-box {
+            margin: 22px 0;
+            border-radius: 18px;
+            padding: 18px;
+            background: linear-gradient(160deg, #f0eadb, #fffaf2);
+            border: 1px solid #ddd1b8;
+        }
+
+        .trial-box strong {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .trial-box p {
+            color: #5f6a62;
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        .selected-plan {
+            margin: 22px 0 0;
+            border-radius: 18px;
+            padding: 18px;
+            background: linear-gradient(160deg, rgba(12, 59, 45, 0.08), rgba(158, 219, 90, 0.16));
+            border: 1px solid rgba(12, 59, 45, 0.12);
+        }
+
+        .selected-plan strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #173227;
+        }
+
+        .selected-plan span {
+            color: #4f6057;
+            font-size: 0.9rem;
+            line-height: 1.55;
+            display: block;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            border: none;
+            border-radius: 16px;
+            padding: 15px 18px;
+            background: linear-gradient(135deg, var(--forest-soft), var(--forest));
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(12, 59, 45, 0.22);
+        }
+
+        .btn-primary:disabled {
+            cursor: wait;
+            opacity: 0.75;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .panel-footer {
+            margin-top: 20px;
+            color: #65736b;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .panel-footer a {
+            color: var(--forest-soft);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .panel-footer .secondary-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #627169;
+            font-weight: 600;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 22px;
+            }
+
+            .hero,
+            .panel {
+                padding: 24px 20px;
+            }
+
+            .form-grid,
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <section class="hero">
+            <div>
+                <div class="eyebrow">
+                    <i class="fas fa-bolt"></i>
+                    Trial SaaS Viabix
+                </div>
+                <h1>Teste o sistema completo antes de contratar.</h1>
+                <p>
+                    Crie agora uma conta trial da sua empresa, entre no ambiente imediatamente e valide o fluxo de ANVI e controle de projetos no mesmo tenant.
+                </p>
+
+                <div class="hero-grid">
+                    <div class="hero-card">
+                        <strong>Onboarding imediato</strong>
+                        <span>Criação automática da empresa, usuário administrador e assinatura trial.</span>
+                    </div>
+                    <div class="hero-card">
+                        <strong>Ambiente isolado</strong>
+                        <span>Seus dados já nascem separados por tenant, preparados para o modelo SaaS.</span>
+                    </div>
+                    <div class="hero-card">
+                        <strong>Módulos integrados</strong>
+                        <span>ANVI, projetos, dashboard e permissões já carregados na mesma conta.</span>
+                    </div>
+                    <div class="hero-card">
+                        <strong>Escala comercial</strong>
+                        <span>Estrutura pronta para cobrança, bloqueio por plano e app desktop opcional depois.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-footer">
+                <div class="kpi">
+                    <strong>14 dias</strong>
+                    <span>de trial inicial</span>
+                </div>
+                <div class="kpi">
+                    <strong>1 conta</strong>
+                    <span>admin criada automaticamente</span>
+                </div>
+                <div class="kpi">
+                    <strong>Plano ativo</strong>
+                    <span>selecionado automaticamente no onboarding</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Criar conta trial</h2>
+                <p>
+                    Preencha os dados iniciais da empresa e do administrador. Ao concluir, você entra direto no ambiente e pode começar a usar.
+                </p>
+            </div>
+
+            <div id="alert" class="alert"></div>
+
+            <form id="signupForm">
+                <input id="plan_code" name="plan_code" type="hidden" value="starter">
+
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="company_name">Empresa</label>
+                        <div class="input-shell">
+                            <i class="fas fa-building"></i>
+                            <input id="company_name" name="company_name" class="form-control" type="text" placeholder="Ex.: Fanavid Industrial" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_name">Nome do responsável</label>
+                        <div class="input-shell">
+                            <i class="fas fa-user-tie"></i>
+                            <input id="contact_name" name="contact_name" class="form-control" type="text" placeholder="Seu nome" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Telefone</label>
+                        <div class="input-shell">
+                            <i class="fas fa-phone"></i>
+                            <input id="phone" name="phone" class="form-control" type="text" placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login">Login do administrador</label>
+                        <div class="input-shell">
+                            <i class="fas fa-at"></i>
+                            <input id="login" name="login" class="form-control" type="text" placeholder="fanavid.admin" required>
+                        </div>
+                        <div class="hint">Use apenas letras minúsculas, números, ponto, hífen ou underscore.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <div class="input-shell">
+                            <i class="fas fa-envelope"></i>
+                            <input id="email" name="email" class="form-control" type="email" placeholder="voce@empresa.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cnpj">CNPJ</label>
+                        <div class="input-shell">
+                            <i class="fas fa-file-invoice"></i>
+                            <input id="cnpj" name="cnpj" class="form-control" type="text" placeholder="00.000.000/0001-00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Senha</label>
+                        <div class="input-shell">
+                            <i class="fas fa-lock"></i>
+                            <input id="password" name="password" class="form-control" type="password" placeholder="Mínimo 8 caracteres" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="trial-box">
+                    <strong>O que acontece quando você clica em criar conta</strong>
+                    <p>
+                        O sistema cria automaticamente um tenant da sua empresa, um usuário administrador inicial, uma assinatura em trial e abre a sessão no mesmo fluxo.
+                    </p>
+                </div>
+
+                <div class="selected-plan" id="selectedPlanBox">
+                    <strong>Plano selecionado para o trial: Starter</strong>
+                    <span id="selectedPlanDescription">O seu onboarding começa já vinculado ao plano Starter, para que a conta nasça no contexto comercial correto.</span>
+                </div>
+
+                <div class="actions">
+                    <button id="submitButton" type="submit" class="btn-primary">
+                        <i class="fas fa-rocket"></i>
+                        Começar teste grátis
+                    </button>
+                </div>
+            </form>
+
+            <div class="panel-footer">
+                Já tem conta? <a href="login.html">Entrar no sistema</a>
+                <div><a class="secondary-link" href="index.html">Voltar para planos e informações do produto</a></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const alertBox = document.getElementById('alert');
+        const submitButton = document.getElementById('submitButton');
+        const signupForm = document.getElementById('signupForm');
+        const planInput = document.getElementById('plan_code');
+        const selectedPlanBox = document.getElementById('selectedPlanBox');
+        const selectedPlanDescription = document.getElementById('selectedPlanDescription');
+
+        const planCatalog = {
+            starter: {
+                name: 'Starter',
+                description: 'Entrada para equipes menores, com ANVI, projetos e exportação padrão.'
+            },
+            pro: {
+                name: 'Pro',
+                description: 'Plano mais equilibrado para operação comercial em escala, com API liberada e maior capacidade.'
+            },
+            enterprise: {
+                name: 'Enterprise',
+                description: 'Conta pensada para operação corporativa, com usuários ilimitados, SSO e suporte dedicado.'
+            }
+        };
+
+        function applySelectedPlan(planCode) {
+            const normalizedPlan = planCatalog[planCode] ? planCode : 'starter';
+            const plan = planCatalog[normalizedPlan];
+
+            planInput.value = normalizedPlan;
+            selectedPlanBox.querySelector('strong').textContent = `Plano selecionado para o trial: ${plan.name}`;
+            selectedPlanDescription.textContent = plan.description;
+        }
+
+        function showAlert(message, type = 'error') {
+            alertBox.className = `alert alert-${type}`;
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+        }
+
+        function setLoading(isLoading) {
+            submitButton.disabled = isLoading;
+            submitButton.innerHTML = isLoading
+                ? '<i class="fas fa-spinner fa-spin"></i> Criando ambiente...'
+                : '<i class="fas fa-rocket"></i> Começar teste grátis';
+        }
+
+        (function hydrateSelectedPlanFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const requestedPlan = (params.get('plan') || '').toLowerCase();
+            applySelectedPlan(requestedPlan);
+        })();
+
+        signupForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            alertBox.style.display = 'none';
+            setLoading(true);
+
+            const payload = Object.fromEntries(new FormData(signupForm).entries());
+
+            try {
+                const response = await fetch('api/signup.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    showAlert(data.message || 'Não foi possível criar a conta trial.');
+                    setLoading(false);
+                    return;
+                }
+
+                const planName = data.subscription?.plan_name ? ` no plano ${data.subscription.plan_name}` : '';
+                showAlert(`Conta criada com sucesso${planName}. Redirecionando...`, 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1200);
+            } catch (error) {
+                console.error(error);
+                showAlert('Falha de conexão ao criar a conta trial.');
+                setLoading(false);
+            }
+        });
+
+        (async function verifySession() {
+            try {
+                const response = await fetch('api/check_session.php', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok && data.logado) {
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (error) {
+                console.error('Sessão não ativa:', error);
+            }
+        })();
+    </script>
+</body>
+</html>

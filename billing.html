@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - Viabix</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #eef4ed, #dbe8e0);
+            color: #173227;
+        }
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 42px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: #0f3f2f;
+        }
+        .back-link {
+            text-decoration: none;
+            color: #0f3f2f;
+            background: rgba(15, 63, 47, 0.08);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.08);
+        }
+        .hero h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .hero p {
+            color: #4d6459;
+            line-height: 1.6;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-top: 14px;
+        }
+        .pill.active { background: #e8f5e9; color: #2e7d32; }
+        .pill.warn { background: #fff6df; color: #8a6500; }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .metric {
+            border: 1px solid #e5ede8;
+            border-radius: 18px;
+            padding: 16px;
+            background: #f9fcfa;
+        }
+        .metric strong {
+            display: block;
+            font-size: 1.45rem;
+            margin-bottom: 6px;
+        }
+        .metric span {
+            color: #5a6b62;
+            font-size: 0.9rem;
+        }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin: 24px 0;
+        }
+        .plan-card {
+            border: 1px solid #dce8e1;
+            border-radius: 20px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+        }
+        .plan-card.current {
+            border-color: #2e7d32;
+            box-shadow: 0 18px 36px rgba(46, 125, 50, 0.12);
+        }
+        .plan-card h3 { margin-bottom: 8px; }
+        .price {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .price small {
+            font-size: 0.95rem;
+            color: #5e7167;
+            font-weight: 600;
+        }
+        .plan-card ul {
+            list-style: none;
+            margin: 18px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: #43564c;
+        }
+        .plan-card li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .plan-card button {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #2e7d32, #0f4a32);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .plan-card button:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+        .table-card table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+        }
+        .table-card th,
+        .table-card td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid #edf2ee;
+            font-size: 0.94rem;
+        }
+        .table-card th { color: #51665b; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+        .status.paga, .status.ativa { background: #e8f5e9; color: #2e7d32; }
+        .status.pendente, .status.trial { background: #fff6df; color: #8a6500; }
+        .status.vencida, .status.inadimplente, .status.cancelada { background: #fdecea; color: #b3261e; }
+        .alert {
+            display: none;
+            margin-bottom: 16px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 0.94rem;
+        }
+        .alert.error { background: #fdecea; color: #b3261e; }
+        .alert.success { background: #e8f5e9; color: #2e7d32; }
+        .note {
+            color: #5b6a61;
+            font-size: 0.9rem;
+            line-height: 1.55;
+            margin-top: 12px;
+        }
+        .provider-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: #edf7f0;
+            color: #15543a;
+            font-weight: 700;
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+        }
+        @media (max-width: 980px) {
+            .hero, .plan-grid { grid-template-columns: 1fr; }
+            .metrics { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="topbar">
+            <div class="brand">
+                <i class="fas fa-wallet"></i>
+                <span>Billing Viabix</span>
+            </div>
+            <a class="back-link" href="dashboard.html">Voltar ao dashboard</a>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <section class="hero">
+            <div class="card">
+                <h1>Assinatura e cobrança</h1>
+                <p>Gerencie plano, ciclo de cobrança e acompanhe as faturas geradas para o seu tenant.</p>
+                <div id="subscriptionBadge" class="pill warn">Carregando assinatura...</div>
+                <div class="metrics">
+                    <div class="metric">
+                        <strong id="planName">-</strong>
+                        <span>Plano atual</span>
+                    </div>
+                    <div class="metric">
+                        <strong id="billingCycle">-</strong>
+                        <span>Ciclo de cobrança</span>
+                    </div>
+                    <div class="metric">
+                        <strong id="renewalDate">-</strong>
+                        <span>Próxima renovação</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2 style="margin-bottom:10px">Como está operando agora</h2>
+                <div id="providerBadge" class="provider-badge">Carregando modo de cobrança...</div>
+                <p id="providerNotePrimary" class="note">A base de checkout já gera fatura e registra eventos no banco. Enquanto o gateway real não é plugado, a confirmação pode ser simulada pelo endpoint de webhook.</p>
+                <p id="providerNoteSecondary" class="note">Isso permite construir billing, regras de ativação e painel interno antes de fechar a integração com Asaas, Stripe ou outro provedor.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2 style="margin-bottom:16px">Planos disponíveis</h2>
+            <div class="plan-grid" id="planGrid"></div>
+        </section>
+
+        <section class="card table-card">
+            <h2>Faturas</h2>
+            <p class="note">As últimas cobranças geradas para seu tenant aparecem aqui.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fatura</th>
+                        <th>Status</th>
+                        <th>Plano</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceRows">
+                    <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        const alertBox = document.getElementById('alert');
+        const planGrid = document.getElementById('planGrid');
+        const invoiceRows = document.getElementById('invoiceRows');
+        const providerBadge = document.getElementById('providerBadge');
+        const providerNotePrimary = document.getElementById('providerNotePrimary');
+        const providerNoteSecondary = document.getElementById('providerNoteSecondary');
+
+        const planCatalog = [
+            {
+                code: 'starter',
+                name: 'Starter',
+                monthlyPrice: 297,
+                annualPrice: 2970,
+                features: ['Até 3 usuários', 'ANVI e Projetos', 'Exportação padrão']
+            },
+            {
+                code: 'pro',
+                name: 'Pro',
+                monthlyPrice: 697,
+                annualPrice: 6970,
+                features: ['Até 15 usuários', 'API liberada', 'Operação comercial completa']
+            },
+            {
+                code: 'enterprise',
+                name: 'Enterprise',
+                monthlyPrice: 1497,
+                annualPrice: 14970,
+                features: ['Usuários ilimitados', 'API + SSO', 'Fluxos avançados e suporte dedicado']
+            }
+        ];
+
+        let currentSubscription = null;
+        let billingProviders = {
+            default: 'manual',
+            manual: { enabled: true, mode: 'local', label: 'Manual' },
+            asaas: { enabled: false, mode: 'sandbox', label: 'Asaas' }
+        };
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+        }
+
+        function formatDate(value) {
+            if (!value) return '-';
+            return new Date(value).toLocaleDateString('pt-BR');
+        }
+
+        function showAlert(message, type = 'error') {
+            alertBox.className = `alert ${type}`;
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+        }
+
+        function getPreferredProvider() {
+            return billingProviders?.asaas?.enabled ? 'asaas' : 'manual';
+        }
+
+        function renderProviderState() {
+            const provider = getPreferredProvider();
+
+            if (provider === 'asaas') {
+                providerBadge.textContent = `Gateway ativo: Asaas (${billingProviders.asaas.mode})`;
+                providerNotePrimary.textContent = 'A cobrança é criada no Asaas e o cliente é redirecionado para a URL oficial de pagamento.';
+                providerNoteSecondary.textContent = 'Depois do pagamento, o webhook do Asaas atualiza faturas, pagamentos, assinatura e tenant automaticamente.';
+                return;
+            }
+
+            providerBadge.textContent = 'Modo atual: Manual/local';
+            providerNotePrimary.textContent = 'O checkout ainda roda em modo local. A fatura é criada no banco e a confirmação pode ser simulada pelo endpoint de webhook.';
+            providerNoteSecondary.textContent = 'Assim que a chave do Asaas for configurada, esta tela passa a abrir a cobrança oficial sem trocar o fluxo principal.';
+        }
+
+        function setSubscriptionHeader(subscription) {
+            const badge = document.getElementById('subscriptionBadge');
+            document.getElementById('planName').textContent = subscription?.plan?.name || '-';
+            document.getElementById('billingCycle').textContent = subscription?.cycle || '-';
+            document.getElementById('renewalDate').textContent = formatDate(subscription?.ends_at || subscription?.trial_until);
+
+            if (!subscription) {
+                badge.textContent = 'Sem assinatura';
+                badge.className = 'pill warn';
+                return;
+            }
+
+            badge.textContent = `Status: ${subscription.status}`;
+            badge.className = `pill ${subscription.status === 'ativa' ? 'active' : 'warn'}`;
+        }
+
+        function renderPlans() {
+            planGrid.innerHTML = planCatalog.map((plan) => {
+                const current = currentSubscription?.plan?.code === plan.code;
+                const buttonLabel = current ? 'Plano atual' : 'Gerar checkout';
+                return `
+                    <article class="plan-card ${current ? 'current' : ''}">
+                        <h3>${plan.name}</h3>
+                        <div class="price">${formatCurrency(plan.monthlyPrice)} <small>/ mês</small></div>
+                        <div class="note">Anual: ${formatCurrency(plan.annualPrice)}</div>
+                        <ul>
+                            ${plan.features.map((feature) => `<li><i class="fas fa-check-circle"></i><span>${feature}</span></li>`).join('')}
+                        </ul>
+                        <button ${current ? 'disabled' : ''} onclick="createCheckout('${plan.code}')">${buttonLabel}</button>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderInvoices(invoices) {
+            if (!invoices.length) {
+                invoiceRows.innerHTML = '<tr><td colspan="6">Nenhuma fatura encontrada.</td></tr>';
+                return;
+            }
+
+            invoiceRows.innerHTML = invoices.map((invoice) => `
+                <tr>
+                    <td>${invoice.number}</td>
+                    <td><span class="status ${invoice.status}">${invoice.status}</span></td>
+                    <td>${invoice.plan_name || '-'}</td>
+                    <td>${formatCurrency(invoice.amount_total)}</td>
+                    <td>${formatDate(invoice.due_at)}</td>
+                    <td>${invoice.billing_url ? `<a href="${invoice.billing_url}" target="_blank" rel="noopener">Abrir</a>` : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadSubscription() {
+            const response = await fetch('api/subscription_current.php', { credentials: 'include' });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Erro ao carregar assinatura.');
+            }
+
+            billingProviders = data.billing_providers || billingProviders;
+            currentSubscription = data.subscription;
+            renderProviderState();
+            setSubscriptionHeader(currentSubscription);
+            renderPlans();
+        }
+
+        async function loadInvoices() {
+            const response = await fetch('api/billing_invoices.php', { credentials: 'include' });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Erro ao carregar faturas.');
+            }
+
+            renderInvoices(data.invoices || []);
+        }
+
+        async function createCheckout(planCode) {
+            alertBox.style.display = 'none';
+            const provider = getPreferredProvider();
+
+            try {
+                const response = await fetch('api/checkout_create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ plan_code: planCode, cycle: 'mensal', provider })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Falha ao gerar checkout.');
+                }
+
+                showAlert(
+                    provider === 'asaas'
+                        ? 'Checkout criado no Asaas. A URL oficial será aberta em seguida.'
+                        : 'Checkout gerado com sucesso. Uma fatura pendente foi criada para o plano selecionado.',
+                    'success'
+                );
+                await loadSubscription();
+                await loadInvoices();
+
+                if (data.checkout?.url) {
+                    window.open(data.checkout.url, '_blank', 'noopener');
+                }
+            } catch (error) {
+                showAlert(error.message || 'Não foi possível gerar checkout.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await loadSubscription();
+                await loadInvoices();
+            } catch (error) {
+                showAlert(error.message || 'Não foi possível carregar a área de billing.');
+            }
+        });
+    </script>
+</body>
+</html>

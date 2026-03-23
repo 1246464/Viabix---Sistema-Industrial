@@ -1,0 +1,12 @@
+/fanavid/
+├── index.html                 # 4.500+ linhas - Interface completa
+├── .htaccess                  # 100+ linhas - Configurações Apache
+├── README.md                  # Documentação
+└── api/
+    ├── config.php              # 150+ linhas - Configuração do BD
+    ├── database.sql            # 400+ linhas - Script SQL completo
+    ├── check_session.php       # 50+ linhas - Verificação de sessão
+    ├── login.php               # 100+ linhas - Login
+    ├── logout.php              # 50+ linhas - Logout
+    ├── usuarios.php            # 300+ linhas - CRUD de usuários
+    └── anvi.php                 # 350+ linhas - CRUD de ANVIs com concorrência

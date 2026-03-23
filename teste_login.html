@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login - FANAVID</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2e7d32;
+        }
+        button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Login - Sistema FANAVID</h1>
+    
+    <div class="test-box">
+        <h2>1. Teste de Login</h2>
+        <p>Usuário: <strong>admin</strong> | Senha: <strong>admin123</strong></p>
+        <button onclick="testarLogin()">Fazer Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>2. Verificar Sessão</h2>
+        <button onclick="verificarSessao()">Verificar Sessão Atual</button>
+        <div id="sessionResult"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>3. Informações de Debug</h2>
+        <button onclick="mostrarDebug()">Mostrar Cookies e Headers</button>
+        <div id="debugResult"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>4. Ações</h2>
+        <button onclick="window.location.href='login.html'">Ir para Login Normal</button>
+        <button onclick="window.location.href='dashboard.html'">Ir para Dashboard</button>
+        <button onclick="fazerLogout()">Fazer Logout</button>
+    </div>
+
+    <script>
+        async function testarLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>⏳ Fazendo login...</p>';
+            
+            try {
+                const response = await fetch('api/login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        login: 'admin',
+                        senha: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Resposta do Login:</h3>
+                    <p class="${data.success ? 'success' : 'error'}">
+                        Status: ${data.success ? '✅ SUCESSO' : '❌ FALHA'}
+                    </p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    ${data.success ? '<p class="success">✅ Login feito com sucesso! Agora teste a verificação de sessão.</p>' : ''}
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Erro na requisição:</p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        async function verificarSessao() {
+            const resultDiv = document.getElementById('sessionResult');
+            resultDiv.innerHTML = '<p>⏳ Verificando sessão...</p>';
+            
+            try {
+                const response = await fetch('api/check_session.php', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Status da Sessão:</h3>
+                    <p class="${data.logado ? 'success' : 'error'}">
+                        ${data.logado ? '✅ LOGADO' : '❌ NÃO LOGADO'}
+                    </p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    ${data.logado ? '<p class="success">✅ Sessão válida! Você pode acessar o dashboard.</p>' : '<p class="error">❌ Você precisa fazer login primeiro.</p>'}
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Erro na requisição:</p>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        function mostrarDebug() {
+            const resultDiv = document.getElementById('debugResult');
+            
+            resultDiv.innerHTML = `
+                <h3>Cookies:</h3>
+                <pre>${document.cookie || '(nenhum cookie)'}</pre>
+                
+                <h3>User Agent:</h3>
+                <pre>${navigator.userAgent}</pre>
+                
+                <h3>URL Atual:</h3>
+                <pre>${window.location.href}</pre>
+            `;
+        }
+        
+        async function fazerLogout() {
+            try {
+                await fetch('api/logout.php', {
+                    credentials: 'include'
+                });
+                alert('✅ Logout realizado!');
+                window.location.reload();
+            } catch (error) {
+                alert('❌ Erro ao fazer logout: ' + error.message);
+            }
+        }
+        
+        // Auto-verificar ao carregar
+        window.addEventListener('load', () => {
+            verificarSessao();
+        });
+    </script>
+</body>
+</html>

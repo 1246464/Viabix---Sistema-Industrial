@@ -1,0 +1,92 @@
+# ======================================================
+# Configuração Apache - Sistema Viabix
+# ======================================================
+
+DirectoryIndex index.html index.php
+
+# Ativar rewrite engine
+RewriteEngine On
+
+# ======================================================
+# Regras de segurança
+# ======================================================
+
+# Bloquear acesso a arquivos sensíveis
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|bak|config|env)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloquear listagem de diretórios
+Options -Indexes
+
+# ======================================================
+# Proteção contra ataques comuns
+# ======================================================
+
+Header always append X-Frame-Options SAMEORIGIN
+Header set X-XSS-Protection "1; mode=block"
+Header set X-Content-Type-Options "nosniff"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+# ======================================================
+# Cache
+# ======================================================
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript application/json
+    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml application/rss+xml
+    AddOutputFilterByType DEFLATE application/x-font-ttf application/x-font-opentype image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# ======================================================
+# Redirecionamentos e regras de reescrita
+# ======================================================
+
+RewriteRule ^$ index.html [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [QSA,L]
+
+# ======================================================
+# Configurações de PHP (via .htaccess)
+# ======================================================
+
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 50M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+    php_value session.gc_maxlifetime 28800
+    php_value session.cookie_lifetime 0
+    php_value session.use_strict_mode 1
+    php_flag display_errors on
+    php_flag display_startup_errors on
+    php_flag log_errors on
+</IfModule>

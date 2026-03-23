@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viabix - Sistema Industrial Completo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a3d2e 0%, #2e7d32 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .system-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-title i {
+            font-size: 1.5rem;
+        }
+
+        .user-info {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .user-info i {
+            font-size: 1.2rem;
+        }
+
+        .tenant-badge {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .billing-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .billing-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .admin-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .welcome-section h1 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .welcome-section p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .module-card.is-disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(0.15);
+        }
+
+        .module-lock {
+            display: none;
+            margin-top: 16px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: #fff3cd;
+            color: #7a5a00;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .module-card.is-disabled .module-lock {
+            display: block;
+        }
+
+        .module-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+        }
+
+        .module-card:nth-child(2) .module-icon {
+            background: linear-gradient(135deg, #2196f3, #1565c0);
+            box-shadow: 0 10px 30px rgba(33, 150, 243, 0.4);
+        }
+
+        .module-card h2 {
+            color: #2e7d32;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .module-card:nth-child(2) h2 {
+            color: #1565c0;
+        }
+
+        .module-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .module-features {
+            text-align: left;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .module-features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .module-features li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .module-features li i {
+            color: #4caf50;
+            width: 20px;
+        }
+
+        .module-card:nth-child(2) .module-features li i {
+            color: #2196f3;
+        }
+
+        .btn-access {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .module-card:nth-child(2) .btn-access {
+            background: linear-gradient(135deg, #2196f3, #1565c0);
+        }
+
+        .btn-access:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 1200px;
+            width: 100%;
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .welcome-section h1 {
+                font-size: 2rem;
+            }
+            
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="system-title">
+            <i class="fas fa-industry"></i>
+            <span>Viabix - Sistema Industrial Completo</span>
+        </div>
+        <div class="user-info">
+            <span id="tenantBadge" class="tenant-badge" style="display:none"></span>
+            <a href="admin_saas.html" class="admin-btn" id="adminButton">
+                <i class="fas fa-shield-halved"></i>
+                Admin SaaS
+            </a>
+            <a href="billing.html" class="billing-btn">
+                <i class="fas fa-wallet"></i>
+                Billing
+            </a>
+            <i class="fas fa-user-circle"></i>
+            <span id="userName">Usuário</span>
+            <a href="api/logout_redirect.php" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Bem-vindo ao Sistema Viabix</h1>
+            <p>Escolha o módulo que deseja acessar</p>
+        </div>
+
+        <div class="modules-grid">
+            <!-- Módulo ANVI -->
+            <a href="anvi.html" class="module-card" id="moduleAnvi">
+                <div class="module-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h2>ANVI</h2>
+                <p>Análise de Viabilidade Industrial e Orçamentação</p>
+                
+                <div class="module-features">
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Cálculo de custos industriais</li>
+                        <li><i class="fas fa-check-circle"></i> Análise de matéria-prima</li>
+                        <li><i class="fas fa-check-circle"></i> Custos de ferramental</li>
+                        <li><i class="fas fa-check-circle"></i> Estrutura de custos completa</li>
+                        <li><i class="fas fa-check-circle"></i> Exportação de relatórios</li>
+                    </ul>
+                </div>
+
+                <button class="btn-access">
+                    <i class="fas fa-arrow-right"></i>
+                    Acessar ANVI
+                </button>
+
+                <div class="module-lock" id="moduleAnviLock">
+                    Módulo indisponível no plano atual
+                </div>
+            </a>
+
+            <!-- Módulo Controle de Projetos -->
+            <a href="Controle_de_projetos/index.php" class="module-card" id="moduleProjetos">
+                <div class="module-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h2>Controle de Projetos</h2>
+                <p>Gestão Completa de Projetos e Cronogramas</p>
+                
+                <div class="module-features">
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Gestão de tarefas e milestones</li>
+                        <li><i class="fas fa-check-circle"></i> Gráfico de Gantt interativo</li>
+                        <li><i class="fas fa-check-circle"></i> Múltiplos líderes de projeto</li>
+                        <li><i class="fas fa-check-circle"></i> Controle de prazos e status</li>
+                        <li><i class="fas fa-check-circle"></i> Relatórios de eficiência</li>
+                    </ul>
+                </div>
+
+                <button class="btn-access">
+                    <i class="fas fa-arrow-right"></i>
+                    Acessar Projetos
+                </button>
+
+                <div class="module-lock" id="moduleProjetosLock">
+                    Módulo indisponível no plano atual
+                </div>
+            </a>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalAnvis">-</div>
+                <div class="stat-label">ANVIs Cadastradas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalProjetos">-</div>
+                <div class="stat-label">Projetos Ativos</div>
+            </div>
+            <div class="stat-item" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
+                <div class="stat-value" id="totalVinculos" style="color: white;">-</div>
+                <div class="stat-label" style="color: rgba(255,255,255,0.95);">
+                    <i class="fas fa-link"></i> ANVIs Vinculadas
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalUsuarios">-</div>
+                <div class="stat-label">Usuários</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalLideres">-</div>
+                <div class="stat-label">Líderes</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function aplicarPermissoesDePlano(features = {}) {
+            const anviEnabled = features.modulo_anvi !== false;
+            const projetosEnabled = features.modulo_projetos !== false;
+
+            document.getElementById('moduleAnvi').classList.toggle('is-disabled', !anviEnabled);
+            document.getElementById('moduleProjetos').classList.toggle('is-disabled', !projetosEnabled);
+        }
+
+        // Verificar sessão e carregar dados do usuário
+        async function verificarSessao() {
+            try {
+                const response = await fetch('api/check_session.php', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    window.location.href = 'api/login.php';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.logado) {
+                    document.getElementById('userName').textContent = data.nome || data.usuario;
+                    aplicarPermissoesDePlano(data.features || {});
+
+                    if (data.user?.nivel === 'admin') {
+                        document.getElementById('adminButton').style.display = 'inline-flex';
+                    }
+
+                    const tenantBadge = document.getElementById('tenantBadge');
+                    if (data.tenant && (data.tenant.nome || data.subscription?.plano_nome)) {
+                        const tenantNome = data.tenant.nome || 'Conta ativa';
+                        const planoNome = data.subscription?.plano_nome ? ` • ${data.subscription.plano_nome}` : '';
+                        tenantBadge.textContent = `${tenantNome}${planoNome}`;
+                        tenantBadge.style.display = 'inline-flex';
+                    }
+                } else {
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error('Erro ao verificar sessão:', e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Carregar estatísticas
+        async function carregarEstatisticas() {
+            try {
+                const response = await fetch('api/estatisticas.php', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('totalAnvis').textContent = data.anvis || 0;
+                    document.getElementById('totalProjetos').textContent = data.projetos || 0;
+                    document.getElementById('totalVinculos').textContent = data.vinculos || 0;
+                    document.getElementById('totalUsuarios').textContent = data.usuarios || 0;
+                    document.getElementById('totalLideres').textContent = data.lideres || 0;
+                }
+            } catch (e) {
+                console.error('Erro ao carregar estatísticas:', e);
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            verificarSessao();
+            carregarEstatisticas();
+        });
+    </script>
+</body>
+</html>
