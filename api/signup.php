@@ -13,6 +13,38 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Iniciar sessão e validar CSRF
+if (session_status() === PHP_SESSION_NONE) {
+    session_name(SESSION_NAME);
+    session_start();
+}
+
+viabixInitializeCsrfProtection();
+
+try {
+    viabixValidateCsrfToken();
+} catch (RuntimeException $e) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
+    exit;
+}
+
+// ======================================================
+// CHECK RATE LIMITING (Brute Force Protection)
+// ======================================================
+$rate_limit_check = viabixCheckIpRateLimit('signup', 3, 300); // 3 attempts per 5 minutes per IP
+if (!$rate_limit_check['allowed']) {
+    http_response_code(429);
+    header('Retry-After: ' . intval($rate_limit_check['reset_in']), true);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Muitas tentativas de cadastro. Tente novamente em ' . intval($rate_limit_check['reset_in']) . ' segundos.',
+        'error_code' => 'rate_limit_exceeded',
+        'retry_after' => intval($rate_limit_check['reset_in'])
+    ]);
+    exit;
+}
+
 if (!viabixHasTable('tenants') || !viabixHasTable('plans') || !viabixHasTable('subscriptions')) {
     http_response_code(503);
     echo json_encode([
@@ -267,6 +299,9 @@ try {
     ], $tenantContext);
 
     viabixLogActivity($userId, 'signup_trial', 'Tenant criado via onboarding público', 'tenant', $tenantId);
+
+    // Clear rate limit on successful signup
+    viabixClearRateLimit('signup');
 
     echo json_encode([
         'success' => true,

@@ -7,6 +7,86 @@
 
 require_once __DIR__ . '/../bootstrap_env.php';
 
+// ======================================================
+// DEFINIR CONSTANTE GLOBAL DA APLICAÇÃO
+// ======================================================
+if (!defined('VIABIX_APP')) {
+    define('VIABIX_APP', true);
+}
+
+// ======================================================
+// INICIALIZAR SESSÃO
+// ======================================================
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// ======================================================
+// INICIALIZAR SENTRY (MONITORING & ERROR TRACKING)
+// ======================================================
+require_once __DIR__ . '/sentry.php';
+
+// ======================================================
+// INICIALIZAR CSRF PROTECTION
+// ======================================================
+require_once __DIR__ . '/csrf.php';
+
+// ======================================================
+// INICIALIZAR CORS PROTECTION
+// ======================================================
+require_once __DIR__ . '/cors.php';
+
+// ======================================================
+// INICIALIZAR RATE LIMITING & THROTTLING
+// ======================================================
+require_once __DIR__ . '/rate_limit.php';
+
+// ======================================================
+// INICIALIZAR EMAIL SERVICE
+// ======================================================
+require_once __DIR__ . '/email.php';
+
+// ======================================================
+// INICIALIZAR INPUT VALIDATION & SANITIZATION
+// ======================================================
+require_once __DIR__ . '/validation.php';
+
+// ======================================================
+// INICIALIZAR TWO-FACTOR AUTHENTICATION (2FA)
+// ======================================================
+require_once __DIR__ . '/two_factor_auth.php';
+
+// ======================================================
+// INICIALIZAR AUDIT LOGGING SYSTEM
+// ======================================================
+require_once __DIR__ . '/audit.php';
+
+// ======================================================
+// INICIALIZAR API ROUTES & SWAGGER/OPENAPI
+// ======================================================
+require_once __DIR__ . '/routes.php';
+require_once __DIR__ . '/swagger.php';
+
+// ======================================================
+// INICIALIZAR PROTEÇÃO CSRF
+// ======================================================
+if (function_exists('viabixInitializeCsrfProtection')) {
+    viabixInitializeCsrfProtection();
+}
+
+if (!defined('SENTRY_DSN')) {
+    define('SENTRY_DSN', viabix_env('SENTRY_DSN', ''));
+}
+if (!defined('SENTRY_ENVIRONMENT')) {
+    define('SENTRY_ENVIRONMENT', viabix_env('SENTRY_ENVIRONMENT', 'production'));
+}
+if (!defined('SENTRY_RELEASE')) {
+    define('SENTRY_RELEASE', viabix_env('SENTRY_RELEASE', '1.0.0'));
+}
+
+// Inicializar Sentry se DSN está configurada
+$_viabix_sentry = viabix_sentry_init(SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE);
+
 // Configurações do banco de dados
 if (!defined('APP_ENV')) {
     define('APP_ENV', viabix_env('APP_ENV', 'development'));
@@ -92,6 +172,131 @@ try {
     exit;
 }
 
+// ======================================================
+// HEADERS DE SEGURANÇA GLOBAIS
+// ======================================================
+
+// Prevenir click-jacking
+header('X-Frame-Options: SAMEORIGIN', true);
+
+// Prevenir MIME type sniffing
+header('X-Content-Type-Options: nosniff', true);
+
+// Prevenir XSS (browsers modernos)
+header('X-XSS-Protection: 1; mode=block', true);
+
+// Referrer policy
+header('Referrer-Policy: strict-origin-when-cross-origin', true);
+
+// Feature policy (Permissions policy)
+header('Permissions-Policy: geolocation=(), microphone=(), camera=()', true);
+
+// HSTS (apenas se HTTPS em produção)
+if (viabix_request_is_https() && APP_ENV === 'production') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains', true);
+}
+
+// ======================================================
+// GLOBAL ERROR & EXCEPTION HANDLERS
+// ======================================================
+
+/**
+ * Handler global para erros do PHP
+ */
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    // Não capturar erros silenciados com @
+    if (!(error_reporting() & $errno)) {
+        return true;
+    }
+
+    $level = 'error';
+    $category = 'error.php';
+
+    switch ($errno) {
+        case E_WARNING:
+        case E_USER_WARNING:
+            $level = 'warning';
+            $category = 'error.warning';
+            break;
+        case E_NOTICE:
+        case E_USER_NOTICE:
+            $level = 'info';
+            $category = 'error.notice';
+            break;
+        case E_DEPRECATED:
+        case E_USER_DEPRECATED:
+            $level = 'info';
+            $category = 'error.deprecated';
+            break;
+    }
+
+    // Registrar breadcrumb para o Sentry
+    viabix_sentry_breadcrumb($errstr, $category, $level, [
+        'file' => $errfile,
+        'line' => $errline,
+    ]);
+
+    // Log local
+    logError("PHP Error [{$errno}]", [
+        'message' => $errstr,
+        'file' => $errfile,
+        'line' => $errline,
+    ]);
+
+    return false;
+});
+
+/**
+ * Handler global para exceções não capturadas
+ */
+set_exception_handler(function (\Throwable $e) {
+    $level = 'error';
+    if ($e instanceof \PDOException) {
+        $level = 'error';
+        viabix_sentry_tag('exception_type', 'database');
+    }
+
+    // Capturar no Sentry
+    viabix_sentry_exception($e, $level, [
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+    ]);
+
+    // Log local
+    logError("Uncaught Exception: " . get_class($e), [
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+    ]);
+
+    // Responder com JSON
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => APP_DEBUG ? $e->getMessage() : 'Erro interno do servidor'
+    ]);
+    exit;
+});
+
+/**
+ * Handler para shutdown - capturar erros fatais
+ */
+register_shutdown_function(function () {
+    $lastError = error_get_last();
+    if ($lastError !== null && in_array($lastError['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        viabix_sentry_message(
+            'Fatal Error: ' . $lastError['message'],
+            'error',
+            'error.fatal',
+            [
+                'file' => $lastError['file'],
+                'line' => $lastError['line'],
+            ]
+        );
+    }
+});
+
 /**
  * Função para gerar hash de senha
  */
@@ -130,6 +335,9 @@ function logError($message, $context = []) {
 
     $logEntry = date('Y-m-d H:i:s') . " - " . $message . " - " . json_encode($context) . PHP_EOL;
     error_log($logEntry, 3, $logDir . '/error.log');
+
+    // Enviar para Sentry também
+    viabix_sentry_message($message, 'error', 'app.error', $context);
 }
 
 /**
@@ -143,6 +351,17 @@ function checkAuth() {
         exit;
     }
     return $_SESSION['user_id'];
+}
+
+/**
+ * Helper para verificar autenticação e inicializar CSRF na mesma chamada
+ * Use em endpoints que exigem autenticação E CSRF protection
+ */
+function viabixRequireAuthenticatedSessionWithCsrf() {
+    checkAuth();
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        viabixInitializeCsrfProtection();
+    }
 }
 
 /**

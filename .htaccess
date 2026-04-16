@@ -67,8 +67,17 @@ Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 # Redirecionamentos e regras de reescrita
 # ======================================================
 
+# NÃO reescrever pasta /api - deixar arquivos serem servidos diretamente
+RewriteCond %{REQUEST_FILENAME} ^.*/api/ [OR]
+RewriteCond %{REQUEST_URI} api/ [OR]
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Página inicial
 RewriteRule ^$ index.html [L]
 
+# Reescrever para index.html se não é arquivo ou diretório ("SPA router") 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [QSA,L]

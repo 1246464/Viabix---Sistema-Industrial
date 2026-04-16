@@ -1,0 +1,24 @@
+{
+  "name": "viabix/saas",
+  "description": "Viabix - SaaS Platform for Industrial Analysis and Project Management",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.0",
+    "sentry/sentry": "^4.0",
+    "sentry/sdk": "^4.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Viabix\\": "src/"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "8.2"
+    }
+  }
+}

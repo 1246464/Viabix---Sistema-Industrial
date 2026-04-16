@@ -11062,6 +11062,11 @@ console.log('Dados a salvar:', anviData);
         verificarSessao().then(() => {
             // Após verificar sessão, limpar bloqueios antigos
             limparBloqueiosAntigos();
+
+            const anviIdInicial = new URLSearchParams(window.location.search).get('anvi_id');
+            if (anviIdInicial) {
+                setTimeout(() => abrirANVI(anviIdInicial), 350);
+            }
         });
 
         window.totalCustosFixos = 0;
@@ -12096,13 +12101,18 @@ async function abrirModalCriarProjeto() {
     // Buscar líderes disponíveis
     let lideresHtml = '<option value="">Selecione um líder</option>';
     try {
-        const response = await fetch('api/diagnostico.php?tabela=lideres', {
-            credentials: 'include'
+        const formData = new FormData();
+        formData.append('action', 'getLeaders');
+
+        const response = await fetch('Controle_de_projetos/api_mysql.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
         });
         const data = await response.json();
-        if (data.success && data.data) {
+        if (data.success && Array.isArray(data.data)) {
             data.data.forEach(lider => {
-                lideresHtml += `<option value="${lider.id}">${lider.nome}</option>`;
+                lideresHtml += `<option value="${lider.id}">${lider.name}</option>`;
             });
         }
     } catch (e) {

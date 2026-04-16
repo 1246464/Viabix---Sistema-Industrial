@@ -272,6 +272,8 @@
             <div id="alert" class="alert"></div>
             
             <form id="loginForm" onsubmit="fazerLogin(event)">
+                <input type="hidden" id="csrfToken" name="_csrf_token" value="">
+                
                 <div class="form-group">
                     <label for="login">Usuário</label>
                     <div class="input-wrapper">
@@ -335,6 +337,25 @@
     </div>
     
     <script>
+        // Carregar token CSRF quando a página carrega
+        async function carregarCsrfToken() {
+            try {
+                const response = await fetch('check_session.php', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.csrf_token) {
+                    document.getElementById('csrfToken').value = data.csrf_token;
+                }
+            } catch (err) {
+                console.warn('Erro ao carregar CSRF token:', err);
+            }
+        }
+        
+        // Chamar ao carregar a página
+        window.addEventListener('DOMContentLoaded', carregarCsrfToken);
+        
         function mostrarAlerta(mensagem, tipo = 'error') {
             const alert = document.getElementById('alert');
             alert.className = `alert alert-${tipo}`;
@@ -353,6 +374,7 @@
             
             const login = document.getElementById('login').value.trim();
             const senha = document.getElementById('senha').value.trim();
+            const csrfToken = document.getElementById('csrfToken').value;
             const btnLogin = document.getElementById('btnLogin');
             const alert = document.getElementById('alert');
             
@@ -370,7 +392,7 @@
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ login, senha })
+                    body: JSON.stringify({ login, senha, _csrf_token: csrfToken })
                 });
                 
                 const data = await response.json();

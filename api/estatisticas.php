@@ -26,6 +26,8 @@ try {
     $tenantAwareProjetos = viabixHasColumn('projetos', 'tenant_id') && $tenantId;
     $tenantAwareUsuarios = viabixHasColumn('usuarios', 'tenant_id') && $tenantId;
     $tenantAwareLideres = viabixHasColumn('lideres', 'tenant_id') && $tenantId;
+    $leadersHasActive = viabixHasColumn('lideres', 'ativo');
+    $projectsHasStatusColumn = viabixHasColumn('projetos', 'status');
     
     // Contar ANVIs
     if ($tenantAwareAnvis) {
@@ -56,10 +58,18 @@ try {
     
     // Contar Líderes ativos
     if ($tenantAwareLideres) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM lideres WHERE ativo = 1 AND tenant_id = ?");
+        $sql = 'SELECT COUNT(*) as total FROM lideres WHERE tenant_id = ?';
+        if ($leadersHasActive) {
+            $sql .= ' AND ativo = 1';
+        }
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$tenantId]);
     } else {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM lideres WHERE ativo = 1");
+        $sql = 'SELECT COUNT(*) as total FROM lideres';
+        if ($leadersHasActive) {
+            $sql .= ' WHERE ativo = 1';
+        }
+        $stmt = $pdo->query($sql);
     }
     $stats['lideres'] = $stmt->fetch()['total'] ?? 0;
     
@@ -99,20 +109,38 @@ try {
     $stats['anvis_por_status'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     
     // Projetos por status
-    if ($tenantAwareProjetos) {
-        $stmt = $pdo->prepare(
-            "SELECT status, COUNT(*) as total
-             FROM projetos
-             WHERE tenant_id = ?
-             GROUP BY status"
-        );
-        $stmt->execute([$tenantId]);
+    if ($projectsHasStatusColumn) {
+        if ($tenantAwareProjetos) {
+            $stmt = $pdo->prepare(
+                "SELECT status, COUNT(*) as total
+                 FROM projetos
+                 WHERE tenant_id = ?
+                 GROUP BY status"
+            );
+            $stmt->execute([$tenantId]);
+        } else {
+            $stmt = $pdo->query(
+                "SELECT status, COUNT(*) as total
+                 FROM projetos
+                 GROUP BY status"
+            );
+        }
     } else {
-        $stmt = $pdo->query(" 
-            SELECT status, COUNT(*) as total 
-            FROM projetos 
-            GROUP BY status
-        ");
+        if ($tenantAwareProjetos) {
+            $stmt = $pdo->prepare(
+                "SELECT COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(dados, '$.status')), ''), 'Pendente') as status, COUNT(*) as total
+                 FROM projetos
+                 WHERE tenant_id = ?
+                 GROUP BY status"
+            );
+            $stmt->execute([$tenantId]);
+        } else {
+            $stmt = $pdo->query(
+                "SELECT COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(dados, '$.status')), ''), 'Pendente') as status, COUNT(*) as total
+                 FROM projetos
+                 GROUP BY status"
+            );
+        }
     }
     $stats['projetos_por_status'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     

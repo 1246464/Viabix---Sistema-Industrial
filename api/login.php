@@ -26,6 +26,39 @@ if (!$input) {
     exit;
 }
 
+// Validar CSRF token
+if (session_status() === PHP_SESSION_NONE) {
+    session_name(SESSION_NAME);
+    session_start();
+}
+
+// Validar CSRF token (skip em modo teste)
+if (!defined('TESTING_MODE') || !TESTING_MODE) {
+    try {
+        viabixValidateCsrfToken();
+    } catch (RuntimeException $e) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
+        exit;
+    }
+}
+
+// ======================================================
+// CHECK RATE LIMITING (Brute Force Protection)
+// ======================================================
+$rate_limit_check = viabixCheckIpRateLimit('login', 5, 300); // 5 attempts per 5 minutes per IP
+if (!$rate_limit_check['allowed']) {
+    http_response_code(429);
+    header('Retry-After: ' . intval($rate_limit_check['reset_in']), true);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Muitas tentativas de login. Tente novamente em ' . intval($rate_limit_check['reset_in']) . ' segundos.',
+        'error_code' => 'rate_limit_exceeded',
+        'retry_after' => intval($rate_limit_check['reset_in'])
+    ]);
+    exit;
+}
+
 $login = trim($input['login'] ?? '');
 $senha = trim($input['senha'] ?? '');
 
@@ -40,13 +73,15 @@ try {
     
     if (!$user) {
         // Log de tentativa com usuário inexistente
-        logError("Tentativa de login com usuário inexistente", ['login' => $login]);
+        viabix_sentry_breadcrumb('Tentativa de login com usuário inexistente', 'auth.login', 'warning', ['login' => $login]);
+        viabixLogError("Tentativa de login com usuário inexistente", ['login' => $login]);
         echo json_encode(['success' => false, 'message' => 'Usuário ou senha inválidos']);
         exit;
     }
     
     if (!$user['ativo']) {
-        logError("Tentativa de login com usuário inativo", ['login' => $login]);
+        viabix_sentry_breadcrumb('Tentativa de login com usuário inativo', 'auth.login', 'warning', ['login' => $login, 'user_id' => $user['id']]);
+        viabixLogError("Tentativa de login com usuário inativo", ['login' => $login]);
         echo json_encode(['success' => false, 'message' => 'Usuário inativo. Contate o administrador.']);
         exit;
     }
@@ -54,7 +89,8 @@ try {
     // Verificar senha
     if (!verifyPassword($senha, $user['senha'])) {
         // Log de tentativa com senha incorreta
-        logError("Tentativa de login com senha incorreta", ['login' => $login]);
+        viabix_sentry_breadcrumb('Tentativa de login com senha incorreta', 'auth.login', 'warning', ['login' => $login, 'user_id' => $user['id']]);
+        viabixLogError("Tentativa de login com senha incorreta", ['login' => $login]);
         echo json_encode(['success' => false, 'message' => 'Usuário ou senha inválidos']);
         exit;
     }
@@ -68,7 +104,15 @@ try {
     [$canAccess, $accessMessage] = viabixCanAccessTenant($tenantContext);
 
     if (!$canAccess) {
-        logError("Tentativa de login com tenant ou assinatura bloqueada", [
+        viabix_sentry_breadcrumb('Tentativa de login com tenant ou assinatura bloqueada', 'auth.login', 'error', [
+            'login' => $login,
+            'user_id' => $user['id'],
+            'tenant_id' => $tenantContext['tenant_id'] ?? null,
+            'tenant_status' => $tenantContext['tenant_status'] ?? null,
+            'subscription_status' => $tenantContext['subscription_status'] ?? null,
+        ]);
+        
+        viabixLogError("Tentativa de login com tenant ou assinatura bloqueada", [
             'login' => $login,
             'tenant_id' => $tenantContext['tenant_id'] ?? null,
             'tenant_status' => $tenantContext['tenant_status'] ?? null,
@@ -79,6 +123,18 @@ try {
     }
 
     viabixPopulateSession($user, $tenantContext);
+    
+    // Configurar contexto no Sentry
+    viabix_sentry_set_user($user['id'], $login, $user['nome'] ?? null);
+    if ($tenantContext['tenant_id'] ?? null) {
+        viabix_sentry_set_tenant($tenantContext['tenant_id'], $tenantContext['tenant_nome'] ?? null);
+    }
+    
+    // Log de login bem-sucedido
+    viabix_sentry_breadcrumb('Login bem-sucedido', 'auth.login', 'info', [
+        'user_id' => $user['id'],
+        'tenantContext' => $tenantContext['tenant_id'] ?? null,
+    ]);
     
     // Atualizar último acesso
     $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
@@ -109,6 +165,9 @@ try {
         ]);
     }
     
+    // Clear rate limit on successful login
+    viabixClearRateLimit('login');
+    
     echo json_encode([
         'success' => true,
         'message' => 'Login realizado com sucesso',
@@ -136,7 +195,7 @@ try {
     ]);
     
 } catch (PDOException $e) {
-    logError("Erro no login", ['error' => $e->getMessage()]);
+    viabixLogError("Erro no login", ['error' => $e->getMessage()]);
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Erro interno do servidor']);
 }

@@ -1,166 +1,276 @@
 <?php
 /**
  * API: Criar Projeto a partir de uma ANVI
- * Cria um novo projeto vinculado a uma ANVI existente
+ * Compatível com o schema atual de projetos (payload JSON em `projetos.dados`).
  */
-
-session_name('viabix_session');
-session_start();
-
-header('Content-Type: application/json; charset=utf-8');
-
-// Verificar autenticação
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['erro' => 'Usuário não autenticado']);
-    exit;
-}
 
 require_once 'config.php';
 
-// Validar método
+header('Content-Type: application/json; charset=utf-8');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['erro' => 'Método não permitido']);
+    echo json_encode(['sucesso' => false, 'erro' => 'Método não permitido']);
     exit;
 }
 
-// Obter dados do POST
+$user = viabixRequireAuthenticatedSession();
+$tenantId = $user['tenant_id'] ?? viabixCurrentTenantId();
+
+if (!viabixHasTable('anvis') || !viabixHasTable('projetos')) {
+    http_response_code(503);
+    echo json_encode(['sucesso' => false, 'erro' => 'Estrutura de integração ANVI-Projetos indisponível.']);
+    exit;
+}
+
+function projetoDefaultTasks() {
+    return [
+        'kom' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 1, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'ferramental' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 5, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'cadBomFt' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 3, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'tryout' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 3, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'entrega' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 1, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'psw' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 1, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+        'handover' => ['planned' => null, 'start' => null, 'executed' => null, 'duration' => 1, 'number' => null, 'quantidadeEntrada' => null, 'quantidadeSaida' => null, 'resources' => null, 'history' => []],
+    ];
+}
+
+function projetoFindExistingLink($anviId, $tenantId) {
+    global $pdo;
+
+    if (viabixHasColumn('anvis', 'projeto_id')) {
+        $sql = 'SELECT projeto_id FROM anvis WHERE id = ?';
+        $params = [$anviId];
+
+        if (viabixHasColumn('anvis', 'tenant_id') && $tenantId) {
+            $sql .= ' AND tenant_id = ?';
+            $params[] = $tenantId;
+        }
+
+        $stmt = $pdo->prepare($sql . ' LIMIT 1');
+        $stmt->execute($params);
+        $row = $stmt->fetch();
+
+        if (!empty($row['projeto_id'])) {
+            return (int) $row['projeto_id'];
+        }
+    }
+
+    $sql = "SELECT id FROM projetos WHERE JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviId')) = ?";
+    $params = [$anviId];
+
+    if (viabixHasColumn('projetos', 'tenant_id') && $tenantId) {
+        $sql .= ' AND tenant_id = ?';
+        $params[] = $tenantId;
+    }
+
+    $stmt = $pdo->prepare($sql . ' ORDER BY id DESC LIMIT 1');
+    $stmt->execute($params);
+    $row = $stmt->fetch();
+
+    return $row ? (int) $row['id'] : null;
+}
+
 $dados = json_decode(file_get_contents('php://input'), true);
+if (!is_array($dados)) {
+    $dados = $_POST;
+}
 
-$anvi_id = isset($dados['anvi_id']) ? intval($dados['anvi_id']) : 0;
-$nome_projeto = isset($dados['nome_projeto']) ? trim($dados['nome_projeto']) : '';
-$descricao = isset($dados['descricao']) ? trim($dados['descricao']) : '';
-$lider_id = isset($dados['lider_id']) ? intval($dados['lider_id']) : null;
-$data_inicio = isset($dados['data_inicio']) ? $dados['data_inicio'] : date('Y-m-d');
-$data_fim_prevista = isset($dados['data_fim_prevista']) ? $dados['data_fim_prevista'] : null;
+$anviId = trim((string) ($dados['anvi_id'] ?? ''));
+$nomeProjeto = trim((string) ($dados['nome_projeto'] ?? ''));
+$descricao = trim((string) ($dados['descricao'] ?? ''));
+$liderId = isset($dados['lider_id']) && $dados['lider_id'] !== '' ? (int) $dados['lider_id'] : null;
+$dataInicio = trim((string) ($dados['data_inicio'] ?? date('Y-m-d')));
+$dataFimPrevista = trim((string) ($dados['data_fim_prevista'] ?? '')) ?: null;
 
-// Validações
-if ($anvi_id <= 0) {
+if ($anviId === '') {
     http_response_code(400);
-    echo json_encode(['erro' => 'ID da ANVI inválido']);
+    echo json_encode(['sucesso' => false, 'erro' => 'ID da ANVI inválido']);
     exit;
 }
 
-if (empty($nome_projeto)) {
+if ($nomeProjeto === '') {
     http_response_code(400);
-    echo json_encode(['erro' => 'Nome do projeto é obrigatório']);
+    echo json_encode(['sucesso' => false, 'erro' => 'Nome do projeto é obrigatório']);
     exit;
 }
 
 try {
-    // Verificar se a ANVI existe
-    $stmt = $conn->prepare("SELECT id, nome_anvi, valor_final FROM anvis WHERE id = ?");
-    $stmt->bind_param("i", $anvi_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $anvi = $result->fetch_assoc();
-    
+    $sql = 'SELECT id, numero, revisao, cliente, projeto, produto, volume_mensal, dados';
+    if (viabixHasColumn('anvis', 'projeto_id')) {
+        $sql .= ', projeto_id';
+    }
+    $sql .= ' FROM anvis WHERE id = ?';
+    $params = [$anviId];
+
+    if (viabixHasColumn('anvis', 'tenant_id') && $tenantId) {
+        $sql .= ' AND tenant_id = ?';
+        $params[] = $tenantId;
+    }
+
+    $stmt = $pdo->prepare($sql . ' LIMIT 1');
+    $stmt->execute($params);
+    $anvi = $stmt->fetch();
+
     if (!$anvi) {
         http_response_code(404);
-        echo json_encode(['erro' => 'ANVI não encontrada']);
+        echo json_encode(['sucesso' => false, 'erro' => 'ANVI não encontrada']);
         exit;
     }
-    
-    // Verificar se ANVI já tem projeto vinculado
-    if ($anvi['id'] && $result->num_rows > 0) {
-        $stmt2 = $conn->prepare("SELECT projeto_id FROM anvis WHERE id = ? AND projeto_id IS NOT NULL");
-        $stmt2->bind_param("i", $anvi_id);
-        $stmt2->execute();
-        $result2 = $stmt2->get_result();
-        
-        if ($result2->num_rows > 0) {
-            $projeto_existente = $result2->fetch_assoc();
-            http_response_code(409);
-            echo json_encode([
-                'erro' => 'Esta ANVI já está vinculada ao projeto #' . $projeto_existente['projeto_id'],
-                'projeto_id' => $projeto_existente['projeto_id']
-            ]);
-            exit;
+
+    $projetoExistenteId = projetoFindExistingLink($anviId, $tenantId);
+    if ($projetoExistenteId) {
+        http_response_code(409);
+        echo json_encode([
+            'sucesso' => false,
+            'erro' => 'Esta ANVI já está vinculada ao projeto #' . $projetoExistenteId,
+            'projeto_id' => $projetoExistenteId,
+        ]);
+        exit;
+    }
+
+    $anviDados = json_decode($anvi['dados'] ?? '{}', true);
+    if (!is_array($anviDados)) {
+        $anviDados = [];
+    }
+
+    $liderNome = '';
+    if ($liderId !== null && viabixHasTable('lideres')) {
+        $leaderSql = 'SELECT id, nome FROM lideres WHERE id = ?';
+        $leaderParams = [$liderId];
+
+        if (viabixHasColumn('lideres', 'tenant_id') && $tenantId) {
+            $leaderSql .= ' AND tenant_id = ?';
+            $leaderParams[] = $tenantId;
+        }
+
+        $stmt = $pdo->prepare($leaderSql . ' LIMIT 1');
+        $stmt->execute($leaderParams);
+        $lider = $stmt->fetch();
+
+        if ($lider) {
+            $liderNome = (string) $lider['nome'];
+        } else {
+            $liderId = null;
         }
     }
-    
-    // Se descrição vazia, usar dados da ANVI
-    if (empty($descricao)) {
-        $descricao = "Projeto criado a partir da ANVI: {$anvi['nome_anvi']}";
+
+    if ($descricao === '') {
+        $descricao = 'Projeto criado a partir da ANVI ' . $anvi['numero'] . ' Rev. ' . $anvi['revisao'];
     }
-    
-    // Calcular orçamento do projeto (valor da ANVI)
-    $orcamento = $anvi['valor_final'] ?? 0;
-    
-    // Inserir novo projeto
-    $stmt = $conn->prepare("
-        INSERT INTO projetos 
-        (nome, descricao, lider_id, data_inicio, data_fim_prevista, status, orcamento, progresso, anvi_id, criado_por, criado_em)
-        VALUES (?, ?, ?, ?, ?, 'planejamento', ?, 0, ?, ?, NOW())
-    ");
-    
-    $criado_por = $_SESSION['user_id'];
-    
-    $stmt->bind_param(
-        "ssissdii",
-        $nome_projeto,
-        $descricao,
-        $lider_id,
-        $data_inicio,
-        $data_fim_prevista,
-        $orcamento,
-        $anvi_id,
-        $criado_por
+
+    $projectPayload = [
+        'cliente' => (string) ($anvi['cliente'] ?? ''),
+        'projectName' => $nomeProjeto,
+        'segmento' => (string) ($anviDados['segment'] ?? $anviDados['segmento'] ?? ''),
+        'leaderId' => $liderId,
+        'codigo' => (string) ($anviDados['codigo'] ?? ''),
+        'anviNumber' => (string) ($anvi['numero'] ?? ''),
+        'modelo' => (string) ($anviDados['modelo'] ?? $anviDados['geometry'] ?? ''),
+        'processo' => (string) ($anviDados['processo'] ?? ''),
+        'fase' => 'Planejamento',
+        'observacoes' => $descricao,
+        'projectLeader' => $liderNome,
+        'tasks' => projetoDefaultTasks(),
+        'manualStatus' => null,
+        'status' => 'Pendente',
+        'createdAt' => date('c'),
+        'capability' => ['characteristics' => []],
+        'apqp' => new stdClass(),
+        'anviId' => $anvi['id'],
+        'anviRevision' => (string) ($anvi['revisao'] ?? ''),
+        'source' => 'anvi',
+        'sourceContext' => [
+            'produto' => (string) ($anvi['produto'] ?? ''),
+            'projeto' => (string) ($anvi['projeto'] ?? ''),
+            'volumeMensal' => (int) ($anvi['volume_mensal'] ?? 0),
+            'dataInicio' => $dataInicio,
+            'dataFimPrevista' => $dataFimPrevista,
+        ],
+    ];
+
+    $jsonPayload = json_encode($projectPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    $insertColumns = ['dados'];
+    $placeholders = ['?'];
+    $insertValues = [$jsonPayload];
+
+    if (viabixHasColumn('projetos', 'tenant_id')) {
+        $insertColumns[] = 'tenant_id';
+        $placeholders[] = '?';
+        $insertValues[] = $tenantId;
+    }
+    if (viabixHasColumn('projetos', 'criado_por')) {
+        $insertColumns[] = 'criado_por';
+        $placeholders[] = '?';
+        $insertValues[] = $user['id'];
+    }
+    if (viabixHasColumn('projetos', 'atualizado_por')) {
+        $insertColumns[] = 'atualizado_por';
+        $placeholders[] = '?';
+        $insertValues[] = $user['id'];
+    }
+
+    $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare(
+        'INSERT INTO projetos (' . implode(', ', $insertColumns) . ') VALUES (' . implode(', ', $placeholders) . ')'
     );
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Erro ao criar projeto: " . $stmt->error);
+    $stmt->execute($insertValues);
+    $projetoId = (int) $pdo->lastInsertId();
+
+    if (viabixHasColumn('anvis', 'projeto_id')) {
+        $updateSql = 'UPDATE anvis SET projeto_id = ?';
+        $updateParams = [$projetoId];
+
+        if (viabixHasColumn('anvis', 'atualizado_por')) {
+            $updateSql .= ', atualizado_por = ?';
+            $updateParams[] = $user['id'];
+        }
+
+        $updateSql .= ', data_atualizacao = NOW() WHERE id = ?';
+        $updateParams[] = $anviId;
+
+        if (viabixHasColumn('anvis', 'tenant_id') && $tenantId) {
+            $updateSql .= ' AND tenant_id = ?';
+            $updateParams[] = $tenantId;
+        }
+
+        $stmt = $pdo->prepare($updateSql);
+        $stmt->execute($updateParams);
     }
-    
-    $projeto_id = $conn->insert_id;
-    
-    // Atualizar ANVI com o projeto_id
-    $stmt = $conn->prepare("UPDATE anvis SET projeto_id = ?, atualizado_em = NOW() WHERE id = ?");
-    $stmt->bind_param("ii", $projeto_id, $anvi_id);
-    
-    if (!$stmt->execute()) {
-        // Se falhar ao vincular, deletar o projeto criado
-        $conn->query("DELETE FROM projetos WHERE id = $projeto_id");
-        throw new Exception("Erro ao vincular projeto à ANVI");
-    }
-    
-    // Registrar no log de atividades
-    $acao = "Projeto #{$projeto_id} criado a partir da ANVI #{$anvi_id}";
-    $stmt = $conn->prepare("
-        INSERT INTO logs_atividade (usuario_id, acao, detalhes, criado_em)
-        VALUES (?, 'criar_projeto_de_anvi', ?, NOW())
-    ");
-    $stmt->bind_param("is", $_SESSION['user_id'], $acao);
-    $stmt->execute();
-    
-    // Buscar dados completos do projeto criado
-    $stmt = $conn->prepare("
-        SELECT p.*, l.nome as lider_nome, u.user_nome as criador_nome
-        FROM projetos p
-        LEFT JOIN lideres l ON p.lider_id = l.id
-        LEFT JOIN usuarios u ON p.criado_por = u.user_id
-        WHERE p.id = ?
-    ");
-    $stmt->bind_param("i", $projeto_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $projeto = $result->fetch_assoc();
-    
-    // Sucesso
+
+    viabixLogActivity(
+        $user['id'],
+        'criar_projeto_de_anvi',
+        'Projeto #' . $projetoId . ' criado a partir da ANVI ' . $anvi['numero'] . ' Rev. ' . $anvi['revisao'],
+        'projeto',
+        (string) $projetoId
+    );
+
+    $pdo->commit();
+
     http_response_code(201);
     echo json_encode([
         'sucesso' => true,
+        'success' => true,
         'mensagem' => 'Projeto criado e vinculado à ANVI com sucesso!',
-        'projeto_id' => $projeto_id,
-        'anvi_id' => $anvi_id,
-        'projeto' => $projeto
+        'projeto_id' => $projetoId,
+        'anvi_id' => $anviId,
+        'projeto' => [
+            'id' => $projetoId,
+            'nome' => $projectPayload['projectName'],
+            'status' => $projectPayload['status'],
+            'progresso' => 0,
+            'lider' => $liderNome,
+        ],
     ]);
-    
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['erro' => $e->getMessage()]);
-}
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
 
-$conn->close();
+    http_response_code(500);
+    echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
+}
 ?>

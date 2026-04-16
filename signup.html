@@ -426,6 +426,7 @@
             <div id="alert" class="alert"></div>
 
             <form id="signupForm">
+                <input type="hidden" id="csrfToken" name="_csrf_token" value="">
                 <input id="plan_code" name="plan_code" type="hidden" value="starter">
 
                 <div class="form-grid">
@@ -521,6 +522,25 @@
         const planInput = document.getElementById('plan_code');
         const selectedPlanBox = document.getElementById('selectedPlanBox');
         const selectedPlanDescription = document.getElementById('selectedPlanDescription');
+
+        // Carregar token CSRF quando a página carrega
+        async function carregarCsrfToken() {
+            try {
+                const response = await fetch('check_session.php', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.csrf_token) {
+                    document.getElementById('csrfToken').value = data.csrf_token;
+                }
+            } catch (err) {
+                console.warn('Erro ao carregar CSRF token:', err);
+            }
+        }
+
+        // Chamar ao carregar a página
+        window.addEventListener('DOMContentLoaded', carregarCsrfToken);
 
         const planCatalog = {
             starter: {

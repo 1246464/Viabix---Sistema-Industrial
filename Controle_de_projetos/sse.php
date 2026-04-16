@@ -1,16 +1,18 @@
 <?php
-header('Content-Type: text/event-stream');
-header('Cache-Control: no-cache');
-header('Connection: keep-alive');
-header('Access-Control-Allow-Origin: *');
-
-// Desabilita output buffering
+// Desabilita output buffering (deve vir antes de headers)
 @apache_setenv('no-gzip', 1);
 @ini_set('zlib.output_compression', 0);
 @ini_set('implicit_flush', 1);
 ob_implicit_flush(1);
 
 require_once 'config.php';
+
+// Configurar CORS seguro (com whitelist de domínios)
+viabixConfigureCors(['GET', 'POST'], ['Content-Type']);
+
+header('Content-Type: text/event-stream');
+header('Cache-Control: no-cache');
+header('Connection: keep-alive')
 
 if (session_status() === PHP_SESSION_NONE) {
     session_name('viabix_session');

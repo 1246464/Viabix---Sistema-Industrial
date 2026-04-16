@@ -3867,6 +3867,7 @@ function loadProjectsFromMySQL() {
                 
                 updateProjectsTable();
                 updateSummary();
+                abrirProjetoInicialDaUrl();
                 updateMysqlStatus('connected', 'Dados carregados com sucesso');
             } else {
                 console.error('Erro ao carregar projetos:', response.message);
@@ -11004,6 +11005,37 @@ function init() {
     });
     
     console.log('Verificação automática de status ativada (primeira execução em 2 segundos, depois a cada 30 segundos)');
+}
+
+function obterProjetoIdDaUrl() {
+    const rawValue = new URLSearchParams(window.location.search).get('projeto_id');
+    if (!rawValue) {
+        return null;
+    }
+
+    const projectId = parseInt(rawValue, 10);
+    return Number.isFinite(projectId) ? projectId : null;
+}
+
+function abrirProjetoInicialDaUrl() {
+    const projectId = obterProjetoIdDaUrl();
+    if (!projectId) {
+        return;
+    }
+
+    const project = projects.find(p => p.id === projectId);
+    if (!project) {
+        console.warn('Projeto informado na URL não foi encontrado:', projectId);
+        return;
+    }
+
+    showProjectForm(projectId);
+    verificarVinculoComANVI(projectId);
+
+    const form = document.getElementById('projectForm');
+    if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 // =========================================

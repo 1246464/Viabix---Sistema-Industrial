@@ -26,6 +26,16 @@ $tenantId = $normalized['tenant_id'];
 $payload = $normalized['payload'];
 $ignored = !empty($normalized['ignored']);
 
+// Registrar no Sentry
+viabix_sentry_breadcrumb("Webhook {$eventType} recebido", "webhook.{$provider}", 'info', [
+    'event_id' => $eventId,
+    'tenant_id' => $tenantId,
+]);
+
+if ($tenantId) {
+    viabix_sentry_set_tenant($tenantId);
+}
+
 if ($eventType === '') {
     http_response_code(422);
     echo json_encode(['success' => false, 'message' => 'event_type é obrigatório.']);
@@ -38,6 +48,7 @@ try {
     $existing = $stmt->fetch();
 
     if ($existing && (int) $existing['processado'] === 1) {
+        viabix_sentry_breadcrumb('Webhook já processado', "webhook.{$provider}", 'info', ['event_id' => $eventId]);
         echo json_encode(['success' => true, 'message' => 'Evento já processado.', 'event_id' => $eventId]);
         exit;
     }

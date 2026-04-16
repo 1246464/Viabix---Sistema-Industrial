@@ -16,10 +16,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$response = ['logado' => false];
+// Inicializar CSRF protection
+viabixInitializeCsrfProtection();
+
+$response = ['logado' => false, 'csrf_token' => viabixGetCsrfToken()];
 
 if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
     try {
+        // Rastrear tentativa de verificação de sessão
+        viabix_sentry_tag('action', 'check_session');
+        
         $select = 'id, login, nome, nivel, ultimo_acesso';
         if (viabixHasColumn('usuarios', 'tenant_id')) {
             $select .= ', tenant_id';
@@ -30,16 +36,29 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
         $user = $stmt->fetch();
         
         if ($user) {
+            // Configurar contexto de usuário e tenant no Sentry
+            viabix_sentry_set_user($user['id'], $_SESSION['user_login'] ?? null, $user['nome'] ?? null);
+            
             $tenantContext = viabixGetTenantContext($user['tenant_id'] ?? ($_SESSION['tenant_id'] ?? null));
             [$canAccess, $accessMessage] = viabixCanAccessTenant($tenantContext);
 
             if (!$canAccess) {
+                viabix_sentry_message('Acesso negado ao tenant', 'warning', 'auth.access_denied', [
+                    'tenant_id' => $user['tenant_id'] ?? null,
+                    'reason' => $accessMessage,
+                ]);
+
                 viabixClearAuthenticatedSession();
                 echo json_encode([
                     'logado' => false,
                     'message' => $accessMessage,
                 ]);
                 exit;
+            }
+
+            // Registrar tenant no Sentry
+            if ($tenantContext['tenant_id'] ?? null) {
+                viabix_sentry_set_tenant($tenantContext['tenant_id'], $tenantContext['tenant_nome'] ?? null);
             }
 
             viabixPopulateSession($user, $tenantContext);
