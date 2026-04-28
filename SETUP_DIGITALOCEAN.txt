@@ -1,0 +1,90 @@
+# ==================== INSTRUÇÕES PARA SETUP DigitalOcean ====================
+
+## PASSO 1: Conectar ao servidor
+ssh root@146.190.244.133
+# Digite a senha: 59380204Mm
+
+## PASSO 2: Testar conexão com MySQL
+mysql --ssl-mode=REQUIRED -h db-mysql-tor1-97153-do-user-35989295-0.h.db.ondigitalocean.com -P 25060 -u doadmin -pAVNS_Ohxp_y8F0kYsDCJ5d2p -e "SELECT 1 as test;"
+
+# Esperado: 
+# +-------+
+# | test  |
+# +-------+
+# |     1 |
+# +-------+
+
+## PASSO 3: Atualizar arquivo .env na aplicação
+cd /var/www/html
+
+# Backup do arquivo antigo
+cp .env .env.backup
+
+# Criar novo .env com credenciais corretas
+cat > .env << 'EOF'
+APP_ENV=production
+APP_DEBUG=false
+
+DB_HOST=db-mysql-tor1-97153-do-user-35989295-0.h.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=defaultdb
+DB_USER=doadmin
+DB_PASS=YOUR_DATABASE_PASSWORD_HERE
+DB_CHARSET=utf8mb4
+
+SESSION_NAME=viabix_session
+SESSION_LIFETIME=28800
+SESSION_SECURE=true
+SESSION_SAMESITE=Strict
+
+VIABIX_BILLING_PROVIDER=manual
+VIABIX_ASAAS_ENV=sandbox
+VIABIX_ASAAS_API_KEY=
+VIABIX_ASAAS_WEBHOOK_TOKEN=
+EOF
+
+## PASSO 4: Testar com PHP
+php -r "
+require_once 'api/config.php';
+try {
+    \$stmt = \$pdo->prepare('SELECT 1 as test');
+    \$stmt->execute();
+    echo '✓ Conexão OK!' . PHP_EOL;
+} catch (Exception \$e) {
+    echo '✗ Erro: ' . \$e->getMessage() . PHP_EOL;
+}
+"
+
+## PASSO 5: Verificar diretórios e permissões
+mkdir -p logs
+chown -R www-data:www-data logs
+chmod -R 755 logs
+ls -la logs/
+
+## PASSO 6: Reiniciar Apache
+systemctl restart apache2
+
+## PASSO 7: Testar endpoints
+curl -I https://viabix.com.br/api/check_session.php
+curl -I https://viabix.com.br/api/login.php
+curl https://viabix.com.br/api/healthcheck.php
+
+## PASSO 8: Ver logs de erro (se houver erro 500)
+tail -50 /var/log/apache2/error.log
+
+## ==================== DÚVIDAS ====================
+
+# Se der erro "Access denied for user 'doadmin'@'..."
+# - Verify: password, username, host name (copiar exatamente)
+
+# Se der erro "Can't connect to MySQL server"
+# - Firewall bloqueando a porta 25060
+# - IP do servidor não está autorizado na whitelist do DigitalOcean
+
+# Se der erro 500 no browser
+# - Ver logs: tail /var/log/apache2/error.log
+# - Garantir que DB_HOST está correto (sem espaços)
+
+# Se os erros continuarem
+# - Execute: php api/diagnostico_producao.php
+# - Cole o resultado aqui

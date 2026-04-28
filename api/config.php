@@ -15,9 +15,40 @@ if (!defined('VIABIX_APP')) {
 }
 
 // ======================================================
-// INICIALIZAR SESSÃO
+// CARREGAR CONFIGURAÇÕES DE AMBIENTE (ANTES DE INICIALIZAR SESSÃO)
+// ======================================================
+if (!defined('APP_ENV')) {
+    define('APP_ENV', viabix_env('APP_ENV', 'development'));
+}
+if (!defined('APP_DEBUG')) {
+    define('APP_DEBUG', viabix_env_bool('APP_DEBUG', APP_ENV !== 'production'));
+}
+if (!defined('SESSION_NAME')) {
+    define('SESSION_NAME', viabix_env('SESSION_NAME', 'viabix_session'));
+}
+if (!defined('SESSION_LIFETIME')) {
+    define('SESSION_LIFETIME', (int) viabix_env('SESSION_LIFETIME', '28800')); // 8 horas
+}
+if (!defined('SESSION_SAMESITE')) {
+    define('SESSION_SAMESITE', viabix_env('SESSION_SAMESITE', 'Strict'));
+}
+if (!defined('SESSION_SECURE')) {
+    define('SESSION_SECURE', viabix_env_bool('SESSION_SECURE', viabix_request_is_https() || APP_ENV === 'production'));
+}
+
+// ======================================================
+// CONFIGURAR E INICIALIZAR SESSÃO
 // ======================================================
 if (session_status() === PHP_SESSION_NONE) {
+    session_name(SESSION_NAME);
+    session_set_cookie_params([
+        'lifetime' => SESSION_LIFETIME,
+        'path' => '/',
+        'domain' => '',
+        'secure' => SESSION_SECURE,
+        'httponly' => true,
+        'samesite' => SESSION_SAMESITE
+    ]);
     session_start();
 }
 
@@ -74,6 +105,9 @@ if (function_exists('viabixInitializeCsrfProtection')) {
     viabixInitializeCsrfProtection();
 }
 
+// ======================================================
+// DEFINIR SENTRY CONFIGURATION
+// ======================================================
 if (!defined('SENTRY_DSN')) {
     define('SENTRY_DSN', viabix_env('SENTRY_DSN', ''));
 }
@@ -87,13 +121,9 @@ if (!defined('SENTRY_RELEASE')) {
 // Inicializar Sentry se DSN está configurada
 $_viabix_sentry = viabix_sentry_init(SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE);
 
-// Configurações do banco de dados
-if (!defined('APP_ENV')) {
-    define('APP_ENV', viabix_env('APP_ENV', 'development'));
-}
-if (!defined('APP_DEBUG')) {
-    define('APP_DEBUG', viabix_env_bool('APP_DEBUG', APP_ENV !== 'production'));
-}
+// ======================================================
+// DEFINIR CONFIGURAÇÕES DE BANCO DE DADOS
+// ======================================================
 if (!defined('DB_HOST')) {
     define('DB_HOST', viabix_env('DB_HOST', '127.0.0.1'));
 }
@@ -109,22 +139,13 @@ if (!defined('DB_PASS')) {
 if (!defined('DB_CHARSET')) {
     define('DB_CHARSET', viabix_env('DB_CHARSET', 'utf8mb4'));
 }
-
-// Configurações de sessão
-if (!defined('SESSION_NAME')) {
-    define('SESSION_NAME', viabix_env('SESSION_NAME', 'viabix_session'));
-}
-if (!defined('SESSION_LIFETIME')) {
-    define('SESSION_LIFETIME', (int) viabix_env('SESSION_LIFETIME', '28800')); // 8 horas
-}
-if (!defined('SESSION_SAMESITE')) {
-    define('SESSION_SAMESITE', viabix_env('SESSION_SAMESITE', 'Strict'));
-}
-if (!defined('SESSION_SECURE')) {
-    define('SESSION_SECURE', viabix_env_bool('SESSION_SECURE', viabix_request_is_https() || APP_ENV === 'production'));
+if (!defined('DB_PORT')) {
+    define('DB_PORT', (int) viabix_env('DB_PORT', '3306'));
 }
 
-// Configurações de segurança
+// ======================================================
+// DEFINIR CONFIGURAÇÕES DE SEGURANÇA
+// ======================================================
 if (!defined('HASH_COST')) {
     define('HASH_COST', 12); // Custo do Bcrypt
 }
@@ -141,26 +162,22 @@ if (!defined('VIABIX_ASAAS_WEBHOOK_TOKEN')) {
     define('VIABIX_ASAAS_WEBHOOK_TOKEN', viabix_env('VIABIX_ASAAS_WEBHOOK_TOKEN', ''));
 }
 
-// Configurar sessão (mas não iniciar ainda - deixar para cada script)
-if (session_status() === PHP_SESSION_NONE) {
-    session_name(SESSION_NAME);
-    session_set_cookie_params([
-        'lifetime' => SESSION_LIFETIME,
-        'path' => '/',
-        'domain' => '',
-        'secure' => SESSION_SECURE,
-        'httponly' => true,
-        'samesite' => SESSION_SAMESITE
-    ]);
-}
-
 // Conexão PDO
 try {
-    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-    $pdo = new PDO($dsn, DB_USER, DB_PASS);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+    // DSN com suporte a SSL para DigitalOcean MySQL
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    
+    // Opções PDO
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_TIMEOUT => 10,
+        PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
+        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+    ];
+    
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (PDOException $e) {
     // Log do erro (não exibir em produção)
     error_log("Erro de conexão: " . $e->getMessage());
@@ -306,9 +323,21 @@ function hashPassword($password) {
 
 /**
  * Função para verificar senha
+ * Suporta tanto bcrypt (novo) quanto MD5 (legado)
  */
 function verifyPassword($password, $hash) {
-    return password_verify($password, $hash);
+    // Verificar bcrypt (novo - começa com $2a$, $2b$, $2x$, $2y$)
+    if (preg_match('/^\$2[aby]\$/', $hash)) {
+        return password_verify($password, $hash);
+    }
+    
+    // Verificar MD5 (legado - 32 caracteres hexadecimais)
+    if (strlen($hash) === 32 && ctype_xdigit($hash)) {
+        return md5($password) === $hash;
+    }
+    
+    // Hash desconhecido
+    return false;
 }
 
 /**

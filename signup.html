@@ -526,7 +526,7 @@
         // Carregar token CSRF quando a página carrega
         async function carregarCsrfToken() {
             try {
-                const response = await fetch('check_session.php', {
+                const response = await fetch('api/check_session.php', {
                     credentials: 'include'
                 });
                 const data = await response.json();

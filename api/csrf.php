@@ -65,6 +65,60 @@ function viabixCsrfField() {
 }
 
 /**
+ * Verificar e validar token CSRF com input já decodificado
+ * 
+ * Use quando já decodificou o input JSON para evitar ler php://input novamente.
+ * 
+ * @param array $input Dados já decodificados
+ * @throws RuntimeException Se token inválido
+ */
+function viabixValidateCsrfTokenWithInput($input = []) {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        throw new RuntimeException('CSRF: Sessão não ativa');
+    }
+
+    // Pegar token do request
+    $submittedToken = null;
+
+    // 1. Verificar formulário POST
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        // POST form-data
+        $submittedToken = $_POST['_csrf_token'] ?? null;
+
+        // JSON body (usar input já decodificado)
+        if (!$submittedToken && is_array($input)) {
+            $submittedToken = $input['_csrf_token'] ?? null;
+        }
+
+        // Header HTTP
+        if (!$submittedToken) {
+            $submittedToken = viabixGetRequestHeader('X-CSRF-Token');
+        }
+    }
+
+    // Token da sessão
+    $sessionToken = $_SESSION['_csrf_token'] ?? null;
+
+    // Validação
+    if (empty($submittedToken) || empty($sessionToken)) {
+        viabix_sentry_message('CSRF token ausente ou vazio', 'warning', 'security.csrf', [
+            'has_submitted' => (bool) $submittedToken,
+            'has_session' => (bool) $sessionToken,
+        ]);
+        throw new RuntimeException('CSRF token ausente ou inválido');
+    }
+
+    // Comparação segura com hash_equals
+    if (!hash_equals($sessionToken, $submittedToken)) {
+        viabix_sentry_message('CSRF token mismatch', 'error', 'security.csrf', [
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+        ]);
+        throw new RuntimeException('CSRF token inválido');
+    }
+}
+
+/**
  * Verificar e validar token CSRF
  * 
  * Lança exceção se token inválido ou ausente.

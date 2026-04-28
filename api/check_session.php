@@ -108,5 +108,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
 }
 
 // Garantir que nao ha saida antes do JSON
+// Garantir status 200 OK
+http_response_code(200);
 echo json_encode($response);
 exit;

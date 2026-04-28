@@ -15,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Obter dados do corpo da requisição
-
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
     $input = $_POST;
@@ -32,10 +31,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Inicializar proteção CSRF
+viabixInitializeCsrfProtection();
+
 // Validar CSRF token (skip em modo teste)
 if (!defined('TESTING_MODE') || !TESTING_MODE) {
     try {
-        viabixValidateCsrfToken();
+        // Passar o input já decodificado para evitar ler php://input novamente
+        viabixValidateCsrfTokenWithInput($input);
     } catch (RuntimeException $e) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
@@ -95,9 +98,7 @@ try {
         exit;
     }
     
-    // Iniciar sessão com nome unificado
-    session_name('viabix_session');
-    session_start();
+    // Regenerar ID da sessão por segurança (sessão já foi iniciada em config.php)
     session_regenerate_id(true);
 
     $tenantContext = viabixGetTenantContext($user['tenant_id'] ?? null);
@@ -197,6 +198,17 @@ try {
 } catch (PDOException $e) {
     viabixLogError("Erro no login", ['error' => $e->getMessage()]);
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Erro interno do servidor']);
+    
+    // DEBUG: mostrar erro se APP_DEBUG=true
+    if (defined('APP_DEBUG') && APP_DEBUG) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Erro interno do servidor',
+            'debug_error' => $e->getMessage(),
+            'debug_code' => $e->getCode(),
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erro interno do servidor']);
+    }
 }
 ?>

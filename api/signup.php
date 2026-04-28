@@ -21,8 +21,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
 viabixInitializeCsrfProtection();
 
+// Decodificar input JSON ANTES de validar CSRF para evitar ler php://input duas vezes
+$input = json_decode(file_get_contents('php://input'), true);
+if (!$input) {
+    $input = $_POST;
+}
+
 try {
-    viabixValidateCsrfToken();
+    viabixValidateCsrfTokenWithInput($input);
 } catch (RuntimeException $e) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
@@ -118,11 +124,6 @@ function signupPlanByCode($planCode) {
     $stmt->execute([$planCode]);
 
     return $stmt->fetch() ?: null;
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    $input = $_POST;
 }
 
 $companyName = trim($input['company_name'] ?? '');

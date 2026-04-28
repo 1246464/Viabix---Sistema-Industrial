@@ -340,16 +340,35 @@
         // Carregar token CSRF quando a página carrega
         async function carregarCsrfToken() {
             try {
-                const response = await fetch('check_session.php', {
+                const response = await fetch('api/check_session.php', {
                     credentials: 'include'
                 });
-                const data = await response.json();
                 
+                // Verificar se a resposta é OK
+                if (!response.ok) {
+                    console.warn(`check_session.php retornou status ${response.status}`);
+                    return;
+                }
+                
+                // Verificar se há conteúdo antes de fazer parse
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.warn('check_session.php não retornou JSON válido');
+                    return;
+                }
+                
+                const text = await response.text();
+                if (!text) {
+                    console.warn('check_session.php retornou corpo vazio');
+                    return;
+                }
+                
+                const data = JSON.parse(text);
                 if (data.csrf_token) {
                     document.getElementById('csrfToken').value = data.csrf_token;
                 }
             } catch (err) {
-                console.warn('Erro ao carregar CSRF token:', err);
+                console.warn('Erro ao carregar CSRF token:', err.message);
             }
         }
         
@@ -378,6 +397,12 @@
             const btnLogin = document.getElementById('btnLogin');
             const alert = document.getElementById('alert');
             
+            // Validar CSRF token
+            if (!csrfToken) {
+                mostrarAlerta('Token de segurança não carregado. Recarregue a página.', 'error');
+                return;
+            }
+            
             // Esconder alerta anterior
             alert.style.display = 'none';
             
@@ -395,7 +420,30 @@
                     body: JSON.stringify({ login, senha, _csrf_token: csrfToken })
                 });
                 
-                const data = await response.json();
+                // Validar status da resposta
+                if (!response.ok) {
+                    console.error(`Login retornou status ${response.status}`);
+                    if (response.status === 403) {
+                        mostrarAlerta('Validação de segurança falhou. Recarregue a página.', 'error');
+                    } else if (response.status === 429) {
+                        mostrarAlerta('Muitas tentativas de login. Tente novamente mais tarde.', 'error');
+                    } else {
+                        mostrarAlerta(`Erro do servidor (${response.status}). Tente novamente.`, 'error');
+                    }
+                    btnLogin.disabled = false;
+                    btnLogin.classList.remove('loading');
+                    return;
+                }
+                
+                const text = await response.text();
+                if (!text) {
+                    mostrarAlerta('Servidor retornou resposta vazia', 'error');
+                    btnLogin.disabled = false;
+                    btnLogin.classList.remove('loading');
+                    return;
+                }
+                
+                const data = JSON.parse(text);
                 
                 if (data.success) {
                     mostrarAlerta('Login realizado com sucesso! Redirecionando...', 'success');
@@ -410,8 +458,8 @@
                     btnLogin.classList.remove('loading');
                 }
             } catch (error) {
-                console.error('Erro:', error);
-                mostrarAlerta('Erro de conexão com o servidor', 'error');
+                console.error('Erro ao fazer login:', error);
+                mostrarAlerta('Erro de conexão com o servidor: ' + error.message, 'error');
                 btnLogin.disabled = false;
                 btnLogin.classList.remove('loading');
             }
@@ -425,14 +473,18 @@
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    if (data.logado) {
-                        // Já está logado, redirecionar
-                        window.location.href = 'dashboard.html';
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        if (data.logado) {
+                            // Já está logado, redirecionar
+                            window.location.href = 'dashboard.html';
+                        }
                     }
                 }
             } catch (e) {
                 // Não faz nada, usuário não está logado
+                console.warn('Erro ao verificar sessão:', e.message);
             }
         }
         
