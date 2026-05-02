@@ -4,8 +4,10 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-ini_set('display_errors', 0);
-error_reporting(0);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+ini_set('error_log', __DIR__ . '/../logs/error_api_mysql.log');
 
 try {
     if (session_status() === PHP_SESSION_NONE) {
@@ -24,8 +26,8 @@ try {
 
     require_once 'config.php';
 
-    createTables();
     $conn = getConnection();
+    createTables($conn);
     $tenantId = getCurrentTenantId();
     $tenantAwareProjects = tenantFilterEnabled($conn, 'projetos');
     $tenantAwareLeaders = tenantFilterEnabled($conn, 'lideres');
@@ -317,13 +319,20 @@ try {
             ]);
     }
 
-    $conn->close();
+    if (isset($conn)) {
+        $conn->close();
+    }
 
-} catch (Exception $e) {
-
+} catch (Throwable $e) {
+    http_response_code(500);
+    error_log('API MySQL Error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+    
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'Erro ao conectar ao servidor: ' . $e->getMessage(),
+        'error_code' => $e->getCode(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ]);
 }
 ?>
