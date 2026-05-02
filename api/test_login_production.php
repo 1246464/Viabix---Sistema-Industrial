@@ -51,10 +51,15 @@ try {
     }
     
     // Verify password
-    if (!password_verify($test_password, $user['password'])) {
+    if (!password_verify($test_password, $user['senha'])) {
         echo json_encode([
             'success' => false,
-            'message' => 'Senha incorreta'
+            'message' => 'Senha incorreta',
+            'debug' => [
+                'provided_password' => $test_password,
+                'stored_hash' => substr($user['senha'], 0, 20) . '...',
+                'match_result' => false
+            ]
         ]);
         exit;
     }
@@ -62,8 +67,8 @@ try {
     // Password OK - set session
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_login'] = $user['login'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_level'] = $user['level'];
+    $_SESSION['user_name'] = $user['nome'];
+    $_SESSION['user_level'] = $user['nivel'];
     $_SESSION['logged_in'] = true;
     
     echo json_encode([
@@ -72,8 +77,9 @@ try {
         'user' => [
             'id' => $user['id'],
             'login' => $user['login'],
-            'name' => $user['name'],
-            'level' => $user['level']
+            'nome' => $user['nome'],
+            'nivel' => $user['nivel'],
+            'ativo' => $user['ativo']
         ],
         'session_id' => session_id()
     ]);
