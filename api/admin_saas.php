@@ -12,85 +12,51 @@ $method = $_SERVER['REQUEST_METHOD'];
 function adminSaasTenantSummary() {
     global $pdo;
 
-    $stmt = $pdo->query(
-        "SELECT
-            t.id,
-            t.slug,
-            t.nome_fantasia,
-            t.email_financeiro,
-            t.status AS tenant_status,
-            t.trial_ate,
-            t.ativado_em,
-            t.created_at,
-            s.id AS subscription_id,
-            s.status AS subscription_status,
-            s.ciclo,
-            s.valor_contratado,
-            s.fim_vigencia,
-            p.codigo AS plan_code,
-            p.nome AS plan_name,
-            0 AS usuarios_ativos,
-            0 AS total_anvis,
-            0 AS total_projetos,
-            0 AS invoices_vencidas
-         FROM tenants t
-         LEFT JOIN subscriptions s ON s.id = (
-            SELECT s2.id
-            FROM subscriptions s2
-            WHERE s2.tenant_id = t.id
-            ORDER BY
-                CASE s2.status
-                    WHEN 'ativa' THEN 1
-                    WHEN 'trial' THEN 2
-                    WHEN 'inadimplente' THEN 3
-                    WHEN 'suspensa' THEN 4
-                    WHEN 'cancelada' THEN 5
-                    ELSE 6
-                END,
-                s2.updated_at DESC,
-                s2.created_at DESC
-            LIMIT 1
-         )
-         LEFT JOIN plans p ON p.id = s.plan_id
-         ORDER BY t.created_at DESC"
-    );
+    try {
+        $stmt = $pdo->query(
+            "SELECT
+                t.id,
+                t.slug,
+                t.nome_fantasia,
+                t.email_financeiro,
+                t.status AS tenant_status,
+                t.trial_ate,
+                t.ativado_em,
+                t.created_at,
+                s.id AS subscription_id,
+                s.status AS subscription_status,
+                s.ciclo,
+                s.valor_contratado,
+                s.fim_vigencia,
+                p.codigo AS plan_code,
+                p.nome AS plan_name
+             FROM tenants t
+             LEFT JOIN subscriptions s ON s.id = (
+                SELECT s2.id
+                FROM subscriptions s2
+                WHERE s2.tenant_id = t.id
+                ORDER BY
+                    CASE s2.status
+                        WHEN 'ativa' THEN 1
+                        WHEN 'trial' THEN 2
+                        WHEN 'inadimplente' THEN 3
+                        WHEN 'suspensa' THEN 4
+                        WHEN 'cancelada' THEN 5
+                        ELSE 6
+                    END,
+                    s2.updated_at DESC,
+                    s2.created_at DESC
+                LIMIT 1
+             )
+             LEFT JOIN plans p ON p.id = s.plan_id
+             ORDER BY t.created_at DESC"
+        );
 
-    $tenants = $stmt->fetchAll();
-
-    // Enriquecer com dados opcionais de usuários e anvis/projetos se as tabelas existem
-    if (viabixHasTable('usuarios')) {
-        foreach ($tenants as &$tenant) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE tenant_id = ? AND ativo = 1");
-            $stmt->execute([$tenant['id']]);
-            $tenant['usuarios_ativos'] = (int) $stmt->fetchColumn();
-        }
+        return $stmt->fetchAll() ?: [];
+    } catch (Throwable $e) {
+        logError('adminSaasTenantSummary', ['error' => $e->getMessage()]);
+        return [];
     }
-
-    if (viabixHasTable('anvis')) {
-        foreach ($tenants as &$tenant) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM anvis WHERE tenant_id = ?");
-            $stmt->execute([$tenant['id']]);
-            $tenant['total_anvis'] = (int) $stmt->fetchColumn();
-        }
-    }
-
-    if (viabixHasTable('projetos')) {
-        foreach ($tenants as &$tenant) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM projetos WHERE tenant_id = ?");
-            $stmt->execute([$tenant['id']]);
-            $tenant['total_projetos'] = (int) $stmt->fetchColumn();
-        }
-    }
-
-    if (viabixHasTable('invoices')) {
-        foreach ($tenants as &$tenant) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE tenant_id = ? AND status = 'vencida'");
-            $stmt->execute([$tenant['id']]);
-            $tenant['invoices_vencidas'] = (int) $stmt->fetchColumn();
-        }
-    }
-
-    return $tenants;
 }
 
 function adminSaasTenantInvoices($tenantId) {
