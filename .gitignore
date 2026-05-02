@@ -2,3 +2,16 @@
 .env.local
 /logs/*.log
 /.phpunit.result.cache
+
+# Exclude files with exposed credentials
+auto-setup-digitalocean.sh
+fix-producao.sh
+setup_producao.sh
+GUIA_CORRECAO_LOGIN.md
+VISUAL_SUMMARY.txt
+ANALISE_ERROS_LOGIN.md
+ca-certificado.crt
+quick_test.sh
+test_quick.sh
+diagnostico_ssh.sh
+diagnostico_remoto.sh
