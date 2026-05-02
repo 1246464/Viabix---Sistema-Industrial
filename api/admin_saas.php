@@ -29,26 +29,10 @@ function adminSaasTenantSummary() {
             s.fim_vigencia,
             p.codigo AS plan_code,
             p.nome AS plan_name,
-            (
-                SELECT COUNT(*)
-                FROM usuarios u
-                WHERE u.tenant_id = t.id AND u.ativo = 1
-            ) AS usuarios_ativos,
-            (
-                SELECT COUNT(*)
-                FROM anvis a
-                WHERE a.tenant_id = t.id
-            ) AS total_anvis,
-            (
-                SELECT COUNT(*)
-                FROM projetos pr
-                WHERE pr.tenant_id = t.id
-            ) AS total_projetos,
-            (
-                SELECT COUNT(*)
-                FROM invoices i
-                WHERE i.tenant_id = t.id AND i.status = 'vencida'
-            ) AS invoices_vencidas
+            0 AS usuarios_ativos,
+            0 AS total_anvis,
+            0 AS total_projetos,
+            0 AS invoices_vencidas
          FROM tenants t
          LEFT JOIN subscriptions s ON s.id = (
             SELECT s2.id
@@ -71,7 +55,42 @@ function adminSaasTenantSummary() {
          ORDER BY t.created_at DESC"
     );
 
-    return $stmt->fetchAll();
+    $tenants = $stmt->fetchAll();
+
+    // Enriquecer com dados opcionais de usuários e anvis/projetos se as tabelas existem
+    if (viabixHasTable('usuarios')) {
+        foreach ($tenants as &$tenant) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE tenant_id = ? AND ativo = 1");
+            $stmt->execute([$tenant['id']]);
+            $tenant['usuarios_ativos'] = (int) $stmt->fetchColumn();
+        }
+    }
+
+    if (viabixHasTable('anvis')) {
+        foreach ($tenants as &$tenant) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM anvis WHERE tenant_id = ?");
+            $stmt->execute([$tenant['id']]);
+            $tenant['total_anvis'] = (int) $stmt->fetchColumn();
+        }
+    }
+
+    if (viabixHasTable('projetos')) {
+        foreach ($tenants as &$tenant) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM projetos WHERE tenant_id = ?");
+            $stmt->execute([$tenant['id']]);
+            $tenant['total_projetos'] = (int) $stmt->fetchColumn();
+        }
+    }
+
+    if (viabixHasTable('invoices')) {
+        foreach ($tenants as &$tenant) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE tenant_id = ? AND status = 'vencida'");
+            $stmt->execute([$tenant['id']]);
+            $tenant['invoices_vencidas'] = (int) $stmt->fetchColumn();
+        }
+    }
+
+    return $tenants;
 }
 
 function adminSaasTenantInvoices($tenantId) {
@@ -445,15 +464,18 @@ function adminSaasTenantDetail($tenantId) {
         return null;
     }
 
-    $stmt = $pdo->prepare(
-        'SELECT id, login, email, nome, nivel, ativo, ultimo_acesso, data_criacao
-         FROM usuarios
-         WHERE tenant_id = ?
-         ORDER BY data_criacao DESC
-         LIMIT 20'
-    );
-    $stmt->execute([$tenantId]);
-    $users = $stmt->fetchAll();
+    $users = [];
+    if (viabixHasTable('usuarios')) {
+        $stmt = $pdo->prepare(
+            'SELECT id, login, email, nome, nivel, ativo, ultimo_acesso, data_criacao
+             FROM usuarios
+             WHERE tenant_id = ?
+             ORDER BY data_criacao DESC
+             LIMIT 20'
+        );
+        $stmt->execute([$tenantId]);
+        $users = $stmt->fetchAll();
+    }
 
     $stmt = $pdo->prepare(
         'SELECT id, tipo_evento, origem, created_at
