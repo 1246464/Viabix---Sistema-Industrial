@@ -156,6 +156,21 @@
         /* HERO */
         .hero {
             padding: 80px 0 60px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(8, 29, 26, 0.03), rgba(171, 197, 93, 0.08));
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(171, 197, 93, 0.08), transparent 70%);
+            border-radius: 50%;
+            filter: blur(40px);
         }
 
         .hero-grid {
@@ -163,6 +178,8 @@
             grid-template-columns: 1fr 1fr;
             gap: 60px;
             align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-copy h1 {
@@ -223,12 +240,27 @@
         }
 
         .hero-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 241, 232, 0.7));
+            position: relative;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 241, 232, 0.85));
             border-radius: var(--radius-lg);
-            border: 1px solid rgba(171, 197, 93, 0.2);
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(8, 29, 26, 0.08);
+            border: 1px solid rgba(171, 197, 93, 0.3);
+            padding: 50px 40px;
+            box-shadow: 0 30px 80px rgba(8, 29, 26, 0.12);
             backdrop-filter: blur(10px);
+            animation: floatUp 3.5s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 520px;
+        }
+
+        @keyframes floatUp {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-16px); }
+        }
+
+        .hero-illustration {
+            filter: drop-shadow(0 10px 30px rgba(8, 29, 26, 0.08));
         }
 
         /* BLOCKS */
@@ -916,41 +948,75 @@
                 </article>
 
                 <aside class="hero-card">
-                    <div style="margin-bottom: 32px;">
-                        <div style="display: inline-block; background: rgba(171, 197, 93, 0.15); color: var(--signal); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 16px;">
-                            <i class="fas fa-check-circle"></i> Plataforma Pronta para Produção
-                        </div>
-                        <h2 style="margin: 14px 0 8px; font-size: 1.6rem; letter-spacing: -0.04em; color: var(--pine-700);">O caminho do cliente agora fica claro</h2>
-                    </div>
-
-                    <div style="background: rgba(31, 90, 73, 0.05); padding: 20px; border-radius: 14px; margin-bottom: 28px; border-left: 4px solid var(--signal);">
-                        <strong style="color: var(--pine-700); display: block; margin-bottom: 8px;">Entrada Comercial Automática</strong>
-                        <p style="font-size: 0.9rem; color: var(--ink-500); margin: 0; line-height: 1.6;">Visitante chega, compara planos, valida escopo, inicia teste e entra no sistema — tudo sem abordagem manual.</p>
-                    </div>
-
-                    <div style="display: grid; gap: 16px;">
-                        <div style="display: flex; gap: 12px;">
-                            <span style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--signal), #f5ac4d); color: var(--white); display: grid; place-items: center; border-radius: 10px; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">1</span>
-                            <div>
-                                <strong style="color: var(--pine-700); display: block; margin-bottom: 4px;">Descoberta</strong>
-                                <p style="font-size: 0.85rem; color: var(--ink-500); margin: 0;">Produto, módulos, prova de valor e FAQ em uma landing única</p>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <span style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--signal), #f5ac4d); color: var(--white); display: grid; place-items: center; border-radius: 10px; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">2</span>
-                            <div>
-                                <strong style="color: var(--pine-700); display: block; margin-bottom: 4px;">Onboarding</strong>
-                                <p style="font-size: 0.85rem; color: var(--ink-500); margin: 0;">Conta trial em signup criada com tenant, assinatura e sessão</p>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <span style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--signal), #f5ac4d); color: var(--white); display: grid; place-items: center; border-radius: 10px; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;">3</span>
-                            <div>
-                                <strong style="color: var(--pine-700); display: block; margin-bottom: 4px;">Conversão</strong>
-                                <p style="font-size: 0.85rem; color: var(--ink-500); margin: 0;">Billing e upgrade por plano seguem o catálogo real do SaaS</p>
-                            </div>
-                        </div>
-                    </div>
+                    <svg class="hero-illustration" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 340px; height: auto; margin: 0 auto; display: block;">
+                        <!-- Definições de gradientes -->
+                        <defs>
+                            <linearGradient id="heroGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#1f5a49;stop-opacity:0.15" />
+                                <stop offset="100%" style="stop-color:#abc55d;stop-opacity:0.2" />
+                            </linearGradient>
+                            <linearGradient id="heroGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#f08a24;stop-opacity:0.85" />
+                                <stop offset="100%" style="stop-color:#1f5a49;stop-opacity:0.85" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Estrutura industrial - cilindro/reator -->
+                        <rect x="60" y="100" width="280" height="260" rx="20" fill="url(#heroGrad1)" stroke="#1f5a49" stroke-width="2.5" opacity="0.8"/>
+                        <circle cx="200" cy="120" r="140" fill="url(#heroGrad2)" opacity="0.25"/>
+                        
+                        <!-- Tubulações principais -->
+                        <path d="M 100 140 Q 80 170 90 220" stroke="#1f5a49" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+                        <path d="M 300 140 Q 320 170 310 220" stroke="#1f5a49" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+                        <rect x="100" y="240" width="200" height="10" rx="5" fill="#1f5a49" opacity="0.6"/>
+                        
+                        <!-- Válvulas circulares de controle -->
+                        <circle cx="120" cy="160" r="10" fill="none" stroke="#f08a24" stroke-width="2.5" opacity="0.8"/>
+                        <line x1="120" y1="150" x2="120" y2="160" stroke="#f08a24" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="280" cy="160" r="10" fill="none" stroke="#f08a24" stroke-width="2.5" opacity="0.8"/>
+                        <line x1="280" y1="150" x2="280" y2="160" stroke="#f08a24" stroke-width="2" stroke-linecap="round"/>
+                        
+                        <!-- Medidor de pressão central -->
+                        <circle cx="200" cy="210" r="22" fill="none" stroke="#1f5a49" stroke-width="2.5" opacity="0.6"/>
+                        <circle cx="200" cy="210" r="18" fill="#f5f1e8" opacity="0.4"/>
+                        <line x1="200" y1="192" x2="200" y2="210" stroke="#f08a24" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="200" cy="210" r="2" fill="#f08a24"/>
+                        
+                        <!-- Painel de controle digital -->
+                        <rect x="110" y="320" width="180" height="120" rx="10" fill="#f5f1e8" stroke="#1f5a49" stroke-width="2.5" opacity="0.95"/>
+                        
+                        <!-- Indicadores de status (LEDs) -->
+                        <circle cx="135" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
+                        <circle cx="165" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
+                        <circle cx="195" cy="345" r="6" fill="#f08a24" opacity="0.8"/>
+                        <circle cx="225" cy="345" r="6" fill="#f08a24" opacity="0.8"/>
+                        <circle cx="255" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
+                        
+                        <!-- Displays/Readouts -->
+                        <rect x="130" y="365" width="60" height="20" rx="4" fill="#1f5a49" opacity="0.15"/>
+                        <rect x="210" y="365" width="60" height="20" rx="4" fill="#1f5a49" opacity="0.15"/>
+                        
+                        <!-- Botões de controle -->
+                        <circle cx="135" cy="410" r="5" fill="#f08a24" opacity="0.7"/>
+                        <circle cx="165" cy="410" r="5" fill="#f08a24" opacity="0.7"/>
+                        <circle cx="195" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
+                        <circle cx="225" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
+                        <circle cx="255" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
+                        
+                        <!-- Animações de dados fluindo -->
+                        <circle cx="200" cy="70" r="7" fill="#abc55d" opacity="0.7">
+                            <animate attributeName="cy" values="70;50;70" dur="2.5s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2.5s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="140" cy="85" r="6" fill="#f08a24" opacity="0.6">
+                            <animate attributeName="cx" values="140;155;140" dur="2s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="260" cy="90" r="6" fill="#1f5a49" opacity="0.5">
+                            <animate attributeName="cx" values="260;245;260" dur="2.3s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="0.5;0.15;0.5" dur="2.3s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
                 </aside>
             </div>
         </section>
@@ -1272,7 +1338,7 @@
         </div>
     </footer>
 
-    <div class="status-ribbon" id="sessionRibbon">
+    <div class="status-ribbon" id="sessionRibbon" style="display: none;">
         <strong><i class="fas fa-check-circle"></i> Sessão Ativa</strong>
         <span>Você já está autenticado. Vá direto para o painel.</span>
         <a href="dashboard.html">Abrir Dashboard</a>
