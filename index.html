@@ -808,6 +808,58 @@
             opacity: 1;
         }
 
+        /* FOOTER STATS */
+        .footer-stats {
+            background: linear-gradient(135deg, var(--pine-900) 0%, var(--pine-800) 100%);
+            padding: 60px 0;
+            margin-top: 80px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .stat-item:nth-child(1) { animation-delay: 0.1s; }
+        .stat-item:nth-child(2) { animation-delay: 0.2s; }
+        .stat-item:nth-child(3) { animation-delay: 0.3s; }
+        .stat-item:nth-child(4) { animation-delay: 0.4s; }
+        .stat-item:nth-child(5) { animation-delay: 0.5s; }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--moss-400);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* STATUS RIBBON */
         .status-ribbon {
             display: none;
@@ -1326,6 +1378,33 @@
         </section>
     </main>
 
+    <section class="footer-stats">
+        <div class="shell">
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-item">
+                    <div class="stat-number" id="anvisTotal">—</div>
+                    <div class="stat-label">ANVIs Criadas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="projetosTotal">—</div>
+                    <div class="stat-label">Projetos Ativos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="usuariosTotal">—</div>
+                    <div class="stat-label">Usuários</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="lideresTotal">—</div>
+                    <div class="stat-label">Líderes de Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="anvisRecentes">—</div>
+                    <div class="stat-label">Últimos 30 Dias</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer class="site-footer">
         <div class="shell site-footer-inner">
             <span><strong>Viabix</strong> — Plataforma SaaS para ANVI, projetos e operação industrial</span>
@@ -1441,8 +1520,32 @@
             }
         });
 
+        async function loadStats() {
+            try {
+                const response = await fetch('api/estatisticas_publicas.php');
+                if (!response.ok) throw new Error('Erro ao carregar estatísticas');
+                
+                const data = await response.json();
+                
+                document.getElementById('anvisTotal').textContent = data.anvis_total || 0;
+                document.getElementById('projetosTotal').textContent = data.projetos_total || 0;
+                document.getElementById('usuariosTotal').textContent = data.usuarios_total || 0;
+                document.getElementById('lideresTotal').textContent = data.lideres_total || 0;
+                document.getElementById('anvisRecentes').textContent = data.anvis_recentes || 0;
+            } catch (e) {
+                console.error('Erro ao carregar estatísticas:', e);
+                // Valores padrão caso haja erro
+                document.getElementById('anvisTotal').textContent = '0';
+                document.getElementById('projetosTotal').textContent = '0';
+                document.getElementById('usuariosTotal').textContent = '0';
+                document.getElementById('lideresTotal').textContent = '0';
+                document.getElementById('anvisRecentes').textContent = '0';
+            }
+        }
+
         loadTestimonials();
         checkSessionStatus();
+        loadStats();
     </script>
 </body>
 </html>
