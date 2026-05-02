@@ -809,18 +809,14 @@
         }
 
         /* FOOTER STATS */
-        .footer-stats {
-            background: linear-gradient(135deg, var(--pine-900) 0%, var(--pine-800) 100%);
-            padding: 60px 0;
-            margin-top: 80px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
             text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat-item {
@@ -835,17 +831,17 @@
         .stat-item:nth-child(5) { animation-delay: 0.5s; }
 
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--moss-400);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .stat-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: rgba(255, 255, 255, 0.7);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.03em;
             font-weight: 500;
         }
 
@@ -1378,7 +1374,7 @@
         </section>
     </main>
 
-    <section class="footer-stats">
+    <footer class="site-footer">
         <div class="shell">
             <div class="stats-grid" id="statsContainer">
                 <div class="stat-item">
@@ -1403,9 +1399,6 @@
                 </div>
             </div>
         </div>
-    </section>
-
-    <footer class="site-footer">
         <div class="shell site-footer-inner">
             <span><strong>Viabix</strong> — Plataforma SaaS para ANVI, projetos e operação industrial</span>
             <span>
@@ -1414,6 +1407,7 @@
                 <a href="PLANO_COMERCIALIZACAO.html">Planos</a> ·
                 <a href="#depoimentos">Depoimentos</a>
             </span>
+        </div>
         </div>
     </footer>
 
