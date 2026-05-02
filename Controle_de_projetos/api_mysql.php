@@ -1,6 +1,21 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+
+// CORS: permitir apenas o mesmo domínio para proteger cookies de sessão
+$allowed_origins = [
+    'https://viabix.com.br',
+    'https://www.viabix.com.br',
+    'http://localhost',
+    'http://localhost:80',
+    'http://localhost:8080'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Credentials: true');
+}
+
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
