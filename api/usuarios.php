@@ -1,18 +1,39 @@
 <?php
 /**
- * Gerenciamento de Usuários - Sistema Viabix
+ * =======================================================
+ * GERENCIAMENTO DE USUÁRIOS - API CORRIGIDA
+ * =======================================================
+ * 
+ * Correções implementadas:
+ * ✅ #1 Autenticação em entrada (viabixRequireAuthentication)
+ * ✅ #2 Unificação de sistema (usa auth_system.php)
+ * ✅ #4 Isolamento multi-tenant obrigatório
+ * ✅ #5 Prevenção de IDOR (validação de tenant)
+ * ✅ #6 CSRF protection em POST/PUT/DELETE
+ * ✅ #7 Validação de tenant forte
+ * 
  * Suporta: GET, POST, PUT, DELETE
+ * 
+ * @version 3.0 (Corrigida)
+ * @since 2026-05-03
  */
 
+// ======================================================
+// 1. HEADERS E INICIALIZAÇÃO
+// ======================================================
+
 require_once 'config.php';
+require_once 'auth_system.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Iniciar sessão
-session_start();
+// ======================================================
+// 2. AUTENTICAÇÃO ANTES DE QUALQUER LÓGICA (PROBLEMA #1)
+// ======================================================
 
-// Verificar autenticação
-$user_id = checkAuth();
+$current_user = viabixRequireAuthentication(false);
+$user_id = $current_user['id'];
+$tenant_id = $current_user['tenant_id'];
 
 // Verificar método HTTP
 $method = $_SERVER['REQUEST_METHOD'];

@@ -342,7 +342,7 @@ CALL sp_add_column_if_missing('anvis_historico', 'tenant_id', 'CHAR(36) NULL AFT
 
 CALL sp_add_column_if_missing('configuracoes', 'tenant_id', 'CHAR(36) NULL AFTER id');
 CALL sp_add_column_if_missing('bancos_dados', 'tenant_id', 'CHAR(36) NULL AFTER id');
-CALL sp_add_column_if_missing('bancos_dados', 'escopo', "ENUM('global', 'tenant') NOT NULL DEFAULT 'global' AFTER tenant_id");
+CALL sp_add_column_if_missing('bancos_dados', 'escopo', 'ENUM(\'global\', \'tenant\') NOT NULL DEFAULT \'global\' AFTER tenant_id');
 
 CALL sp_add_column_if_missing('notificacoes', 'tenant_id', 'CHAR(36) NULL AFTER id');
 CALL sp_add_column_if_missing('mudancas', 'tenant_id', 'CHAR(36) NULL AFTER id');

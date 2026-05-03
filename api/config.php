@@ -58,6 +58,13 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/sentry.php';
 
 // ======================================================
+// INICIALIZAR SISTEMA CENTRALIZADO DE AUTENTICAÇÃO
+// ======================================================
+// Sistema unificado de auth + autorização baseado em permissões
+// Usar: viabixRequireAuthentication(), viabixRequirePermission(), etc
+require_once __DIR__ . '/auth_system.php';
+
+// ======================================================
 // INICIALIZAR CSRF PROTECTION
 // ======================================================
 require_once __DIR__ . '/csrf.php';
