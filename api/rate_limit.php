@@ -257,15 +257,53 @@ function viabixCheckUserRateLimit($user_id, $endpoint = 'api', $max_requests = 1
     
     $data = $session_data[$cache_key];
     $elapsed = $current_time - $data['window_start'];
+    
+    // Reset window if expired
+    if ($elapsed >= $window_seconds) {
+        $_SESSION['rate_limit'][$cache_key] = [
+            'count' => 1,
+            'window_start' => $current_time,
+            'endpoint' => $endpoint
+        ];
+        return [
+            'allowed' => true,
+            'requests' => 1,
+            'reset_in' => $window_seconds
+        ];
+    }
+    
+    // Increment counter
+    $_SESSION['rate_limit'][$cache_key]['count']++;
+    $requests = $_SESSION['rate_limit'][$cache_key]['count'];
+    $reset_in = $window_seconds - $elapsed;
+    
+    $allowed = $requests <= $max_requests;
+    
+    // Log if limit exceeded
+    if (!$allowed && function_exists('viabixSentryMessage')) {
+        viabixSentryMessage(
+            "User rate limit exceeded: User {$user_id} at endpoint '{$endpoint}' " .
+            "made {$requests} requests in {$window_seconds}s",
+            'warning'
+        );
+    }
+    
+    return [
+        'allowed' => $allowed,
+        'requests' => $requests,
+        'reset_in' => $reset_in
+    ];
+}
+
 /**
- * Check if user is rate limited (API throttling)
+ * Check if user is rate limited - Redis version
  * @param int $user_id - User ID
  * @param string $endpoint - Endpoint name
  * @param int $max_requests - Maximum requests allowed
  * @param int $window_seconds - Time window in seconds
  * Returns: array ['allowed' => bool, 'requests' => int, 'reset_in' => seconds]
  */
-function viabixCheckUserRateLimit($user_id, $endpoint = 'api', $max_requests = 100, $window_seconds = 60) {
+function viabixCheckUserRateLimitRedis($user_id, $endpoint = 'api', $max_requests = 100, $window_seconds = 60) {
     global $redis;
     
     if (!$user_id) {
