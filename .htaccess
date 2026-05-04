@@ -32,13 +32,27 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Exceções explícitas para arquivos HTML que devem ser acessíveis diretamente
-RewriteRule ^(dashboard_viabilidade|admin_saas|billing|login|signup|anvi|index|test_module_3_demo)\.html$ - [L]
+# Página inicial - ANTES de redirecionar outras requisições
+RewriteRule ^/?$ index.html [L]
 
-# Página inicial
-RewriteRule ^$ index.html [L]
-
-# Reescrever para index.html se não é arquivo ou diretório ("SPA router") 
+# Reescrever rotas SPA (qualquer outra coisa) para index.html
+# MAS não reescrever se:
+#  - É um arquivo real (-f)
+#  - É um diretório real (-d)
+#  - É um arquivo com extensão conhecida (.php, .html, .css, .js, etc)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !\.php$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.html$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.js$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.css$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.json$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.png$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.jpg$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.jpeg$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.gif$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.svg$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.woff$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.woff2$ [NC]
+RewriteCond %{REQUEST_FILENAME} !\.ttf$ [NC]
 RewriteRule ^ index.html [QSA,L]
