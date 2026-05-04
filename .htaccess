@@ -26,29 +26,20 @@ Options -Indexes
 # Redirecionamentos e regras de reescrita
 # ======================================================
 
-# NÃO reescrever pasta /api
-RewriteCond %{REQUEST_URI} ^/api/ [OR]
-# NÃO reescrever arquivos reais
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-# NÃO reescrever diretórios reais
+# IMPORTANTE: NÃO REESCREVER nenhum arquivo físico
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# IMPORTANTE: NÃO REESCREVER nenhum diretório físico
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Reescrever APENAS requisições sem extensão para index.html (SPA)
-# Ignora completamente .php, .html, .css, .js, etc
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !\.php$ [NC]
-RewriteCond %{REQUEST_URI} !\.html$ [NC]
-RewriteCond %{REQUEST_URI} !\.js$ [NC]
-RewriteCond %{REQUEST_URI} !\.css$ [NC]
-RewriteCond %{REQUEST_URI} !\.json$ [NC]
-RewriteCond %{REQUEST_URI} !\.png$ [NC]
-RewriteCond %{REQUEST_URI} !\.jpg$ [NC]
-RewriteCond %{REQUEST_URI} !\.gif$ [NC]
-RewriteCond %{REQUEST_URI} !\.svg$ [NC]
-RewriteCond %{REQUEST_URI} !\.woff$ [NC]
-RewriteCond %{REQUEST_URI} !\.woff2$ [NC]
-RewriteCond %{REQUEST_URI} !\.ttf$ [NC]
-RewriteCond %{REQUEST_URI} !^/\.
-RewriteRule ^(.*)$ index.html [L]
+# IMPORTANTE: NÃO REESCREVER a pasta /api
+RewriteCond %{REQUEST_URI} ^/api(/|$)
+RewriteRule ^ - [L]
+
+# Reescrever apenas requisições sem caminho para index.html
+RewriteRule ^/?$ index.html [L]
+
+# Reescrever APENAS requisições SPA (sem extensão, não existem como arquivo, não são diretório, não são API)
+RewriteRule ^ index.html [L]
