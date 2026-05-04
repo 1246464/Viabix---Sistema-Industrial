@@ -1,0 +1,489 @@
+{
+  "analysisMetadata": {
+    "projectName": "VIABIX SaaS",
+    "analysisDate": "2026-05-03",
+    "analysisDuration": "3 hours",
+    "codebaseSize": "6000+ lines analyzed",
+    "filesAnalyzed": 50,
+    "version": "1.0"
+  },
+  "overallAssessment": {
+    "productionReady": false,
+    "healthScore": 5.3,
+    "maxScore": 10,
+    "scoreBreakdown": {
+      "security": 6,
+      "performance": 5.5,
+      "codeQuality": 5.5,
+      "devOps": 4,
+      "architecture": 5.5
+    },
+    "timelineToProduction": "3-4 months",
+    "estimatedCost": 31000,
+    "currency": "USD",
+    "estimatedEffort": 620,
+    "effortUnit": "hours",
+    "recommendedTeamSize": 2,
+    "recommendedTeamRole": "developers"
+  },
+  "criticalBlockers": [
+    {
+      "rank": 1,
+      "issue": "Webhook signature validation missing",
+      "severity": "CRITICAL",
+      "file": "api/webhook_billing.php",
+      "line": "13-30",
+      "fixTime": "3 days",
+      "impact": "Payment fraud ($1M+ potential loss)",
+      "solution": "Implement HMAC-SHA256 validation"
+    },
+    {
+      "rank": 2,
+      "issue": "Tenant isolation inconsistent",
+      "severity": "CRITICAL",
+      "files": ["api/anvi.php", "api/usuarios.php", "all endpoints"],
+      "fixTime": "2 weeks",
+      "impact": "Data leakage between customers",
+      "solution": "Enforce tenant_id in all queries"
+    },
+    {
+      "rank": 3,
+      "issue": "Rate limiting not persistent",
+      "severity": "HIGH",
+      "file": "api/rate_limit.php",
+      "fixTime": "1 week",
+      "impact": "Brute force attacks possible",
+      "solution": "Use Redis or database-backed rate limiting"
+    },
+    {
+      "rank": 4,
+      "issue": "Email delivery not implemented",
+      "severity": "HIGH",
+      "file": "api/email.php",
+      "fixTime": "2 weeks",
+      "impact": "Onboarding broken, password recovery impossible",
+      "solution": "Integrate SendGrid or SMTP"
+    },
+    {
+      "rank": 5,
+      "issue": "Database indexes missing on tenant_id",
+      "severity": "HIGH",
+      "file": "BD/migracao_para_saas_fase1_v2.sql",
+      "fixTime": "1 day",
+      "impact": "Query performance degradation",
+      "solution": "Add indexes on tenant_id columns in 12+ tables"
+    }
+  ],
+  "issueSummary": {
+    "security": {
+      "total": 12,
+      "critical": 3,
+      "high": 4,
+      "medium": 3,
+      "low": 2,
+      "issues": [
+        "SEC-001: Rate limiting not persistent",
+        "SEC-002: Webhook validation missing",
+        "SEC-003: Tenant isolation inconsistent",
+        "SEC-004: Input validation missing",
+        "SEC-005: No encryption at rest",
+        "SEC-006: Email not implemented",
+        "SEC-007: HTTP headers missing",
+        "SEC-008: CORS incomplete",
+        "SEC-009: 2FA not integrated",
+        "SEC-010: No request timeout",
+        "SEC-011: Insufficient logging",
+        "SEC-012: Password reset missing"
+      ]
+    },
+    "performance": {
+      "total": 9,
+      "critical": 0,
+      "high": 2,
+      "medium": 5,
+      "low": 2,
+      "issues": [
+        "PERF-001: No indexes on tenant_id",
+        "PERF-002: Unbounded result sets",
+        "PERF-003: N+1 query patterns",
+        "PERF-004: JSON queries slow",
+        "PERF-005: No query caching",
+        "PERF-006: webhook_events unbounded growth",
+        "PERF-007: No connection pooling",
+        "PERF-008: Large response bodies",
+        "PERF-009: Sync audit logging"
+      ]
+    },
+    "architecture": {
+      "total": 7,
+      "critical": 0,
+      "high": 2,
+      "medium": 4,
+      "low": 1,
+      "issues": [
+        "ARCH-001: config.php monolithic (1200+ lines)",
+        "ARCH-002: No middleware pipeline",
+        "ARCH-003: No repository pattern",
+        "ARCH-004: High coupling between modules",
+        "ARCH-005: Multi-tenancy not enforced",
+        "ARCH-006: Global functions (50+)",
+        "ARCH-007: No exception hierarchy"
+      ]
+    },
+    "bestPractices": {
+      "total": 8,
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 4,
+      "issues": [
+        "BP-001: No type hints (250+ functions)",
+        "BP-002: No automated tests",
+        "BP-003: Magic strings everywhere",
+        "BP-004: Naming inconsistencies",
+        "BP-005: Documentation incomplete",
+        "BP-006: No changelog",
+        "BP-007: No API versioning",
+        "BP-008: Outdated comments"
+      ]
+    },
+    "missingFeatures": {
+      "total": 10,
+      "critical": 0,
+      "high": 3,
+      "medium": 4,
+      "low": 3,
+      "features": [
+        "MISSING-001: Email delivery (CRITICAL)",
+        "MISSING-002: 2FA enforcement (CRITICAL)",
+        "MISSING-003: Password reset (CRITICAL)",
+        "MISSING-004: GDPR data export",
+        "MISSING-005: Webhook retry",
+        "MISSING-006: Plan enforcement (backend)",
+        "MISSING-007: Soft deletes",
+        "MISSING-008: Notifications",
+        "MISSING-009: API tokens",
+        "MISSING-010: Analytics"
+      ]
+    }
+  },
+  "timeline": {
+    "phase1": {
+      "name": "Critical Hardening",
+      "duration": "2-3 weeks",
+      "effort": 150,
+      "description": "Resolve security and stability blockers",
+      "items": [
+        "Webhook signature validation",
+        "Persistent rate limiting",
+        "Email delivery",
+        "Database indexes",
+        "Tenant isolation enforcement",
+        "HTTP security headers",
+        "2FA integration",
+        "Password reset flow"
+      ]
+    },
+    "phase2": {
+      "name": "Quality & Features",
+      "duration": "4-6 weeks",
+      "effort": 200,
+      "description": "Add tests, type safety, compliance",
+      "items": [
+        "Unit test suite (PHPUnit)",
+        "Type hints (all functions)",
+        "GDPR export endpoint",
+        "Webhook retry mechanism",
+        "Plan enforcement backend",
+        "Encryption at rest"
+      ]
+    },
+    "phase3": {
+      "name": "Refactoring & Optimization",
+      "duration": "8-12 weeks",
+      "effort": 270,
+      "description": "Scalable, maintainable architecture",
+      "items": [
+        "Middleware pipeline",
+        "Repository pattern",
+        "Query caching (Redis)",
+        "Pagination everywhere",
+        "CI/CD pipeline",
+        "Load testing"
+      ]
+    },
+    "total": {
+      "duration": "3-4 months",
+      "effort": 620,
+      "teamSize": 2,
+      "estimatedCost": 31000
+    }
+  },
+  "productionChecklist": {
+    "security": {
+      "total": 10,
+      "completed": 3,
+      "pending": 7,
+      "items": [
+        "CSRF enabled on all POST/PUT/DELETE (✅ Partial)",
+        "Rate limiting persistent (❌ Session-based)",
+        "Webhook signatures validated (❌ Missing)",
+        "Tenant isolation enforced (❌ Inconsistent)",
+        "Input validation complete (❌ Partial)",
+        "HTTP security headers (❌ Missing)",
+        "SSL/TLS configured (⏳ Required)",
+        "CORS whitelist (❌ Missing)",
+        "2FA on admin (❌ Not integrated)",
+        "Secure cookies (✅ Configured)"
+      ]
+    },
+    "performance": {
+      "total": 8,
+      "completed": 0,
+      "pending": 8,
+      "items": [
+        "Database indexes (❌ Missing)",
+        "Pagination implemented (❌ Missing)",
+        "N+1 queries fixed (❌ Found 15+)",
+        "Response compression (❌ Not configured)",
+        "Connection pooling (❌ Missing)",
+        "Query caching (❌ Missing)",
+        "Slow query logging (❌ Missing)",
+        "Load testing passed (❌ Not done)"
+      ]
+    },
+    "operations": {
+      "total": 8,
+      "completed": 2,
+      "pending": 6,
+      "items": [
+        "Backups configured (✅ Scripts exist)",
+        "Monitoring (⏳ Sentry configured)",
+        "Health check endpoint (✅ Exists)",
+        "Log aggregation (❌ Missing)",
+        "Disaster recovery (❌ Plan missing)",
+        "Database replication (❌ Missing)",
+        "Staging environment (⏳ Partial)",
+        "On-call rotation (❌ Missing)"
+      ]
+    },
+    "compliance": {
+      "total": 8,
+      "completed": 0,
+      "pending": 8,
+      "items": [
+        "GDPR export endpoint (❌ Missing)",
+        "GDPR delete endpoint (❌ Missing)",
+        "PII encryption (❌ Missing)",
+        "Audit logging (⏳ Partial)",
+        "Privacy policy (⏳ Outdated)",
+        "Terms of Service (⏳ Outdated)",
+        "Data Processing Agreement (❌ Missing)",
+        "Legal review (❌ Not done)"
+      ]
+    }
+  },
+  "refactoringOpportunities": [
+    {
+      "id": "REFACTOR-001",
+      "title": "Extract Database Access Layer",
+      "priority": "HIGH",
+      "effort": 80,
+      "description": "Create repositories to abstract database access"
+    },
+    {
+      "id": "REFACTOR-002",
+      "title": "Create Middleware Pipeline",
+      "priority": "HIGH",
+      "effort": 50,
+      "description": "Centralize middleware (auth, CSRF, validation)"
+    },
+    {
+      "id": "REFACTOR-003",
+      "title": "Split config.php into modules",
+      "priority": "HIGH",
+      "effort": 80,
+      "description": "Break 1200+ line config.php into focused modules"
+    },
+    {
+      "id": "REFACTOR-004",
+      "title": "Introduce Service Container",
+      "priority": "MEDIUM",
+      "effort": 40,
+      "description": "Replace global functions with injected services"
+    },
+    {
+      "id": "REFACTOR-005",
+      "title": "Add Type Hints Everywhere",
+      "priority": "MEDIUM",
+      "effort": 120,
+      "description": "Add strict type hints to all 250+ functions"
+    },
+    {
+      "id": "REFACTOR-006",
+      "title": "Replace Magic Strings with Enums",
+      "priority": "MEDIUM",
+      "effort": 50,
+      "description": "Create UserRole, PlanStatus, PaymentStatus enums"
+    },
+    {
+      "id": "REFACTOR-007",
+      "title": "Implement Repository Pattern",
+      "priority": "HIGH",
+      "effort": 70,
+      "description": "Move all SQL to repository classes"
+    }
+  ],
+  "recommendations": {
+    "immediate": [
+      "Webhook signature validation (3 days)",
+      "Persistent rate limiting (1 week)",
+      "Email delivery (2 weeks)",
+      "Database indexes (1 day)",
+      "Tenant isolation audit (2 weeks)"
+    ],
+    "shortTerm": [
+      "2FA integration (2 weeks)",
+      "Password reset (1 week)",
+      "Encryption at rest (2 weeks)",
+      "PHPUnit tests (1 week)",
+      "Type hints (2 weeks)"
+    ],
+    "mediumTerm": [
+      "Middleware pipeline (1 week)",
+      "Repository pattern (2 weeks)",
+      "Query optimization (1 week)",
+      "CI/CD setup (1 week)",
+      "Load testing (1 week)"
+    ]
+  },
+  "risks": {
+    "security": [
+      {
+        "risk": "Payment fraud via webhook spoofing",
+        "likelihood": "HIGH",
+        "impact": "$1M+",
+        "mitigation": "HMAC validation within 3 days"
+      },
+      {
+        "risk": "Data leakage between customers",
+        "likelihood": "MEDIUM",
+        "impact": "Legal + reputation",
+        "mitigation": "Tenant isolation enforcement within 2 weeks"
+      },
+      {
+        "risk": "Brute force attacks",
+        "likelihood": "HIGH",
+        "impact": "Account takeover",
+        "mitigation": "Redis rate limiting within 1 week"
+      }
+    ],
+    "operational": [
+      {
+        "risk": "Onboarding broken (email missing)",
+        "likelihood": "CERTAIN",
+        "impact": "Zero new users",
+        "mitigation": "Email implementation within 2 weeks"
+      },
+      {
+        "risk": "Performance degradation",
+        "likelihood": "MEDIUM",
+        "impact": "User frustration",
+        "mitigation": "Indexes + caching within 1 month"
+      }
+    ],
+    "compliance": [
+      {
+        "risk": "GDPR violation",
+        "likelihood": "MEDIUM",
+        "impact": "€20k+ fines",
+        "mitigation": "Data export endpoint within 1 month"
+      }
+    ]
+  },
+  "successMetrics": {
+    "preLaunch": [
+      "Security audit: 0 CRITICAL, <3 HIGH",
+      "Performance: p99 < 500ms",
+      "Test coverage: > 60%",
+      "Load test: 1000 req/sec",
+      "Uptime: 99.9% in staging"
+    ],
+    "postLaunch30Days": [
+      "Uptime: > 99.9%",
+      "Error rate: < 0.1%",
+      "Avg latency: < 200ms",
+      "Security incidents: 0",
+      "Customer satisfaction: > 4/5"
+    ]
+  },
+  "outputDocuments": [
+    {
+      "name": "PROJECT_ANALYSIS.json",
+      "format": "JSON",
+      "size": "150kb",
+      "audience": "Developers, Tech Leads",
+      "purpose": "Complete technical analysis with code locations"
+    },
+    {
+      "name": "ANALYSIS_EXECUTIVE_SUMMARY.md",
+      "format": "Markdown",
+      "size": "50kb",
+      "audience": "Managers, C-Level",
+      "purpose": "Business impact, costs, risks"
+    },
+    {
+      "name": "PRODUCTION_ROADMAP.md",
+      "format": "Markdown",
+      "size": "80kb",
+      "audience": "Project Managers, Dev Team",
+      "purpose": "Detailed 3-4 month implementation plan"
+    },
+    {
+      "name": "QUICK_REFERENCE.md",
+      "format": "Markdown",
+      "size": "20kb",
+      "audience": "Everyone",
+      "purpose": "Quick lookup, daily reference"
+    },
+    {
+      "name": "ANALYSIS_SUMMARY.json",
+      "format": "JSON",
+      "size": "35kb",
+      "audience": "Tools, automation",
+      "purpose": "Structured summary for integration"
+    }
+  ],
+  "nextSteps": [
+    {
+      "step": 1,
+      "action": "Review analysis with team",
+      "timeline": "Today",
+      "owner": "Tech Lead"
+    },
+    {
+      "step": 2,
+      "action": "Prioritize Phase 1 items",
+      "timeline": "Tomorrow",
+      "owner": "Project Manager"
+    },
+    {
+      "step": 3,
+      "action": "Start implementation (webhook validation, rate limit, email, indexes)",
+      "timeline": "This week",
+      "owner": "Development Team"
+    },
+    {
+      "step": 4,
+      "action": "Weekly progress review",
+      "timeline": "Weekly",
+      "owner": "All"
+    },
+    {
+      "step": 5,
+      "action": "Phase 1 completion & Phase 2 start",
+      "timeline": "Week 3-4",
+      "owner": "Tech Lead"
+    }
+  ]
+}

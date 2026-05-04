@@ -11,6 +11,46 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 viabixEnsureBillingSchema();
 
+/**
+ * Validar assinatura de webhook para prevenir spoofing
+ * Suporta Asaas, Stripe e outros provedores
+ */
+function viabixValidateWebhookSignature($provider, $rawPayload, $receivedSignature) {
+    // Obter secret configurado para o provider
+    $secret = null;
+    
+    switch (strtolower($provider)) {
+        case 'asaas':
+            $secret = viabix_env('WEBHOOK_SECRET_ASAAS', viabix_env('WEBHOOK_SECRET'));
+            $headerName = 'X-Asaas-Signature';
+            break;
+        case 'stripe':
+            $secret = viabix_env('WEBHOOK_SECRET_STRIPE', viabix_env('WEBHOOK_SECRET'));
+            $headerName = 'Stripe-Signature';
+            break;
+        default:
+            $secret = viabix_env('WEBHOOK_SECRET');
+            $headerName = 'X-Signature';
+    }
+    
+    // Se não houver secret configurado, apenas log (modo desenvolvimento)
+    if (!$secret) {
+        error_log("[WEBHOOK] Aviso: WEBHOOK_SECRET não configurado para provider '{$provider}'. Validação desabilitada.");
+        return true; // Permitir em desenvolvimento, mas registrar aviso
+    }
+    
+    // Calcular assinatura esperada
+    $calculatedSignature = hash_hmac('sha256', $rawPayload, $secret);
+    
+    // Comparar com a assinatura recebida (timing-safe comparison)
+    if (!hash_equals($calculatedSignature, $receivedSignature)) {
+        error_log("[WEBHOOK] Falha de validação de assinatura para provider '{$provider}'. Assinatura inválida ou secreta incorreta.");
+        return false;
+    }
+    
+    return true;
+}
+
 $rawPayload = file_get_contents('php://input');
 $payload = json_decode($rawPayload, true);
 if (!is_array($payload)) {
@@ -25,6 +65,26 @@ $eventType = $normalized['event_type'];
 $tenantId = $normalized['tenant_id'];
 $payload = $normalized['payload'];
 $ignored = !empty($normalized['ignored']);
+
+// VALIDAR ASSINATURA DE WEBHOOK (Segurança crítica)
+// Obter assinatura do header HTTP apropriado
+$receivedSignature = null;
+switch (strtolower($provider)) {
+    case 'asaas':
+        $receivedSignature = $_SERVER['HTTP_X_ASAAS_SIGNATURE'] ?? '';
+        break;
+    case 'stripe':
+        $receivedSignature = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+        break;
+    default:
+        $receivedSignature = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
+}
+
+if (!viabixValidateWebhookSignature($provider, $rawPayload, $receivedSignature)) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Assinatura de webhook inválida']);
+    exit;
+}
 
 // Registrar no Sentry
 viabix_sentry_breadcrumb("Webhook {$eventType} recebido", "webhook.{$provider}", 'info', [

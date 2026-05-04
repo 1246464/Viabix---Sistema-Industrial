@@ -24,6 +24,7 @@ class ViabixAuditLogger {
     
     private $pdo;
     private $user_id;
+    private $tenant_id;
     private $ip_address;
     private $user_agent;
     
@@ -31,6 +32,8 @@ class ViabixAuditLogger {
         global $pdo;
         $this->pdo = $pdo;
         $this->user_id = $_SESSION['user_id'] ?? null;
+        // SECURITY: Get tenant_id for audit log filtering
+        $this->tenant_id = viabixCurrentTenantId();
         $this->ip_address = $this->getClientIp();
         $this->user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
     }
@@ -209,8 +212,36 @@ class ViabixAuditLogger {
      */
     public function getLogs($filters = [], $limit = 100, $offset = 0) {
         try {
-            $query = "SELECT * FROM audit_logs WHERE 1=1";
-            $params = [];
+            // SECURITY: Check if audit_logs has tenant_id column
+            $tenantAware = false;
+            if ($this->tenant_id) {
+                try {
+                    $check = $this->pdo->query("DESCRIBE audit_logs");
+                    while ($col = $check->fetch(PDO::FETCH_ASSOC)) {
+                        if ($col['Field'] === 'tenant_id') {
+                            $tenantAware = true;
+                            break;
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Column check failed, continue without tenant filtering
+                }
+            }
+            
+            // Build base query with tenant isolation
+            if ($tenantAware && $this->tenant_id) {
+                $query = "SELECT * FROM audit_logs WHERE tenant_id = ?";
+                $params = [$this->tenant_id];
+            } else if ($this->tenant_id) {
+                // Fallback: Filter via user's tenant through JOIN with usuarios
+                $query = "SELECT al.* FROM audit_logs al "
+                       . "JOIN usuarios u ON al.user_id = u.id "
+                       . "WHERE u.tenant_id = ?";
+                $params = [$this->tenant_id];
+            } else {
+                $query = "SELECT * FROM audit_logs WHERE 1=1";
+                $params = [];
+            }
             
             // Filter by user
             if (!empty($filters['user_id'])) {
@@ -276,8 +307,36 @@ class ViabixAuditLogger {
      */
     public function getLogsCount($filters = []) {
         try {
-            $query = "SELECT COUNT(*) as total FROM audit_logs WHERE 1=1";
-            $params = [];
+            // SECURITY: Check if audit_logs has tenant_id column
+            $tenantAware = false;
+            if ($this->tenant_id) {
+                try {
+                    $check = $this->pdo->query("DESCRIBE audit_logs");
+                    while ($col = $check->fetch(PDO::FETCH_ASSOC)) {
+                        if ($col['Field'] === 'tenant_id') {
+                            $tenantAware = true;
+                            break;
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Column check failed, continue without tenant filtering
+                }
+            }
+            
+            // Build base query with tenant isolation
+            if ($tenantAware && $this->tenant_id) {
+                $query = "SELECT COUNT(*) as total FROM audit_logs WHERE tenant_id = ?";
+                $params = [$this->tenant_id];
+            } else if ($this->tenant_id) {
+                // Fallback: Filter via user's tenant through JOIN with usuarios
+                $query = "SELECT COUNT(*) as total FROM audit_logs al "
+                       . "JOIN usuarios u ON al.user_id = u.id "
+                       . "WHERE u.tenant_id = ?";
+                $params = [$this->tenant_id];
+            } else {
+                $query = "SELECT COUNT(*) as total FROM audit_logs WHERE 1=1";
+                $params = [];
+            }
             
             if (!empty($filters['user_id'])) {
                 $query .= " AND user_id = ?";

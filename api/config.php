@@ -75,9 +75,18 @@ require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cors.php';
 
 // ======================================================
+// INICIALIZAR REDIS CONNECTION (para rate limiting, sessions, cache)
+// ======================================================
+// Redis é opcional - sistema funciona com session fallback se Redis não disponível
+$redis = null;
+require_once __DIR__ . '/rate_limit.php';
+viabixInitializeRedis(); // Initialize Redis for rate limiting & caching
+
+// ======================================================
 // INICIALIZAR RATE LIMITING & THROTTLING
 // ======================================================
-require_once __DIR__ . '/rate_limit.php';
+// Agora que Redis foi inicializado, rate limiting funciona com persistência
+// Se Redis não disponível, falls back para $_SESSION (desenvolvimento)
 
 // ======================================================
 // INICIALIZAR EMAIL SERVICE

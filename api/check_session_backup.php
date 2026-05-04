@@ -21,9 +21,18 @@ $response = ['logado' => false];
 
 if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
     try {
+        // SECURITY: Validar tenant_id da sessão
+        $tenant_id = viabixCurrentTenantId();
+        $tenantAware = viabixHasColumn('usuarios', 'tenant_id') && $tenant_id;
+        
         // Verificar se usuário ainda existe no banco
-        $stmt = $pdo->prepare("SELECT id, login, nome, nivel, ultimo_acesso FROM usuarios WHERE id = ? AND ativo = 1");
-        $stmt->execute([$_SESSION['user_id']]);
+        if ($tenantAware) {
+            $stmt = $pdo->prepare("SELECT id, login, nome, nivel, ultimo_acesso, tenant_id FROM usuarios WHERE id = ? AND ativo = 1 AND tenant_id = ?");
+            $stmt->execute([$_SESSION['user_id'], $tenant_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT id, login, nome, nivel, ultimo_acesso FROM usuarios WHERE id = ? AND ativo = 1");
+            $stmt->execute([$_SESSION['user_id']]);
+        }
         $user = $stmt->fetch();
         
         if ($user) {
@@ -43,8 +52,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
             
             // Atualizar último acesso (apenas a cada 5 minutos)
             if (!isset($_SESSION['last_access_update']) || time() - $_SESSION['last_access_update'] > 300) {
-                $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
-                $stmt->execute([$user['id']]);
+                if ($tenantAware) {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ? AND tenant_id = ?");
+                    $stmt->execute([$user['id'], $tenant_id]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
+                    $stmt->execute([$user['id']]);
+                }
                 $_SESSION['last_access_update'] = time();
             }
         } else {

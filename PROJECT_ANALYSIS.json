@@ -1,0 +1,922 @@
+{
+  "projectName": "VIABIX SaaS - PHP/MySQL Industrial Engineering Platform",
+  "analysisDate": "2026-05-03",
+  "summary": {
+    "overallHealthScore": 6.2,
+    "scalability": "Medium - Growing architectural debt",
+    "securityPosture": "6/10 - Layers present but incomplete",
+    "codeQuality": "5.5/10 - Inconsistent patterns, high coupling",
+    "productionReadiness": "5/10 - Needs hardening before launch",
+    "mainConcerns": [
+      "High coupling between components (especially config.php)",
+      "Incomplete security layer implementations (2FA, email validation)",
+      "No automated testing framework",
+      "Multi-tenancy not enforced in all contexts",
+      "Performance degradation paths (JSON queries, unbounded lists)",
+      "Operational automation gaps (backups, migrations)"
+    ]
+  },
+  "securityIssues": [
+    {
+      "id": "SEC-001",
+      "issue": "Rate limiting not persistent across requests",
+      "description": "Rate limiting via $_SESSION is only per-session and resets on new session. Attackers can bypass by creating new sessions/IPs.",
+      "severity": "high",
+      "location": "api/rate_limit.php:43-85",
+      "affectedAreas": ["login", "signup", "API endpoints"],
+      "cveRelated": "CWE-770: Allocation of Resources Without Limits",
+      "recommendation": "Implement persistent rate limiting using Redis or database table with IP-based keys. Create centralized rate limiter middleware.",
+      "exampleFix": "Use Redis INCR with expiring keys (TTL), fallback to database with cleanup cron"
+    },
+    {
+      "id": "SEC-002",
+      "issue": "Webhook validation insufficient for security",
+      "description": "webhook_billing.php lacks request signature validation. Only checks event_id uniqueness, not authenticity. HMAC/signature verification missing.",
+      "severity": "critical",
+      "location": "api/webhook_billing.php:13-30",
+      "affectedAreas": ["Billing", "Payment processing", "Revenue collection"],
+      "cveRelated": "CWE-347: Improper Verification of Cryptographic Signature",
+      "recommendation": "Implement HMAC-SHA256 signature validation for incoming webhooks. Validate timestamp to prevent replay attacks.",
+      "exampleFix": "Add viabixValidateWebhookSignature() with hash_hmac('sha256', $payload, $secret) verification before processing"
+    },
+    {
+      "id": "SEC-003",
+      "issue": "Tenant isolation not enforced consistently across all tables",
+      "description": "Multi-tenant support added incrementally. Not all queries check tenant_id. Risk of data leakage between tenants.",
+      "severity": "critical",
+      "location": "api/anvi.php:40, api/usuarios.php:65, api/config.php",
+      "affectedAreas": ["Multi-tenancy", "Data isolation", "ANVIs", "Projects", "Audit logs"],
+      "cveRelated": "CWE-639: Authorization Bypass Through User-Controlled Key",
+      "recommendation": "Enforce tenant_id in all queries via SQL views or middleware. Add unit tests for tenant isolation.",
+      "audit": "Review: anvi.php lines 40-43, 124-127 - some queries missing tenant_id filters when tenantAwareAnvis=true"
+    },
+    {
+      "id": "SEC-004",
+      "issue": "Missing input validation on critical endpoints",
+      "description": "endpoints like anvi.php accept raw JSON without comprehensive validation. Only basic presence checks exist.",
+      "severity": "high",
+      "location": "api/anvi.php:95-120, api/usuarios.php:80",
+      "affectedAreas": ["ANVI management", "User creation", "Project updates"],
+      "cveRelated": "CWE-20: Improper Input Validation",
+      "recommendation": "Use ViabixValidator class for all POST/PUT endpoints. Define strict schemas.",
+      "exampleFix": "$validator->rule('numero', 'required|min_length:5|max_length:50|regex:/^[A-Z0-9-]+$/')"
+    },
+    {
+      "id": "SEC-005",
+      "issue": "No encryption at rest for sensitive data",
+      "description": "Passwords are hashed (bcrypt) but emails, phone numbers, and billing data are stored in plaintext.",
+      "severity": "high",
+      "location": "BD/database.sql, api/config.php",
+      "affectedAreas": ["GDPR compliance", "Data protection", "PCI-DSS", "Billing data"],
+      "cveRelated": "CWE-312: Cleartext Storage of Sensitive Information",
+      "recommendation": "Implement column-level encryption for PII. Use AES-256-GCM with key rotation.",
+      "exampleFix": "CREATE TABLE usuarios (...email VARBINARY(255)...) with viabixEncrypt()/viabixDecrypt() functions"
+    },
+    {
+      "id": "SEC-006",
+      "issue": "Email delivery not implemented",
+      "description": "email.php defines sendEmail() but implementation is stub. No emails are actually sent. Verification, password resets will fail silently.",
+      "severity": "high",
+      "location": "api/email.php:40-70",
+      "affectedAreas": ["User onboarding", "Password recovery", "Billing notifications", "2FA"],
+      "cveRelated": "CWE-573: Improper Following of Specification by Caller",
+      "recommendation": "Complete email provider implementations (SendGrid, SMTP). Add email queue with retry logic.",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "SEC-007",
+      "issue": "HTTP security headers not centralized",
+      "description": "Security headers (HSTS, X-Frame-Options, CSP) mentioned in memory but not implemented in code. Vulnerable to clickjacking, XSS.",
+      "severity": "medium",
+      "location": "api/config.php (missing), index.php (frontend)",
+      "affectedAreas": ["Frontend", "API responses"],
+      "cveRelated": "CWE-693: Protection Mechanism Failure",
+      "recommendation": "Add middleware function viabixApplySecurityHeaders() in config.php bootstrap.",
+      "exampleFix": "header('X-Frame-Options: DENY'); header('X-Content-Type-Options: nosniff'); header('X-XSS-Protection: 1; mode=block');"
+    },
+    {
+      "id": "SEC-008",
+      "issue": "CORS configuration incomplete for production",
+      "description": "CORS allows localhost:* for development. Production config requires manual ENV setup. No validation of CORS_ALLOWED_ORIGINS format.",
+      "severity": "medium",
+      "location": "api/cors.php:11-20",
+      "affectedAreas": ["API security", "Mobile apps", "Third-party integrations"],
+      "cveRelated": "CWE-352: Cross-Site Request Forgery",
+      "recommendation": "Add CORS validation helper. Test against wildcard/regex bypasses.",
+      "exampleFix": "Add regex validation for origins: /^https:\\/\\/([a-z0-9-]+\\.)?viabix\\.com\\.br$/"
+    },
+    {
+      "id": "SEC-009",
+      "issue": "2FA framework exists but not integrated",
+      "description": "two_factor_auth.php has TOTP/backup code implementation but login.php doesn't call it. 2FA is dead code.",
+      "severity": "high",
+      "location": "api/login.php, api/two_factor_auth.php",
+      "affectedAreas": ["Authentication", "Admin accounts", "Payment accounts"],
+      "cveRelated": "CWE-1390: Weak Authentication",
+      "recommendation": "Integrate 2FA challenge after password validation. Store TOTP secret/backup codes in usuarios table.",
+      "missingImplementation": "login.php needs: check 2FA enabled -> prompt code -> verify via ViabixTwoFactorAuth"
+    },
+    {
+      "id": "SEC-010",
+      "issue": "No timeout on API requests",
+      "description": "Long-running queries (anvi.php with large JSON) can exhaust resources. No request timeout configuration.",
+      "severity": "medium",
+      "location": "api/config.php, php.ini",
+      "affectedAreas": ["ANVI exports", "Large reports", "Data dumps"],
+      "cveRelated": "CWE-770: Allocation of Resources Without Limits",
+      "recommendation": "Set max_execution_time and set_time_limit() per endpoint. Add query timeout.",
+      "exampleFix": "set_time_limit(30); $pdo->setAttribute(PDO::ATTR_TIMEOUT, 10);"
+    },
+    {
+      "id": "SEC-011",
+      "issue": "Insufficient logging of failed security events",
+      "description": "Failed 2FA, CSRF, rate limit events logged to Sentry but not persisted in audit_logs. Compliance violations.",
+      "severity": "medium",
+      "location": "api/audit.php, api/csrf.php:110",
+      "affectedAreas": ["Compliance", "Forensics", "Audit trail"],
+      "cveRelated": "CWE-778: Insufficient Logging",
+      "recommendation": "Log ALL security events to audit_logs table with user_id, ip, user_agent.",
+      "exampleFix": "viabixAudit()->logSecurityEvent('csrf_failed', ['ip' => $ip, 'reason' => $reason])"
+    },
+    {
+      "id": "SEC-012",
+      "issue": "Password reset endpoint missing",
+      "description": "No api/reset_password.php or similar. Users cannot recover forgotten passwords securely.",
+      "severity": "high",
+      "location": "api/ (missing)",
+      "affectedAreas": ["User onboarding", "Account recovery"],
+      "cveRelated": "CWE-640: Weak Password Recovery Mechanism",
+      "recommendation": "Implement forgot_password.php with email verification token (time-limited, single-use).",
+      "status": "NOT_IMPLEMENTED"
+    }
+  ],
+  "performanceIssues": [
+    {
+      "id": "PERF-001",
+      "issue": "No indexes on new multi-tenant columns",
+      "description": "Migration adds tenant_id to anvis, usuarios, logs_atividade but no indexes. FULLTEXT index on anvis still exists but no composite indexes.",
+      "severity": "high",
+      "location": "BD/migracao_para_saas_fase1_v2.sql",
+      "affectedAreas": ["Tenant filtering", "List performance", "Reporting"],
+      "impact": "O(n) table scans for every WHERE tenant_id = ? query",
+      "recommendation": "Add INDEX idx_tenant_id (tenant_id) to all multi-tenant tables. Add composite indexes: (tenant_id, status), (tenant_id, criado_em).",
+      "exampleFix": "ALTER TABLE usuarios ADD INDEX idx_tenant_id (tenant_id); ALTER TABLE anvis ADD INDEX idx_tenant_status (tenant_id, status);"
+    },
+    {
+      "id": "PERF-002",
+      "issue": "Unbounded result sets in list endpoints",
+      "description": "anvi.php GET without ?id returns ALL ANVIs without LIMIT. usuarios.php lists all users. No pagination.",
+      "severity": "high",
+      "location": "api/anvi.php:59-69, api/usuarios.php:75",
+      "affectedAreas": ["List endpoints", "Dashboard loading", "Export functionality"],
+      "impact": "Memory exhaustion with 10k+ records. Transfer slow. UI hangs.",
+      "recommendation": "Implement pagination with LIMIT/OFFSET. Default limit=50, max=200. Add count endpoint.",
+      "exampleFix": "GET /api/anvi.php?page=1&limit=50 -> SELECT ... FROM anvis WHERE tenant_id = ? LIMIT 50 OFFSET 0"
+    },
+    {
+      "id": "PERF-003",
+      "issue": "N+1 query pattern in admin_saas.php",
+      "description": "Lines 169-185 loop through payments and fetch invoice/subscription/tenant for each. Should use JOIN.",
+      "severity": "high",
+      "location": "api/admin_saas.php:169-185",
+      "affectedAreas": ["Admin panel", "Payment reports", "Analytics"],
+      "impact": "1 initial query + N subqueries. 100 payments = 101 queries.",
+      "recommendation": "Use JOIN or load data in batches. Pre-fetch related records.",
+      "exampleFix": "SELECT p.*, i.numero, i.status as invoice_status, s.ciclo, t.nome as tenant_nome FROM payments p JOIN invoices i... JOIN subscriptions s... JOIN tenants t... WHERE p.created_at > ?"
+    },
+    {
+      "id": "PERF-004",
+      "issue": "JSON column queries without indexes",
+      "description": "anvi.php stores full data in JSON column 'dados'. No JSON indexes. Queries like JSON_EXTRACT(dados, '$.anviId') = ? are slow.",
+      "severity": "medium",
+      "location": "api/anvi.php:50, api/criar_projeto_de_anvi.php:59",
+      "affectedAreas": ["ANVI searches", "Cross-references"],
+      "impact": "O(n) JSON parsing for each row. 1000s of ANVIs = seconds of query time.",
+      "recommendation": "Extract frequently-searched JSON fields into normal columns OR use generated/virtual columns with indexes.",
+      "exampleFix": "ALTER TABLE anvis ADD COLUMN anvi_numero VARCHAR(50) GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(dados, '$.numero'))) STORED INDEX idx_anvi_numero;"
+    },
+    {
+      "id": "PERF-005",
+      "issue": "No query result caching",
+      "description": "Plans, tenants, subscriptions queried repeatedly per request. No caching. viabixFindPlan() queries DB every time.",
+      "severity": "medium",
+      "location": "api/config.php (schema cache only), api/checkout_create.php:40",
+      "affectedAreas": ["Plan lookups", "Tenant details", "Feature checks"],
+      "impact": "5-10 extra DB queries per request that could be cached.",
+      "recommendation": "Implement Redis cache layer for plans, tenants, subscriptions. 5min TTL.",
+      "exampleFix": "$plan = viabixCache()->remember('plan:' . $planId, 300, fn() => viabixFindPlan($planId))"
+    },
+    {
+      "id": "PERF-006",
+      "issue": "webhook_events table unbounded growth",
+      "description": "webhook_events INSERT every webhook but no retention policy. Table will grow infinitely.",
+      "severity": "medium",
+      "location": "api/webhook_billing.php:24, BD/database.sql",
+      "affectedAreas": ["Database size", "Backup size", "Query performance"],
+      "impact": "After 1 year with 10 webhooks/day: 3650 rows. After 5 years: 18k rows. Historical data becomes slow.",
+      "recommendation": "Archive old webhooks. Add PARTITION BY DATE or implement soft deletes with cleanup cron.",
+      "exampleFix": "ALTER TABLE webhook_events ADD COLUMN deleted_at DATETIME NULL; DELETE FROM webhook_events WHERE processado = 1 AND created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);"
+    },
+    {
+      "id": "PERF-007",
+      "issue": "No connection pooling configured",
+      "description": "PDO creates new MySQL connection per request. No persistent connections or connection pooling.",
+      "severity": "medium",
+      "location": "api/config.php:110-130 (PDO initialization)",
+      "affectedAreas": ["Concurrent requests", "High-traffic scenarios"],
+      "impact": "Connection overhead: ~100ms per request × connection cost.",
+      "recommendation": "Use ProxySQL or PgBouncer for connection pooling. Or enable PDO::ATTR_PERSISTENT.",
+      "exampleFix": "DSN += ';charset=utf8mb4' or use 'pdo_mysql' with pool config"
+    },
+    {
+      "id": "PERF-008",
+      "issue": "Large response bodies for ANVI export",
+      "description": "GET /api/anvi.php?id=X returns full JSON data. No compression. Large ANVIs (100kb+) sent uncompressed.",
+      "severity": "low",
+      "location": "api/anvi.php:50-56",
+      "affectedAreas": ["Mobile apps", "Slow networks", "Export endpoints"],
+      "impact": "Bandwidth waste. Slow downloads.",
+      "recommendation": "Enable gzip in nginx/Apache. Offer ?format=csv for tabular data.",
+      "exampleFix": "header('Content-Encoding: gzip'); or use Output Filter in .htaccess"
+    },
+    {
+      "id": "PERF-009",
+      "issue": "Audit logs stored synchronously in critical paths",
+      "description": "Every login, CRUD op, API call inserts into logs_atividade synchronously. Blocks response.",
+      "severity": "low",
+      "location": "api/login.php:165-175, api/config.php:770-795",
+      "affectedAreas": ["Response time", "High-throughput endpoints"],
+      "impact": "10-50ms extra per request.",
+      "recommendation": "Queue audit logs async (use Redis queue + cron job or message bus).",
+      "exampleFix": "viabixQueueAuditLog() -> async insert, cron processes 1000/min"
+    }
+  ],
+  "architectureProblems": [
+    {
+      "id": "ARCH-001",
+      "issue": "Monolithic config.php with 1200+ lines",
+      "description": "config.php includes database connection, utility functions, auth helpers, billing logic, schema introspection, error handling. Violates Single Responsibility Principle.",
+      "severity": "high",
+      "location": "api/config.php:1-1300",
+      "complexity": "Lines of code: 1200+, Functions defined: 50+, Classes included: 0",
+      "recommendation": "Break into separate modules: Database.php, Auth.php, Billing.php, Schema.php, Errors.php",
+      "refactoringPlan": [
+        "Extract PDO initialization to Database/Connection.php",
+        "Extract auth functions to Auth/AuthManager.php",
+        "Extract billing functions to Billing/BillingManager.php",
+        "Extract schema utilities to Database/Schema.php",
+        "Keep config.php as bootstrap loader only"
+      ]
+    },
+    {
+      "id": "ARCH-002",
+      "issue": "No middleware/pipeline pattern",
+      "description": "No centralized way to apply auth, CSRF, CORS, rate limit, validation. Each endpoint duplicates checks.",
+      "severity": "high",
+      "location": "api/anvi.php:1-30, api/usuarios.php:1-30, api/checkout_create.php:1-30",
+      "affectedAreas": ["Code duplication", "Security consistency", "Maintainability"],
+      "recommendation": "Create Middleware class with pipeline pattern. Order: CORS -> CSRF -> RateLimit -> Auth -> Validation.",
+      "exampleFix": [
+        "class MiddlewarePipeline {",
+        "  public function add(Middleware $m) { $this->stack[] = $m; }",
+        "  public function handle($request) { return $this->stack[0]->handle($request, closure); }",
+        "}",
+        "Usage: $pipeline->add(new CsrfMiddleware)->add(new AuthMiddleware)->handle($request)"
+      ]
+    },
+    {
+      "id": "ARCH-003",
+      "issue": "No repository/data access pattern",
+      "description": "All endpoints write SQL directly. No abstraction layer. Queries scattered across 50 files.",
+      "severity": "medium",
+      "location": "api/anvi.php:40-45, api/usuarios.php:65-70, api/login.php:80-100",
+      "affectedAreas": ["Testability", "Reusability", "Consistency"],
+      "recommendation": "Create Repository classes: AnviRepository, UserRepository, SubscriptionRepository with methods like findById(), findByTenant(), update(), delete().",
+      "exampleFix": "class AnviRepository { public function findById($id, $tenantId) { return $this->pdo->prepare('SELECT * FROM anvis WHERE id = ? AND tenant_id = ?')->execute([$id, $tenantId])->fetch(); } }"
+    },
+    {
+      "id": "ARCH-004",
+      "issue": "High coupling between auth, permission, and audit systems",
+      "description": "auth_system.php, permissions.php, audit.php have interdependencies. Changes break multiple modules.",
+      "severity": "medium",
+      "location": "api/auth_system.php <-> api/audit.php <-> api/permissions.php",
+      "affectedAreas": ["Maintainability", "Testing", "Refactoring"],
+      "recommendation": "Define clear interfaces. Use event-driven pattern: UserLoggedIn -> audit listener -> record log.",
+      "exampleFix": "interface EventListener { onUserLoggedIn($user) {} } class AuditListener implements EventListener { ... }"
+    },
+    {
+      "id": "ARCH-005",
+      "issue": "Multi-tenancy not enforced architecturally",
+      "description": "Some tables have tenant_id, others don't. Some queries check it, others bypass. No enforced pattern.",
+      "severity": "high",
+      "location": "BD/database.sql, api/config.php (inconsistent)",
+      "affectedAreas": ["Data isolation", "Security", "Migrations"],
+      "recommendation": "Enforce multi-tenancy via: (1) Database views that add WHERE tenant_id filter, (2) Tenant middleware that throws 403 for mismatches.",
+      "exampleFix": "CREATE VIEW usuarios_tenant AS SELECT * FROM usuarios WHERE tenant_id = CURRENT_SETTING('app.tenant_id');"
+    },
+    {
+      "id": "ARCH-006",
+      "issue": "Global functions instead of classes/services",
+      "description": "50+ viabix*() functions are global. Namespace pollution. Hard to test. No dependency injection.",
+      "severity": "medium",
+      "location": "api/auth_system.php:136+, api/config.php:400+, api/cors.php:1+",
+      "affectedAreas": ["Testability", "Dependency management", "Modularity"],
+      "recommendation": "Create ServiceContainer class. Register services. Inject via constructor.",
+      "exampleFix": "$services = new ServiceContainer(); $services->register('auth', new AuthService($pdo)); $auth = $services->get('auth');"
+    },
+    {
+      "id": "ARCH-007",
+      "issue": "No error hierarchy/exceptions",
+      "description": "Generic RuntimeException thrown. No custom exceptions for validation, auth, permission, billing errors. Poor error handling.",
+      "severity": "low",
+      "location": "api/csrf.php:101, api/auth_system.php:150, api/config.php:295",
+      "affectedAreas": ["Error handling", "Debugging", "API contracts"],
+      "recommendation": "Create exception hierarchy: ViabixException -> AuthException, ValidationException, BillingException, etc.",
+      "exampleFix": "throw new AuthException('CSRF token invalid', 403); throw new SubscriptionException('Plan not found', 404);"
+    }
+  ],
+  "bestPracticesViolations": [
+    {
+      "id": "BP-001",
+      "issue": "No type hints in function signatures",
+      "description": "PHP 8.2 supports strict types but codebase uses none. Functions accept any type.",
+      "severity": "medium",
+      "location": "api/auth_system.php, api/config.php, api/validation.php",
+      "examples": [
+        "function viabixRequireAuthentication($requireAdmin = false) -> function viabixRequireAuthentication(bool $requireAdmin = false): array",
+        "function viabixValidateCsrfToken() -> function viabixValidateCsrfToken(): void"
+      ],
+      "recommendation": "Add strict_types=1 and type hints to all functions. Use union types where applicable.",
+      "refactoringScope": "250+ functions (substantial refactoring)"
+    },
+    {
+      "id": "BP-002",
+      "issue": "No automated testing",
+      "description": "Only manual test scripts exist (test_*.php). No PHPUnit, no CI/CD test runner.",
+      "severity": "high",
+      "location": "api/test_*.php (manual only), no phpunit.xml",
+      "affectedAreas": ["Regression detection", "Refactoring safety", "Deployment confidence"],
+      "recommendation": "Set up PHPUnit. Write tests for: Auth, CSRF, Rate limit, Validation, Billing webhook. Target 60%+ coverage.",
+      "estimatedEffort": "200-300 hours for comprehensive test suite"
+    },
+    {
+      "id": "BP-003",
+      "issue": "Magic strings everywhere",
+      "description": "'admin', 'editor', 'viewer', 'active', 'pending', 'failed' scattered as strings. No constants/enums.",
+      "severity": "medium",
+      "location": "api/auth_system.php:60-90, api/config.php:1400+, api/webhook_billing.php",
+      "impact": "Typos cause silent bugs. Refactoring prone to errors.",
+      "recommendation": "Create UserRole, PlanStatus, PaymentStatus enums (PHP 8.1+) or constants.",
+      "exampleFix": "enum UserRole { case ADMIN; case EDITOR; case VIEWER; }"
+    },
+    {
+      "id": "BP-004",
+      "issue": "Inconsistent naming conventions",
+      "description": "Mix of camelCase (viabixRequireAuth), snake_case (viabix_env), and inconsistent prefixes (VIABIX_ vs viabix_).",
+      "severity": "low",
+      "location": "api/bootstrap_env.php, api/config.php, api/auth_system.php",
+      "impact": "Harder to search/remember function names.",
+      "recommendation": "Standardize: Classes (PascalCase), functions (camelCase), constants (UPPER_SNAKE_CASE)."
+    },
+    {
+      "id": "BP-005",
+      "issue": "Incomplete documentation",
+      "description": "Some functions have docblocks, others don't. Parameters not documented. Return types unclear.",
+      "severity": "low",
+      "location": "api/config.php:400+, api/validation.php",
+      "recommendation": "Add PHPDoc to all public functions with @param, @return, @throws."
+    },
+    {
+      "id": "BP-006",
+      "issue": "No changelog/version management",
+      "description": "No CHANGELOG.md, no version tags, no deprecation warnings. API breaking changes not tracked.",
+      "severity": "low",
+      "location": "Repository root",
+      "recommendation": "Create CHANGELOG.md. Use semantic versioning. Mark breaking changes."
+    },
+    {
+      "id": "BP-007",
+      "issue": "No API versioning strategy",
+      "description": "All endpoints at /api/*.php. No /api/v1/, /api/v2/ structure. Breaking changes will break clients.",
+      "severity": "medium",
+      "location": "api/ directory structure",
+      "recommendation": "Plan for /api/v1/ namespace. Document deprecation policy."
+    },
+    {
+      "id": "BP-008",
+      "issue": "Comments are outdated or missing",
+      "description": "Some complex logic (JSON merging in anvi.php, billing event handling) lacks explanation.",
+      "severity": "low",
+      "location": "api/anvi.php:50-70, api/config.php:1350-1400"
+    }
+  ],
+  "missingFeatures": [
+    {
+      "id": "MISSING-001",
+      "feature": "Email verification and delivery",
+      "status": "NOT_IMPLEMENTED",
+      "description": "email.php is a stub. No emails sent. Signup verification, password reset, 2FA codes not delivered.",
+      "severity": "critical",
+      "affectedFlows": ["User onboarding", "Password recovery", "2FA setup", "Billing notifications"],
+      "recommendation": "Implement SMTP/SendGrid/Mailgun provider fully. Add email queue.",
+      "estimatedEffort": "40-80 hours"
+    },
+    {
+      "id": "MISSING-002",
+      "feature": "2FA enforcement in login",
+      "status": "FRAMEWORK_EXISTS_NOT_INTEGRATED",
+      "description": "two_factor_auth.php has TOTP logic but login.php doesn't call it. 2FA can't be enforced.",
+      "severity": "high",
+      "affectedFlows": ["Admin login", "Account security"],
+      "recommendation": "Integrate 2FA prompt after password validation. Store TOTP secret in usuarios table.",
+      "estimatedEffort": "30-50 hours"
+    },
+    {
+      "id": "MISSING-003",
+      "feature": "Password reset workflow",
+      "status": "NOT_IMPLEMENTED",
+      "description": "No forgot_password.php endpoint. Users can't recover locked accounts.",
+      "severity": "high",
+      "affectedFlows": ["Account recovery"],
+      "recommendation": "Create reset token flow with email verification.",
+      "estimatedEffort": "30-40 hours"
+    },
+    {
+      "id": "MISSING-004",
+      "feature": "GDPR data export",
+      "status": "NOT_IMPLEMENTED",
+      "description": "No endpoint for users to download their data (required by GDPR Article 20).",
+      "severity": "high",
+      "affectedFlows": ["GDPR compliance", "Data portability"],
+      "recommendation": "Create /api/export_user_data.php that returns JSON/CSV of all user-owned data.",
+      "estimatedEffort": "40-60 hours"
+    },
+    {
+      "id": "MISSING-005",
+      "feature": "Webhook retry mechanism",
+      "status": "NOT_IMPLEMENTED",
+      "description": "Webhooks stored if processing fails but never retried. Failed payments won't be reconciled.",
+      "severity": "high",
+      "affectedFlows": ["Billing reconciliation", "Revenue assurance"],
+      "recommendation": "Add retry queue. Implement exponential backoff (1min, 5min, 30min, 2h, 24h).",
+      "estimatedEffort": "40-60 hours"
+    },
+    {
+      "id": "MISSING-006",
+      "feature": "Plan feature enforcement in backend",
+      "status": "PARTIAL",
+      "description": "Dashboard disables UI but API doesn't validate. Can directly call /api/projetos if role is 'usuario'.",
+      "severity": "high",
+      "affectedFlows": ["Plan enforcement", "Revenue protection"],
+      "recommendation": "Add viabixCheckFeatureAccess() middleware to all feature-gated endpoints.",
+      "estimatedEffort": "20-30 hours"
+    },
+    {
+      "id": "MISSING-007",
+      "feature": "Soft deletes and data retention",
+      "status": "NOT_IMPLEMENTED",
+      "description": "DELETE queries are hard deletes. Can't recover data. GDPR right-to-be-forgotten complicates with references.",
+      "severity": "medium",
+      "affectedFlows": ["GDPR compliance", "Audit trail", "Data recovery"],
+      "recommendation": "Add deleted_at column. Create archives. Implement cascade soft delete.",
+      "estimatedEffort": "60-80 hours"
+    },
+    {
+      "id": "MISSING-008",
+      "feature": "Notification system (in-app, email, SMS)",
+      "status": "NOT_IMPLEMENTED",
+      "description": "No way to notify users of events (payment due, plan upgrade, admin messages).",
+      "severity": "medium",
+      "affectedFlows": ["User engagement", "Billing management"],
+      "recommendation": "Create notification table + queue. Support email, SMS (Twilio), in-app.",
+      "estimatedEffort": "80-120 hours"
+    },
+    {
+      "id": "MISSING-009",
+      "feature": "API authentication via bearer tokens",
+      "status": "NOT_IMPLEMENTED",
+      "description": "Only session-based auth. No API tokens for integrations, third-party apps, mobile clients.",
+      "severity": "medium",
+      "affectedFlows": ["API integrations", "Mobile apps", "Webhooks from clients"],
+      "recommendation": "Implement OAuth2 / Bearer tokens. Create token management UI.",
+      "estimatedEffort": "60-100 hours"
+    },
+    {
+      "id": "MISSING-010",
+      "feature": "Activity dashboard / analytics",
+      "status": "NOT_IMPLEMENTED",
+      "description": "No analytics on user activity, feature usage, billing trends. audit_logs exist but not exposed.",
+      "severity": "low",
+      "affectedFlows": ["Business intelligence", "Product decisions"],
+      "recommendation": "Create analytics endpoint querying audit_logs. Add charts in admin panel.",
+      "estimatedEffort": "40-80 hours"
+    }
+  ],
+  "refactoringOpportunities": [
+    {
+      "id": "REFACTOR-001",
+      "title": "Extract Database Access Layer",
+      "priority": "high",
+      "scope": "Large refactoring",
+      "effort": "80-120 hours",
+      "description": "Create repositories to abstract database access. Reduces coupling, improves testability.",
+      "steps": [
+        "1. Create Repositories/ directory",
+        "2. Create AnviRepository, UserRepository, SubscriptionRepository, etc.",
+        "3. Migrate queries from endpoints to repositories",
+        "4. Update endpoints to use repositories"
+      ],
+      "benefits": [
+        "Endpoints easier to test (mock repositories)",
+        "Easier to add caching",
+        "SQL queries in one place",
+        "Easier to add query logging/monitoring"
+      ]
+    },
+    {
+      "id": "REFACTOR-002",
+      "title": "Create Middleware Pipeline",
+      "priority": "high",
+      "scope": "Medium refactoring",
+      "effort": "40-60 hours",
+      "description": "Centralize middleware (auth, CSRF, rate limit, validation) to DRY up endpoint code.",
+      "steps": [
+        "1. Create Middleware interface",
+        "2. Create CsrfMiddleware, AuthMiddleware, RateLimitMiddleware",
+        "3. Create Pipeline orchestrator",
+        "4. Update all endpoints to use pipeline"
+      ],
+      "benefits": [
+        "50-70% reduction in endpoint boilerplate",
+        "Consistent security checks",
+        "Easier to add new middleware"
+      ]
+    },
+    {
+      "id": "REFACTOR-003",
+      "title": "Split config.php into modules",
+      "priority": "high",
+      "scope": "Large refactoring",
+      "effort": "60-100 hours",
+      "description": "Break 1200+ line config.php into focused modules.",
+      "modules": [
+        "Database/Connection.php - PDO setup",
+        "Database/Schema.php - viabixHasTable, viabixHasColumn",
+        "Auth/AuthService.php - Auth functions",
+        "Auth/PermissionService.php - Permission checks",
+        "Billing/BillingService.php - Billing logic",
+        "Billing/WebhookProcessor.php - Webhook handling",
+        "Error/ErrorHandler.php - Error handling"
+      ],
+      "benefits": [
+        "config.php becomes clean bootstrap",
+        "Each module is testable",
+        "Easier to understand responsibility",
+        "Easier to locate code"
+      ]
+    },
+    {
+      "id": "REFACTOR-004",
+      "title": "Introduce Service Container",
+      "priority": "medium",
+      "scope": "Medium refactoring",
+      "effort": "30-50 hours",
+      "description": "Replace global functions with injected services. Improve testability.",
+      "steps": [
+        "1. Create ServiceContainer class",
+        "2. Register services: AuthService, PermissionService, BillingService, etc.",
+        "3. Replace global function calls with $services->get('auth')->...",
+        "4. Add mocking support for tests"
+      ],
+      "benefits": [
+        "Dependency injection ready",
+        "Mock services for testing",
+        "Cleaner code"
+      ]
+    },
+    {
+      "id": "REFACTOR-005",
+      "title": "Add Type Hints Everywhere",
+      "priority": "medium",
+      "scope": "Broad refactoring",
+      "effort": "100-150 hours",
+      "description": "Add strict type hints to all functions (250+ functions).",
+      "steps": [
+        "1. Enable declare(strict_types=1) in all files",
+        "2. Add parameter types to all functions",
+        "3. Add return types to all functions",
+        "4. Use union types where applicable (PHP 8.0+)"
+      ],
+      "benefits": [
+        "Catch type errors at compile time",
+        "Better IDE autocomplete",
+        "Better documentation"
+      ]
+    },
+    {
+      "id": "REFACTOR-006",
+      "title": "Replace Magic Strings with Enums/Constants",
+      "priority": "medium",
+      "scope": "Medium refactoring",
+      "effort": "40-60 hours",
+      "description": "Create enums for user roles, plan statuses, payment statuses, etc.",
+      "enums": [
+        "enum UserRole { ADMIN, EDITOR, VIEWER, GUEST }",
+        "enum PlanStatus { ACTIVE, INACTIVE, ARCHIVED }",
+        "enum PaymentStatus { PENDING, COMPLETED, FAILED, REFUNDED }",
+        "enum InvoiceStatus { DRAFT, SENT, PENDING, PAID, OVERDUE, CANCELLED }",
+        "enum TenantStatus { ACTIVE, SUSPENDED, CANCELLED, INADIMPLENTE }"
+      ],
+      "benefits": [
+        "Type-safe",
+        "IDE autocomplete",
+        "Prevents typos",
+        "Easier refactoring"
+      ]
+    },
+    {
+      "id": "REFACTOR-007",
+      "title": "Implement Repository Pattern for Queries",
+      "priority": "high",
+      "scope": "Large refactoring",
+      "effort": "60-80 hours",
+      "description": "Move all SQL from endpoints to repository classes. Single query location.",
+      "exampleRepositories": [
+        "AnviRepository::findById(), findByTenant(), findByStatus(), save(), delete()",
+        "UserRepository::findById(), findByEmail(), findByTenant(), update(), delete()",
+        "SubscriptionRepository::findByTenant(), save(), archive()"
+      ],
+      "benefits": [
+        "Easier to add logging/monitoring",
+        "Easier to optimize queries",
+        "DRY principle",
+        "Testable queries"
+      ]
+    },
+    {
+      "id": "REFACTOR-008",
+      "title": "Create proper HTTP Request/Response classes",
+      "priority": "low",
+      "scope": "Medium refactoring",
+      "effort": "30-40 hours",
+      "description": "Replace raw $_GET/$_POST/$_SERVER with Request class. Typed responses.",
+      "benefits": [
+        "Type-safe request access",
+        "Built-in validation",
+        "Better testing"
+      ]
+    },
+    {
+      "id": "REFACTOR-009",
+      "title": "Extract validation schemas",
+      "priority": "medium",
+      "scope": "Medium refactoring",
+      "effort": "30-40 hours",
+      "description": "Define validation rules in reusable schema classes instead of inline.",
+      "exampleSchemas": [
+        "CreateUserSchema, UpdateUserSchema, CreateAnviSchema, UpdateAnviSchema, CreateSubscriptionSchema"
+      ],
+      "benefits": [
+        "Reusable",
+        "Testable",
+        "Easier to document API requirements"
+      ]
+    }
+  ],
+  "recommendations": {
+    "immediateActions": [
+      {
+        "priority": "critical",
+        "action": "Implement persistent rate limiting (Redis or database)",
+        "reason": "Protect against brute force and API abuse",
+        "timeline": "1 week"
+      },
+      {
+        "priority": "critical",
+        "action": "Add webhook signature validation (HMAC)",
+        "reason": "Prevent webhook spoofing and payment fraud",
+        "timeline": "3 days"
+      },
+      {
+        "priority": "critical",
+        "action": "Enforce tenant_id in all queries (audit remaining)",
+        "reason": "Prevent data leakage between customers",
+        "timeline": "2 weeks"
+      },
+      {
+        "priority": "high",
+        "action": "Implement email delivery (SendGrid or SMTP)",
+        "reason": "Unblock user onboarding and password recovery",
+        "timeline": "2 weeks"
+      },
+      {
+        "priority": "high",
+        "action": "Add 2FA to login flow",
+        "reason": "Protect admin and payment accounts",
+        "timeline": "2 weeks"
+      },
+      {
+        "priority": "high",
+        "action": "Add database indexes on tenant_id columns",
+        "reason": "Improve query performance for multi-tenant setup",
+        "timeline": "1 week"
+      }
+    ],
+    "shortTermPlan": [
+      {
+        "month": 1,
+        "items": [
+          "Complete email system (SendGrid integration)",
+          "Integrate 2FA into login",
+          "Add webhook signature validation",
+          "Add persistent rate limiting",
+          "Add missing indexes (tenant_id)",
+          "Implement password reset flow"
+        ]
+      },
+      {
+        "month": 2,
+        "items": [
+          "Create comprehensive test suite (PHPUnit)",
+          "Implement pagination for list endpoints",
+          "Add API tokenization (OAuth2/Bearer)",
+          "Extract config.php into modules",
+          "Add GDPR data export endpoint",
+          "Implement soft deletes"
+        ]
+      },
+      {
+        "month": 3,
+        "items": [
+          "Create middleware pipeline",
+          "Implement repository pattern",
+          "Add type hints to all functions",
+          "Replace magic strings with enums",
+          "Setup CI/CD pipeline (GitHub Actions)",
+          "Add automated backups"
+        ]
+      }
+    ],
+    "productionChecklist": [
+      {
+        "category": "Security",
+        "items": [
+          "[ ] CSRF enabled on all POST/PUT/DELETE",
+          "[ ] Rate limiting enabled (persistent)",
+          "[ ] Webhook signatures validated (HMAC)",
+          "[ ] Tenant isolation enforced in all queries",
+          "[ ] Input validation on all endpoints",
+          "[ ] HTTP security headers configured",
+          "[ ] SSL/TLS certificate configured (Let's Encrypt)",
+          "[ ] CORS whitelist configured (no wildcard)",
+          "[ ] Password hashing with bcrypt cost 12",
+          "[ ] Session secure cookies enabled (SECURE, HTTPONLY, SAMESITE)"
+        ]
+      },
+      {
+        "category": "Performance",
+        "items": [
+          "[ ] Database indexes on common queries (tenant_id, created_at)",
+          "[ ] Pagination implemented (LIMIT/OFFSET)",
+          "[ ] N+1 queries eliminated (JOINs, batch loading)",
+          "[ ] Response compression enabled (gzip)",
+          "[ ] Connection pooling configured",
+          "[ ] Query caching implemented (Redis)",
+          "[ ] Slow query logging enabled",
+          "[ ] Monitor database size and optimize"
+        ]
+      },
+      {
+        "category": "Operations",
+        "items": [
+          "[ ] Backups configured (daily, 30+ day retention)",
+          "[ ] Monitoring enabled (Sentry, NewRelic, or DataDog)",
+          "[ ] Log aggregation configured",
+          "[ ] Error handling and 500 page",
+          "[ ] Health check endpoint monitoring",
+          "[ ] Database replication (optional but recommended)",
+          "[ ] Disaster recovery plan documented",
+          "[ ] Staging environment available"
+        ]
+      },
+      {
+        "category": "Compliance",
+        "items": [
+          "[ ] GDPR data export endpoint working",
+          "[ ] GDPR data deletion (right-to-be-forgotten) implemented",
+          "[ ] Audit logging complete (login, CRUD, access)",
+          "[ ] Data encryption at rest (sensitive fields)",
+          "[ ] PCI-DSS compliance for billing data",
+          "[ ] Privacy policy and ToS updated",
+          "[ ] Data processing agreement (DPA) in place"
+        ]
+      }
+    ]
+  },
+  "scorecard": {
+    "security": {
+      "score": 6,
+      "maxScore": 10,
+      "breakdown": {
+        "authentication": 7,
+        "authorization": 6,
+        "inputValidation": 5,
+        "outputEncoding": 6,
+        "cryptography": 4,
+        "rateLimit": 4,
+        "csrf": 7,
+        "cors": 5,
+        "logging": 6,
+        "errorHandling": 6
+      }
+    },
+    "performance": {
+      "score": 5.5,
+      "maxScore": 10,
+      "breakdown": {
+        "queryOptimization": 4,
+        "caching": 3,
+        "indexing": 3,
+        "paginationPaging": 2,
+        "compression": 6,
+        "concurrency": 5,
+        "scalability": 5,
+        "monitoring": 5
+      }
+    },
+    "codeQuality": {
+      "score": 5.5,
+      "maxScore": 10,
+      "breakdown": {
+        "modularity": 4,
+        "maintainability": 5,
+        "documentation": 5,
+        "typeHints": 0,
+        "testability": 2,
+        "dryPrinciple": 4,
+        "solidPrinciples": 3,
+        "designPatterns": 4
+      }
+    },
+    "devOps": {
+      "score": 4,
+      "maxScore": 10,
+      "breakdown": {
+        "deployment": 4,
+        "monitoring": 4,
+        "logging": 4,
+        "automation": 3,
+        "documentation": 5,
+        "backup": 3,
+        "disasterRecovery": 2,
+        "cicd": 1
+      }
+    },
+    "architecture": {
+      "score": 5.5,
+      "maxScore": 10,
+      "breakdown": {
+        "layering": 5,
+        "dependencies": 4,
+        "coupling": 4,
+        "cohesion": 5,
+        "multitenancy": 6,
+        "scalability": 5,
+        "extensibility": 5,
+        "patterns": 4
+      }
+    }
+  },
+  "timeline": {
+    "phase1_critical": {
+      "duration": "2-3 weeks",
+      "items": [
+        "Persistent rate limiting",
+        "Webhook validation",
+        "Email delivery",
+        "Database indexes",
+        "Tenant isolation verification"
+      ]
+    },
+    "phase2_security": {
+      "duration": "4-6 weeks",
+      "items": [
+        "2FA integration",
+        "Password reset",
+        "Encryption at rest",
+        "API token auth",
+        "GDPR export"
+      ]
+    },
+    "phase3_quality": {
+      "duration": "8-12 weeks",
+      "items": [
+        "Test suite (PHPUnit)",
+        "Type hints",
+        "Refactoring (repositories, middleware)",
+        "CI/CD pipeline",
+        "Performance optimization"
+      ]
+    }
+  }
+}

@@ -7,12 +7,73 @@
  * - API abuse
  * - DDoS attacks
  * 
+ * Supports:
+ * - Redis (PRIMARY) - Persistent, distributed, fast
+ * - Session fallback - Lightweight, development-only
+ * 
  * Location: api/rate_limit.php
  * Integrated: api/config.php
  */
 
 if (!defined('VIABIX_APP')) {
     die('Direct access not allowed');
+}
+
+/**
+ * Global Redis connection (initialized in config.php)
+ */
+$redis = null;
+
+/**
+ * Initialize Redis connection for rate limiting
+ * Called automatically from config.php
+ */
+function viabixInitializeRedis() {
+    global $redis;
+    
+    if ($redis !== null) {
+        return $redis; // Already initialized
+    }
+    
+    $redisEnabled = viabix_env_bool('REDIS_ENABLED', true);
+    $redisHost = viabix_env('REDIS_HOST', 'localhost');
+    $redisPort = (int) viabix_env('REDIS_PORT', 6379);
+    $redisPassword = viabix_env('REDIS_PASSWORD', '');
+    $redisDb = (int) viabix_env('REDIS_DB', 0);
+    
+    // Try to initialize Redis if enabled
+    if ($redisEnabled && extension_loaded('redis')) {
+        try {
+            $redis = new Redis();
+            
+            // Set connection timeout
+            $redis->settimeout(5000); // 5 seconds
+            
+            // Connect
+            if ($redisPassword) {
+                $redis->connect($redisHost, $redisPort, 5, null, 0, 5000);
+                $redis->auth($redisPassword);
+            } else {
+                $redis->connect($redisHost, $redisPort, 5);
+            }
+            
+            // Select database
+            $redis->select($redisDb);
+            
+            // Ping to verify connection
+            if ($redis->ping()) {
+                error_log('[RATE_LIMIT] Redis initialized successfully: ' . $redisHost . ':' . $redisPort);
+                return $redis;
+            }
+        } catch (Exception $e) {
+            error_log('[RATE_LIMIT] Redis connection failed: ' . $e->getMessage());
+            $redis = null;
+        }
+    }
+    
+    // Fallback to session if Redis not available
+    error_log('[RATE_LIMIT] Using fallback: Session-based rate limiting (NOT PERSISTENT!)');
+    return null;
 }
 
 /**
@@ -55,10 +116,59 @@ function viabixGetEndpointLimitKey($endpoint, $user_id = null) {
  * Returns: array ['allowed' => bool, 'attempts' => int, 'reset_in' => seconds]
  */
 function viabixCheckIpRateLimit($action = 'login', $max_attempts = 5, $window_seconds = 300) {
-    $cache_key = viabixGetIpLimitKey() . '_' . $action;
+    global $redis;
     
-    // Try to get current count from session
+    $cache_key = viabixGetIpLimitKey() . '_' . $action;
     $current_time = time();
+    
+    // ===== TRY REDIS FIRST =====
+    if ($redis !== null) {
+        try {
+            $current = $redis->get($cache_key);
+            
+            if ($current === false) {
+                // First attempt in this window
+                $redis->setex($cache_key, $window_seconds, 1);
+                return [
+                    'allowed' => true,
+                    'attempts' => 1,
+                    'reset_in' => $window_seconds
+                ];
+            }
+            
+            // Get current count and TTL
+            $attempts = intval($current);
+            $ttl = $redis->ttl($cache_key);
+            $reset_in = max($ttl, 1);
+            
+            // Increment counter
+            $attempts++;
+            $redis->incr($cache_key);
+            
+            // Check if limit exceeded
+            $allowed = $attempts <= $max_attempts;
+            
+            // Log suspicious activity
+            if (!$allowed && function_exists('viabixSentryMessage')) {
+                viabixSentryMessage(
+                    "Rate limit exceeded for action '{$action}': " . viabixGetClientIp() . 
+                    " attempted {$attempts} times in {$window_seconds}s",
+                    'warning'
+                );
+            }
+            
+            return [
+                'allowed' => $allowed,
+                'attempts' => $attempts,
+                'reset_in' => $reset_in
+            ];
+        } catch (Exception $e) {
+            error_log('[RATE_LIMIT] Redis error in IP check: ' . $e->getMessage());
+            // Fallthrough to session backup
+        }
+    }
+    
+    // ===== FALLBACK TO SESSION =====
     $session_data = $_SESSION['rate_limit'] ?? [];
     
     if (!isset($session_data[$cache_key])) {
@@ -130,6 +240,89 @@ function viabixCheckUserRateLimit($user_id, $endpoint = 'api', $max_requests = 1
     
     $cache_key = viabixGetUserLimitKey($user_id) . '_' . $endpoint;
     $current_time = time();
+    $session_data = $_SESSION['rate_limit'] ?? [];
+    
+    if (!isset($session_data[$cache_key])) {
+        $_SESSION['rate_limit'][$cache_key] = [
+            'count' => 1,
+            'window_start' => $current_time,
+            'endpoint' => $endpoint
+        ];
+        return [
+            'allowed' => true,
+            'requests' => 1,
+            'reset_in' => $window_seconds
+        ];
+    }
+    
+    $data = $session_data[$cache_key];
+    $elapsed = $current_time - $data['window_start'];
+/**
+ * Check if user is rate limited (API throttling)
+ * @param int $user_id - User ID
+ * @param string $endpoint - Endpoint name
+ * @param int $max_requests - Maximum requests allowed
+ * @param int $window_seconds - Time window in seconds
+ * Returns: array ['allowed' => bool, 'requests' => int, 'reset_in' => seconds]
+ */
+function viabixCheckUserRateLimit($user_id, $endpoint = 'api', $max_requests = 100, $window_seconds = 60) {
+    global $redis;
+    
+    if (!$user_id) {
+        return ['allowed' => true, 'requests' => 0, 'reset_in' => 0];
+    }
+    
+    $cache_key = viabixGetUserLimitKey($user_id) . '_' . $endpoint;
+    $current_time = time();
+    
+    // ===== TRY REDIS FIRST =====
+    if ($redis !== null) {
+        try {
+            $current = $redis->get($cache_key);
+            
+            if ($current === false) {
+                // First request in this window
+                $redis->setex($cache_key, $window_seconds, 1);
+                return [
+                    'allowed' => true,
+                    'requests' => 1,
+                    'reset_in' => $window_seconds
+                ];
+            }
+            
+            // Get current count and TTL
+            $requests = intval($current);
+            $ttl = $redis->ttl($cache_key);
+            $reset_in = max($ttl, 1);
+            
+            // Increment counter
+            $requests++;
+            $redis->incr($cache_key);
+            
+            // Check if limit exceeded
+            $allowed = $requests <= $max_requests;
+            
+            // Log if limit exceeded
+            if (!$allowed && function_exists('viabixSentryMessage')) {
+                viabixSentryMessage(
+                    "User rate limit exceeded: User {$user_id} at endpoint '{$endpoint}' " .
+                    "made {$requests} requests in {$window_seconds}s",
+                    'warning'
+                );
+            }
+            
+            return [
+                'allowed' => $allowed,
+                'requests' => $requests,
+                'reset_in' => $reset_in
+            ];
+        } catch (Exception $e) {
+            error_log('[RATE_LIMIT] Redis error in user check: ' . $e->getMessage());
+            // Fallthrough to session backup
+        }
+    }
+    
+    // ===== FALLBACK TO SESSION =====
     $session_data = $_SESSION['rate_limit'] ?? [];
     
     if (!isset($session_data[$cache_key])) {

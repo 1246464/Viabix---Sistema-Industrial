@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Compatibilidade/Viabilidade - VIABIX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 0;
+        }
+        
+        .container-dashboard {
+            max-width: 1400px;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 16px;
+        }
+        
+        .input-group-demo {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        
+        .input-group-demo input {
+            flex: 1;
+            max-width: 300px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .input-group-demo button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .input-group-demo button:hover {
+            background: #764ba2;
+        }
+        
+        .viabilidade-score {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.3s;
+        }
+        
+        .score-circle:hover {
+            transform: scale(1.05);
+        }
+        
+        .score-green {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        
+        .score-yellow {
+            background: linear-gradient(135deg, #FFC107, #FFB300);
+            color: #333;
+        }
+        
+        .score-red {
+            background: linear-gradient(135deg, #F44336, #E53935);
+        }
+        
+        .status-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .recomendacao-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .secao {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .secao h2 {
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        
+        .secao-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .secao-financeiro .secao-icon {
+            background: #E8F5E9;
+            color: #4CAF50;
+        }
+        
+        .secao-planejamento .secao-icon {
+            background: #E3F2FD;
+            color: #2196F3;
+        }
+        
+        .secao-qualidade .secao-icon {
+            background: #FCE4EC;
+            color: #E91E63;
+        }
+        
+        .secao-recursos .secao-icon {
+            background: #F3E5F5;
+            color: #9C27B0;
+        }
+        
+        .item-compatibilidade {
+            border-left: 5px solid #ddd;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .item-compatibilidade:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .item-compatibilidade.success {
+            border-left-color: #4CAF50;
+            background: #F1F8F6;
+        }
+        
+        .item-compatibilidade.warning {
+            border-left-color: #FFC107;
+            background: #FFFBF0;
+        }
+        
+        .item-compatibilidade.error {
+            border-left-color: #F44336;
+            background: #FFF5F5;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-titulo {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .item-detalhes {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .item-mensagem {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .item-mensagem.success {
+            color: #2E7D32;
+        }
+        
+        .item-mensagem.warning {
+            color: #F57F17;
+        }
+        
+        .item-mensagem.error {
+            color: #C62828;
+        }
+        
+        .item-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        
+        .badge-warning {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+        
+        .badge-error {
+            background: #FFEBEE;
+            color: #B71C1C;
+        }
+        
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .score-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+            text-align: center;
+        }
+        
+        .score-item h5 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .score-item.high {
+            border-left-color: #4CAF50;
+            background: #F1F8F6;
+        }
+        
+        .score-item.medium {
+            border-left-color: #FFC107;
+            background: #FFFBF0;
+        }
+        
+        .score-item.low {
+            border-left-color: #F44336;
+            background: #FFF5F5;
+        }
+        
+        .score-item.high .score-value {
+            color: #2E7D32;
+        }
+        
+        .score-item.medium .score-value {
+            color: #F57F17;
+        }
+        
+        .score-item.low .score-value {
+            color: #C62828;
+        }
+        
+        .recomendacoes-list {
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .recomendacao-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .recomendacao-item:last-child {
+            border-bottom: none;
+        }
+        
+        .recomendacao-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 20px;
+        }
+        
+        .recomendacao-item.alta .recomendacao-icon {
+            background: #FFEBEE;
+            color: #F44336;
+        }
+        
+        .recomendacao-item.media .recomendacao-icon {
+            background: #FFF3E0;
+            color: #FF9800;
+        }
+        
+        .recomendacao-content {
+            flex: 1;
+        }
+        
+        .recomendacao-titulo {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .recomendacao-detalhes {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .recomendacao-acao {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .recomendacao-item.alta .recomendacao-acao {
+            color: #C62828;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner-border {
+            color: white;
+        }
+        
+        .erro-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            color: #666;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .score-circle {
+                width: 150px;
+                height: 150px;
+                font-size: 36px;
+            }
+            
+            .secao h2 {
+                font-size: 18px;
+            }
+            
+            .score-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container container-dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="bi bi-graph-up"></i>
+                Dashboard de Compatibilidade/Viabilidade
+            </h1>
+            <p>Análise completa de um projeto ANVI mostrando incompatibilidades e incoerências</p>
+            
+            <div class="input-group-demo">
+                <input type="number" id="anvi-id" placeholder="Digite o número do ANVI..." min="1" value="1">
+                <button onclick="carregarDashboard()">Carregar Análise</button>
+            </div>
+        </div>
+
+        <!-- Área de Conteúdo -->
+        <div id="conteudo">
+            <div class="loading">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p style="color: white; margin-top: 15px;">Digite um ANVI e clique em "Carregar Análise"</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function carregarDashboard() {
+            const anviId = document.getElementById('anvi-id').value;
+            
+            if (!anviId || anviId < 1) {
+                alert('Por favor, digite um número de ANVI válido');
+                return;
+            }
+            
+            const conteudo = document.getElementById('conteudo');
+            conteudo.innerHTML = `
+                <div class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p style="color: white; margin-top: 15px;">Carregando análise do ANVI ${anviId}...</p>
+                </div>
+            `;
+            
+            fetch(`/api/dashboard_viabilidade.php?anvi_id=${anviId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('ANVI não encontrado');
+                        } else if (response.status === 401) {
+                            throw new Error('Você precisa estar autenticado');
+                        } else {
+                            throw new Error('Erro ao carregar os dados');
+                        }
+                    }
+                    return response.json();
+                })
+                .then(data => renderizarDashboard(data))
+                .catch(erro => {
+                    conteudo.innerHTML = `
+                        <div class="erro-box">
+                            <h4>❌ Erro ao carregar</h4>
+                            <p>${erro.message}</p>
+                            <p style="font-size: 13px; margin-top: 10px; color: #999;">Certifique-se de que o ANVI existe e que você tem acesso a ele.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function renderizarDashboard(data) {
+            const conteudo = document.getElementById('conteudo');
+            let html = '';
+            
+            // Score de Viabilidade
+            const score = data.viabilidade.score_geral;
+            let scoreClass = score >= 80 ? 'score-green' : (score >= 60 ? 'score-yellow' : 'score-red');
+            
+            html += `
+                <div class="viabilidade-score">
+                    <h2 style="color: #333; margin-bottom: 20px;">📊 Score de Viabilidade Geral</h2>
+                    <div class="score-circle ${scoreClass}">${score}</div>
+                    <div class="status-text">${data.viabilidade.status}</div>
+                    <div class="recomendacao-text">${data.viabilidade.recomendacao}</div>
+            `;
+            
+            // Scores por área
+            html += `<div class="score-breakdown">`;
+            for (let area in data.viabilidade.scores_por_area) {
+                const scoreArea = data.viabilidade.scores_por_area[area];
+                const classe = scoreArea >= 80 ? 'high' : (scoreArea >= 60 ? 'medium' : 'low');
+                html += `
+                    <div class="score-item ${classe}">
+                        <h5>${area.charAt(0).toUpperCase() + area.slice(1)}</h5>
+                        <div class="score-value">${scoreArea}</div>
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+            
+            // Seção Financeira Expandida (ROI, Payback, Variâncias)
+            if (data.financeiro_expandido) {
+                html += renderizarFinanceiroExpandido(data.financeiro_expandido);
+            }
+            
+            // Seção Riscos
+            if (data.riscos && data.riscos.total > 0) {
+                html += renderizarRiscos(data.riscos);
+            }
+            
+            // Seção Etapas
+            if (data.etapas && data.etapas.total > 0) {
+                html += renderizarEtapas(data.etapas);
+            }
+            
+            // Seção Financeira
+            html += renderizarSecao('Financeiro', '💰', data.financeiro, 'financeiro');
+            
+            // Seção Planejamento
+            html += renderizarSecao('Planejamento', '📅', data.planejamento, 'planejamento');
+            
+            // Seção Qualidade
+            html += renderizarSecao('Qualidade', '✅', data.qualidade, 'qualidade');
+            
+            // Seção Recursos
+            html += renderizarSecao('Recursos', '👥', data.recursos, 'recursos');
+            
+            // Recomendações
+            if (data.recomendacoes && data.recomendacoes.length > 0) {
+                html += `
+                    <div class="secao">
+                        <h2>
+                            <div class="secao-icon" style="background: #FFF3E0; color: #FF9800;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            Recomendações de Ação
+                        </h2>
+                        <div class="recomendacoes-list">
+                `;
+                
+                data.recomendacoes.forEach(rec => {
+                    html += `
+                        <div class="recomendacao-item ${rec.prioridade.toLowerCase()}">
+                            <div class="recomendacao-icon">
+                                <i class="bi bi-${rec.prioridade === 'ALTA' ? 'exclamation-circle' : 'info-circle'}"></i>
+                            </div>
+                            <div class="recomendacao-content">
+                                <div class="recomendacao-titulo">${rec.area}</div>
+                                <div class="recomendacao-detalhes">${rec.problema}</div>
+                                <div class="recomendacao-acao">${rec.acao}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+            
+            conteudo.innerHTML = html;
+        }
+        
+        function renderizarFinanceiroExpandido(financeiro) {
+            let html = `
+                <div class="secao">
+                    <h2>
+                        <div class="secao-icon" style="background: #E8F5E9; color: #4CAF50;">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        Análise Financeira Expandida (ROI, Payback, Variâncias)
+                    </h2>
+            `;
+            
+            if (financeiro.planejado) {
+                const plan = financeiro.planejado;
+                html += `
+                    <div class="item-compatibilidade success">
+                        <div class="item-info">
+                            <div class="item-titulo">📊 Planejamento Financeiro</div>
+                            <div class="item-detalhes">
+                                <strong>Investimento Total:</strong> R$ ${plan.investimento_total?.toFixed(2)}<br/>
+                                <strong>ROI Esperado:</strong> ${plan.roi_esperado_pct?.toFixed(2)}%<br/>
+                                <strong>Payback:</strong> ${plan.payback_meses?.toFixed(1)} meses<br/>
+                                <strong>Duração:</strong> ${plan.duracao_meses?.toFixed(1)} meses
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (financeiro.realizado) {
+                const real = financeiro.realizado;
+                const varianciaClass = real.variancia_orcamentaria_pct > 10 ? 'error' : (real.variancia_orcamentaria_pct > 5 ? 'warning' : 'success');
+                html += `
+                    <div class="item-compatibilidade ${varianciaClass}">
+                        <div class="item-info">
+                            <div class="item-titulo">💸 Realizado até Agora</div>
+                            <div class="item-detalhes">
+                                <strong>Custo Real:</strong> R$ ${real.custo_real?.toFixed(2)}<br/>
+                                <strong>Orçamento:</strong> R$ ${real.orcamento_planejado?.toFixed(2)}<br/>
+                                <strong>Variância:</strong> <span style="color: ${real.variancia_orcamentaria_pct > 0 ? '#d32f2f' : '#388e3c'}">${real.variancia_orcamentaria_pct > 0 ? '+' : ''}${real.variancia_orcamentaria_pct?.toFixed(2)}%</span><br/>
+                                <strong>Status:</strong> ${real.status_orcamento}
+                                ${real.roi_real_pct ? `<br/><strong>ROI Real:</strong> ${real.roi_real_pct?.toFixed(2)}%` : ''}
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <span class="badge-status badge-${varianciaClass}">${real.status_orcamento}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (financeiro.timeline) {
+                const tl = financeiro.timeline;
+                const tlClass = Math.abs(tl.variancia_dias) > 14 ? 'error' : (Math.abs(tl.variancia_dias) > 7 ? 'warning' : 'success');
+                html += `
+                    <div class="item-compatibilidade ${tlClass}">
+                        <div class="item-info">
+                            <div class="item-titulo">📅 Timeline</div>
+                            <div class="item-detalhes">
+                                <strong>Planejado:</strong> ${tl.data_fim_planejada}<br/>
+                                <strong>Estimado:</strong> ${tl.data_fim_estimada}<br/>
+                                <strong>Variância:</strong> <span style="color: ${tl.variancia_dias > 0 ? '#d32f2f' : '#388e3c'}">${tl.variancia_dias > 0 ? '+' : ''}${tl.variancia_dias} dias</span><br/>
+                                <strong>Status:</strong> ${tl.status_timeline}
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <span class="badge-status badge-${tlClass}">${tl.status_timeline}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        function renderizarRiscos(riscos) {
+            let html = `
+                <div class="secao">
+                    <h2>
+                        <div class="secao-icon" style="background: #FCE4EC; color: #E91E63;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        Riscos Identificados (${riscos.total})
+                    </h2>
+            `;
+            
+            // Resumo por severidade
+            html += `
+                <div class="score-breakdown" style="margin-bottom: 20px;">
+                    <div class="score-item high" style="border-left-color: #d32f2f; background: #ffebee;">
+                        <h5>Críticos</h5>
+                        <div class="score-value" style="color: #d32f2f;">${riscos.por_severidade.critica || 0}</div>
+                    </div>
+                    <div class="score-item high" style="border-left-color: #f57c00; background: #fff3e0;">
+                        <h5>Altos</h5>
+                        <div class="score-value" style="color: #f57c00;">${riscos.por_severidade.alta || 0}</div>
+                    </div>
+                    <div class="score-item high" style="border-left-color: #fbc02d; background: #fffde7;">
+                        <h5>Médios</h5>
+                        <div class="score-value" style="color: #fbc02d;">${riscos.por_severidade.media || 0}</div>
+                    </div>
+                    <div class="score-item high">
+                        <h5>Baixos</h5>
+                        <div class="score-value">${riscos.por_severidade.baixa || 0}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (riscos.exposicao_total > 0) {
+                html += `
+                    <div class="item-compatibilidade error" style="margin-bottom: 20px;">
+                        <div class="item-info">
+                            <div class="item-titulo">⚠️ Exposição Financeira Total</div>
+                            <div class="item-mensagem error">R$ ${riscos.exposicao_total?.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Lista de riscos
+            if (riscos.lista && riscos.lista.length > 0) {
+                html += `<div style="margin-top: 15px;">`;
+                riscos.lista.slice(0, 5).forEach(risco => {
+                    const severidadeClass = risco.severidade === 'critica' ? 'error' : (risco.severidade === 'alta' ? 'warning' : 'success');
+                    html += `
+                        <div class="item-compatibilidade ${severidadeClass}">
+                            <div class="item-info">
+                                <div class="item-titulo">${risco.descricao}</div>
+                                <div class="item-detalhes">
+                                    <strong>Probabilidade:</strong> ${(risco.probabilidade * 100).toFixed(0)}% | 
+                                    <strong>Impacto:</strong> R$ ${risco.impacto_financeiro?.toFixed(2) || 'N/A'} | 
+                                    <strong>Exposição:</strong> R$ ${risco.exposicao?.toFixed(2) || 'N/A'}
+                                </div>
+                            </div>
+                            <div class="item-status">
+                                <span class="badge-status badge-${severidadeClass}" style="text-transform: capitalize;">${risco.severidade}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        function renderizarEtapas(etapas) {
+            let html = `
+                <div class="secao">
+                    <h2>
+                        <div class="secao-icon" style="background: #E3F2FD; color: #2196F3;">
+                            <i class="bi bi-list-check"></i>
+                        </div>
+                        Etapas do Projeto (${etapas.concluidas}/${etapas.total} concluídas)
+                    </h2>
+            `;
+            
+            // Barra de progresso geral
+            html += `
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <strong>Progresso Geral</strong>
+                        <span>${etapas.progresso_pct?.toFixed(1) || 0}%</span>
+                    </div>
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%); height: 100%; width: ${etapas.progresso_pct || 0}%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Resumo
+            html += `
+                <div class="score-breakdown" style="margin-bottom: 20px;">
+                    <div class="score-item high">
+                        <h5>✅ Concluídas</h5>
+                        <div class="score-value" style="color: #4CAF50;">${etapas.concluidas}</div>
+                    </div>
+                    <div class="score-item high" style="border-left-color: #2196F3;">
+                        <h5>▶️ Em Andamento</h5>
+                        <div class="score-value" style="color: #2196F3;">${etapas.em_andamento || 0}</div>
+                    </div>
+                    <div class="score-item high" style="border-left-color: #9E9E9E;">
+                        <h5>📋 Planejadas</h5>
+                        <div class="score-value" style="color: #9E9E9E;">${etapas.planejadas || 0}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Lista de etapas
+            if (etapas.lista && etapas.lista.length > 0) {
+                html += `<div style="margin-top: 15px;">`;
+                etapas.lista.forEach((etapa, idx) => {
+                    const statusClass = etapa.status === 'concluida' ? 'success' : (etapa.status === 'em_andamento' ? 'warning' : 'success');
+                    html += `
+                        <div class="item-compatibilidade ${statusClass}">
+                            <div class="item-info">
+                                <div class="item-titulo">#${etapa.numero} - ${etapa.descricao}</div>
+                                <div class="item-detalhes">
+                                    <strong>Início:</strong> ${etapa.data_inicio_planejada} → ${etapa.data_fim_planejada}<br/>
+                                    <strong>Progresso:</strong> ${etapa.percentual_completo}%
+                                    ${etapa.data_inicio_real ? `<br/><strong>Real:</strong> ${etapa.data_inicio_real}` : ''}
+                                </div>
+                                <div style="margin-top: 8px; background: #fff; border-radius: 5px; height: 8px; overflow: hidden;">
+                                    <div style="background: ${etapa.percentual_completo === 100 ? '#4CAF50' : '#2196F3'}; height: 100%; width: ${etapa.percentual_completo}%;"></div>
+                                </div>
+                            </div>
+                            <div class="item-status">
+                                <span class="badge-status badge-${statusClass}" style="text-transform: capitalize;">${etapa.status.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        function renderizarSecao(titulo, emoji, dados, classe) {
+            let html = `
+                <div class="secao secao-${classe}">
+                    <h2>
+                        <div class="secao-icon">
+                            <span>${emoji}</span>
+                        </div>
+                        ${titulo}
+                    </h2>
+            `;
+            
+            dados.compatibilidades.forEach(comp => {
+                const statusClass = comp.severidade;
+                const badge = comp.status;
+                
+                let detalhes = '';
+                if (comp.orcamento !== undefined) {
+                    detalhes = `Orçamento: R$ ${comp.orcamento?.toFixed(2)} | Gasto: R$ ${comp.gasto?.toFixed(2)} | ${comp.percentual}%`;
+                } else if (comp.tempo_decorrido_percentual !== undefined) {
+                    detalhes = `Tempo: ${comp.tempo_decorrido_percentual}% | Progresso: ${comp.progresso_percentual}% | ${comp.etapas_concluidas}/${comp.etapas_total} etapas`;
+                } else if (comp.tarefas_total !== undefined) {
+                    detalhes = `${comp.tarefas_concluidas}/${comp.tarefas_total} tarefas concluídas | ${comp.tarefas_vencidas} vencidas`;
+                } else if (comp.issues_total !== undefined) {
+                    detalhes = `${comp.issues_total} total | ${comp.issues_abertos} abertas | ${comp.issues_criticos} críticas`;
+                } else if (comp.testes_total !== undefined) {
+                    detalhes = `${comp.testes_passou}/${comp.testes_total} testes passaram (${comp.taxa_sucesso}%)`;
+                } else if (comp.disponibilidade !== undefined) {
+                    detalhes = `${comp.recursos_ativos}/${comp.recursos_total} recursos ativos (${comp.disponibilidade}%)`;
+                } else {
+                    detalhes = comp.membros ? `${comp.membros} membro(s)` : '';
+                }
+                
+                html += `
+                    <div class="item-compatibilidade ${statusClass}">
+                        <div class="item-info">
+                            <div class="item-titulo">${comp.item}</div>
+                            ${detalhes ? `<div class="item-detalhes">${detalhes}</div>` : ''}
+                            <div class="item-mensagem ${statusClass}">
+                                ${comp.mensagem}
+                            </div>
+                        </div>
+                        <div class="item-status">
+                            <span class="badge-status badge-${statusClass}">${badge}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        // Carregar ao pressionar Enter no input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('anvi-id').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    carregarDashboard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

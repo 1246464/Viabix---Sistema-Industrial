@@ -21,12 +21,30 @@ if (!defined('VIABIX_APP')) {
 class ViabixTwoFactorAuth {
     
     private $user_id;
+    private $tenant_id;
     private $pdo;
     
     public function __construct($user_id = null) {
         global $pdo;
         $this->user_id = $user_id;
+        $this->tenant_id = viabixCurrentTenantId();
         $this->pdo = $pdo;
+    }
+    
+    /**
+     * Validate tenant access for this user
+     * Prevents one tenant's users from accessing another's 2FA data
+     */
+    private function validateTenantAccess($target_user_id) {
+        if (!$this->tenant_id || !$target_user_id) {
+            return false;
+        }
+        
+        $stmt = $this->pdo->prepare("SELECT tenant_id FROM usuarios WHERE id = ? LIMIT 1");
+        $stmt->execute([$target_user_id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $user && $user['tenant_id'] === $this->tenant_id;
     }
     
     /**
@@ -160,6 +178,12 @@ class ViabixTwoFactorAuth {
      */
     public function verifyCode($user_id, $code) {
         try {
+            // SECURITY: Validate tenant access
+            if (!$this->validateTenantAccess($user_id)) {
+                viabixLogWarning("2FA verify attempt by unauthorized tenant for user $user_id");
+                return false;
+            }
+            
             // Get user's 2FA config
             $stmt = $this->pdo->prepare("SELECT * FROM usuarios_2fa WHERE user_id = ? AND enabled = 1");
             $stmt->execute([$user_id]);
@@ -197,8 +221,12 @@ class ViabixTwoFactorAuth {
      * @return bool True if valid and unused
      */
     private function verifyBackupCode($user_id, $code) {
-        try {
-            $stmt = $this->pdo->prepare("SELECT backup_codes FROM usuarios_2fa WHERE user_id = ?");
+        try {            // SECURITY: Validate tenant access
+            if (!$this->validateTenantAccess($user_id)) {
+                viabixLogWarning("Backup code verify attempt by unauthorized tenant for user $user_id");
+                return false;
+            }
+                        $stmt = $this->pdo->prepare("SELECT backup_codes FROM usuarios_2fa WHERE user_id = ?");
             $stmt->execute([$user_id]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -241,6 +269,11 @@ class ViabixTwoFactorAuth {
      */
     public function isTwoFactorEnabled($user_id) {
         try {
+            // SECURITY: Validate tenant access
+            if (!$this->validateTenantAccess($user_id)) {
+                return false;
+            }
+            
             $stmt = $this->pdo->prepare("SELECT 1 FROM usuarios_2fa WHERE user_id = ? AND enabled = 1");
             $stmt->execute([$user_id]);
             return $stmt->rowCount() > 0;
@@ -256,6 +289,11 @@ class ViabixTwoFactorAuth {
      */
     public function getTwoFactorMethod($user_id) {
         try {
+            // SECURITY: Validate tenant access
+            if (!$this->validateTenantAccess($user_id)) {
+                return null;
+            }
+            
             $stmt = $this->pdo->prepare("SELECT method FROM usuarios_2fa WHERE user_id = ? AND enabled = 1");
             $stmt->execute([$user_id]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -271,8 +309,12 @@ class ViabixTwoFactorAuth {
      * @return bool Success
      */
     public function disableTwoFactor($user_id) {
-        try {
-            $stmt = $this->pdo->prepare("UPDATE usuarios_2fa SET enabled = 0 WHERE user_id = ?");
+        try {            // SECURITY: Validate tenant access
+            if (!$this->validateTenantAccess($user_id)) {
+                viabixLogWarning("2FA disable attempt by unauthorized tenant for user $user_id");
+                return false;
+            }
+                        $stmt = $this->pdo->prepare("UPDATE usuarios_2fa SET enabled = 0 WHERE user_id = ?");
             $stmt->execute([$user_id]);
             viabixLogInfo("2FA disabled for user $user_id");
             return true;
@@ -444,6 +486,12 @@ class ViabixTwoFactorAuth {
      * @return bool Success
      */
     public function completeTwoFactorAuth($user_id) {
+        // SECURITY: Validate tenant access
+        if (!$this->validateTenantAccess($user_id)) {
+            viabixLogWarning("2FA completion attempt by unauthorized tenant for user $user_id");
+            return false;
+        }
+        
         // Clear 2FA session data
         unset($_SESSION['2fa_pending_user_id']);
         unset($_SESSION['2fa_token']);

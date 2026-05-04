@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração do Módulo 3 - Email Delivery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 0;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border-left: 5px solid #667eea;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .demo-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .demo-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .btn-demo {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-demo:hover {
+            background: #764ba2;
+            color: white;
+            text-decoration: none;
+        }
+        .email-preview {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .email-header {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .email-header strong {
+            color: #333;
+        }
+        .email-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-demo {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .config-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .config-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .config-table tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎉 Demonstração do Módulo 3 - Email Delivery com SendGrid</h1>
+            <p>Veja como o sistema de email funciona na prática. Teste diferentes cenários de envio de email.</p>
+            <div class="status-badge status-demo">🟡 MODO SIMULADO (sem API real)</div>
+        </div>
+
+        <!-- Opções de Demonstração -->
+        <div class="grid">
+            <!-- Demo 1: Welcome Email -->
+            <div class="demo-card">
+                <h3><span class="emoji">👋</span> Email de Boas-vindas</h3>
+                <p>Enviado quando um novo usuário se cadastra no sistema.</p>
+                <div class="input-group">
+                    <label>Email do usuário:</label>
+                    <input type="email" class="new-user-email" value="novo_usuario@example.com" placeholder="usuario@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Nome do usuário:</label>
+                    <input type="text" class="new-user-name" value="João Silva" placeholder="Seu nome">
+                </div>
+                <button class="btn-demo" onclick="demonstrarEmail('welcome')">
+                    Ver Demonstração →
+                </button>
+            </div>
+
+            <!-- Demo 2: Password Reset -->
+            <div class="demo-card">
+                <h3><span class="emoji">🔐</span> Email de Reset de Senha</h3>
+                <p>Enviado quando usuário solicita redefinir sua senha.</p>
+                <div class="input-group">
+                    <label>Email do usuário:</label>
+                    <input type="email" class="reset-email" value="usuario@example.com" placeholder="usuario@example.com">
+                </div>
+                <button class="btn-demo" onclick="demonstrarEmail('password_reset')">
+                    Ver Demonstração →
+                </button>
+            </div>
+
+            <!-- Demo 3: 2FA Code -->
+            <div class="demo-card">
+                <h3><span class="emoji">📱</span> Email de Verificação 2FA</h3>
+                <p>Enviado para confirmar login com autenticação de dois fatores.</p>
+                <div class="input-group">
+                    <label>Email do usuário:</label>
+                    <input type="email" class="otp-email" value="usuario@example.com" placeholder="usuario@example.com">
+                </div>
+                <button class="btn-demo" onclick="demonstrarEmail('2fa')">
+                    Ver Demonstração →
+                </button>
+            </div>
+
+            <!-- Demo 4: Team Invite -->
+            <div class="demo-card">
+                <h3><span class="emoji">👥</span> Email de Convite de Colaborador</h3>
+                <p>Enviado para convidar colaboradores para um projeto.</p>
+                <div class="input-group">
+                    <label>Email do colaborador:</label>
+                    <input type="email" class="invite-email" value="colaborador@example.com" placeholder="colaborador@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Nome do projeto:</label>
+                    <input type="text" class="invite-project" value="Projeto ACME" placeholder="Nome do projeto">
+                </div>
+                <button class="btn-demo" onclick="demonstrarEmail('invite')">
+                    Ver Demonstração →
+                </button>
+            </div>
+
+            <!-- Demo 5: Configuration -->
+            <div class="demo-card">
+                <h3><span class="emoji">⚙️</span> Ver Configuração</h3>
+                <p>Mostra como o módulo de email está configurado.</p>
+                <button class="btn-demo" onclick="demonstrarEmail('config')">
+                    Ver Configuração →
+                </button>
+            </div>
+
+            <!-- Demo 6: API Usage -->
+            <div class="demo-card">
+                <h3><span class="emoji">💻</span> Como Usar na Código</h3>
+                <p>Exemplos de como integrar o módulo de email no seu código.</p>
+                <button class="btn-demo" onclick="mostrarCodigoExemplo()">
+                    Ver Exemplos de Código →
+                </button>
+            </div>
+        </div>
+
+        <!-- Resultado da Demonstração -->
+        <div id="resultado" style="display: none; margin-top: 30px;">
+            <div class="demo-card" style="border-left: 5px solid #4CAF50;">
+                <h2 id="titulo-resultado">Resultado</h2>
+                <div id="conteudo-resultado"></div>
+            </div>
+        </div>
+
+        <!-- Exemplos de Código -->
+        <div id="exemplos" style="display: none; margin-top: 30px;">
+            <div class="demo-card" style="border-left: 5px solid #2196F3;">
+                <h2>💻 Como Usar na Código</h2>
+                <div id="conteudo-exemplos"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function demonstrarEmail(tipo) {
+            let url = '/api/test_email_module_demo.php?action=';
+            
+            if (tipo === 'welcome') {
+                const email = document.querySelector('.new-user-email').value;
+                const nome = document.querySelector('.new-user-name').value;
+                url += `demo_welcome&email=${encodeURIComponent(email)}&nome=${encodeURIComponent(nome)}`;
+            } else if (tipo === 'password_reset') {
+                const email = document.querySelector('.reset-email').value;
+                url += `demo_password_reset&email=${encodeURIComponent(email)}`;
+            } else if (tipo === '2fa') {
+                const email = document.querySelector('.otp-email').value;
+                url += `demo_2fa&email=${encodeURIComponent(email)}`;
+            } else if (tipo === 'invite') {
+                const email = document.querySelector('.invite-email').value;
+                const projeto = document.querySelector('.invite-project').value;
+                url += `demo_invite&email=${encodeURIComponent(email)}&projeto=${encodeURIComponent(projeto)}`;
+            } else if (tipo === 'config') {
+                url += 'show_config';
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => mostrarResultado(data, tipo))
+                .catch(erro => alert('Erro: ' + erro.message));
+        }
+
+        function mostrarResultado(data, tipo) {
+            const resultado = document.getElementById('resultado');
+            const titulo = document.getElementById('titulo-resultado');
+            const conteudo = document.getElementById('conteudo-resultado');
+
+            // Esconder exemplos se estiverem visíveis
+            document.getElementById('exemplos').style.display = 'none';
+
+            titulo.textContent = data.tipo || data.titulo || 'Resultado';
+
+            let html = '';
+
+            if (tipo === 'config') {
+                // Mostrar configuração em tabela
+                html += '<h4>Configurações do Módulo</h4>';
+                html += '<table class="config-table">';
+                html += '<tr><th>Configuração</th><th>Valor</th><th>Status</th></tr>';
+                
+                for (let key in data.configuracoes) {
+                    const config = data.configuracoes[key];
+                    if (typeof config === 'object') {
+                        html += `<tr><td><strong>${key}</strong></td><td>${config.valor || config.status || '-'}</td><td>${config.status || '-'}</td></tr>`;
+                    }
+                }
+                html += '</table>';
+
+                html += '<h4 style="margin-top: 20px;">Como Usar</h4>';
+                html += '<pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>';
+                for (let key in data.como_usar) {
+                    html += `${key}: ${data.como_usar[key]}\n`;
+                }
+                html += '</code></pre>';
+            } else {
+                // Email normal
+                if (data.destinatario) {
+                    html += '<div class="email-header">';
+                    html += `<strong>Para:</strong> ${data.destinatario}<br>`;
+                    html += `<strong>Assunto:</strong> ${data.assunto}<br>`;
+                    if (data.nome_usuario) html += `<strong>Usuário:</strong> ${data.nome_usuario}<br>`;
+                    html += '</div>';
+                }
+
+                if (data.conteudo_html) {
+                    html += '<h5>Visualização do Email:</h5>';
+                    html += '<div class="email-content">';
+                    html += data.conteudo_html;
+                    html += '</div>';
+                }
+
+                if (data.resultado_simulacao) {
+                    html += '<h5 style="margin-top: 20px;">Status da Simulação:</h5>';
+                    html += '<div class="email-header">';
+                    html += `<strong>Status:</strong> ${data.resultado_simulacao.success ? '✅ Sucesso' : '❌ Erro'}<br>`;
+                    html += `<strong>Modo:</strong> ${data.resultado_simulacao.mode}<br>`;
+                    html += `<strong>Timestamp:</strong> ${data.resultado_simulacao.timestamp}<br>`;
+                    html += '</div>';
+                }
+            }
+
+            conteudo.innerHTML = html;
+            resultado.style.display = 'block';
+            resultado.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function mostrarCodigoExemplo() {
+            document.getElementById('resultado').style.display = 'none';
+            const exemplos = document.getElementById('exemplos');
+            const conteudo = document.getElementById('conteudo-exemplos');
+
+            let html = `
+                <h4>1️⃣ Importar o módulo</h4>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>&lt;?php
+require_once 'api/email.php';</code></pre>
+
+                <h4>2️⃣ Enviar Email de Boas-vindas</h4>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>&lt;?php
+\$dados = [
+    'user_name' => 'João Silva',
+    'login_url' => 'https://viabix.app/login',
+    'docs_url' => 'https://docs.viabix.app',
+];
+
+sendEmail(
+    'novo_usuario@example.com',
+    'Bem-vindo ao VIABIX!',
+    'welcome',
+    \$dados
+);</code></pre>
+
+                <h4>3️⃣ Enviar Email de Reset de Senha</h4>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>&lt;?php
+\$reset_token = bin2hex(random_bytes(32));
+\$reset_link = "https://viabix.app/reset?token=" . \$reset_token;
+
+\$dados = [
+    'reset_token' => \$reset_token,
+    'reset_link' => \$reset_link,
+    'expiracao' => '1 hora',
+];
+
+sendEmail(
+    'usuario@example.com',
+    'Redefinir sua senha VIABIX',
+    'password_reset',
+    \$dados
+);</code></pre>
+
+                <h4>4️⃣ Verificar Taxa de Limite de Emails</h4>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>&lt;?php
+\$user_id = \$_SESSION['user_id'];
+
+// Verifica se o usuário excedeu o limite de emails
+if (!viabixCheckEmailRateLimit(\$user_id)) {
+    http_response_code(429);
+    exit(json_encode(['erro' => 'Muitos emails enviados. Tente novamente mais tarde.']));
+}
+
+// Prosseguir com envio...</code></pre>
+
+                <h4>5️⃣ Integração Completa em um Fluxo de Registro</h4>
+                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>&lt;?php
+// 1. Validar dados de entrada
+if (!filter_var(\$email, FILTER_VALIDATE_EMAIL)) {
+    exit(json_encode(['erro' => 'Email inválido']));
+}
+
+// 2. Criar usuário no banco de dados
+\$stmt = \$pdo->prepare("INSERT INTO usuarios (email, nome, senha, tenant_id) VALUES (?, ?, ?, ?)");
+\$stmt->execute([\$email, \$nome, \$senha_hash, \$tenant_id]);
+
+// 3. Verificar taxa de limite
+if (!viabixCheckEmailRateLimit(\$_SESSION['user_id'])) {
+    exit(json_encode(['erro' => 'Limite de emails excedido']));
+}
+
+// 4. Enviar email de boas-vindas
+sendEmail(
+    \$email,
+    'Bem-vindo ao VIABIX!',
+    'welcome',
+    ['user_name' => \$nome, 'login_url' => 'https://viabix.app/login']
+);
+
+exit(json_encode(['sucesso' => true]));</code></pre>
+
+                <div style="background: #E8F5E9; border-left: 4px solid #4CAF50; padding: 15px; margin-top: 20px; border-radius: 5px;">
+                    <strong>✅ Boas Práticas:</strong>
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>Sempre verificar a taxa de limite antes de enviar</li>
+                        <li>Usar tokens criptográficos para links de reset</li>
+                        <li>Definir expiração nos tokens (1 hora recomendado)</li>
+                        <li>Nunca enviar senhas por email</li>
+                        <li>Usar templates HTML para emails profissionais</li>
+                        <li>Validar endereço de email antes de enviar</li>
+                    </ul>
+                </div>
+            `;
+
+            conteudo.innerHTML = html;
+            exemplos.style.display = 'block';
+            exemplos.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

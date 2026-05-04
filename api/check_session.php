@@ -26,13 +26,22 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
         // Rastrear tentativa de verificação de sessão
         viabix_sentry_tag('action', 'check_session');
         
+        // SECURITY: Validar tenant_id da sessão
+        $tenant_id = viabixCurrentTenantId();
+        $tenantAware = viabixHasColumn('usuarios', 'tenant_id') && $tenant_id;
+        
         $select = 'id, login, nome, nivel, ultimo_acesso';
-        if (viabixHasColumn('usuarios', 'tenant_id')) {
+        if ($tenantAware) {
             $select .= ', tenant_id';
         }
 
-        $stmt = $pdo->prepare("SELECT $select FROM usuarios WHERE id = ? AND ativo = 1");
-        $stmt->execute([$_SESSION['user_id']]);
+        if ($tenantAware) {
+            $stmt = $pdo->prepare("SELECT $select FROM usuarios WHERE id = ? AND ativo = 1 AND tenant_id = ?");
+            $stmt->execute([$_SESSION['user_id'], $tenant_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT $select FROM usuarios WHERE id = ? AND ativo = 1");
+            $stmt->execute([$_SESSION['user_id']]);
+        }
         $user = $stmt->fetch();
         
         if ($user) {
@@ -94,8 +103,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_login'])) {
             
             // Atualizar ultimo acesso (apenas a cada 5 minutos)
             if (!isset($_SESSION['last_access_update']) || time() - $_SESSION['last_access_update'] > 300) {
-                $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
-                $stmt->execute([$user['id']]);
+                if ($tenantAware) {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ? AND tenant_id = ?");
+                    $stmt->execute([$user['id'], $tenant_id]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?");
+                    $stmt->execute([$user['id']]);
+                }
                 $_SESSION['last_access_update'] = time();
             }
         } else {

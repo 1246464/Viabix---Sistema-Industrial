@@ -246,8 +246,18 @@ class ViabixValidator {
         }
         
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE email = ?");
-            $stmt->execute([$email]);
+            // SECURITY: Check email uniqueness within tenant only
+            $tenant_id = viabixCurrentTenantId();
+            $has_tenant_column = viabixHasColumn('usuarios', 'tenant_id');
+            
+            if ($has_tenant_column && $tenant_id) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE email = ? AND tenant_id = ?");
+                $stmt->execute([$email, $tenant_id]);
+            } else {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE email = ?");
+                $stmt->execute([$email]);
+            }
+            
             return $stmt->fetchColumn() === 0;
         } catch (Exception $e) {
             return true;
@@ -265,8 +275,18 @@ class ViabixValidator {
         }
         
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE login = ?");
-            $stmt->execute([$login]);
+            // SECURITY: Check login uniqueness within tenant only
+            $tenant_id = viabixCurrentTenantId();
+            $has_tenant_column = viabixHasColumn('usuarios', 'tenant_id');
+            
+            if ($has_tenant_column && $tenant_id) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE login = ? AND tenant_id = ?");
+                $stmt->execute([$login, $tenant_id]);
+            } else {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuarios WHERE login = ?");
+                $stmt->execute([$login]);
+            }
+            
             return $stmt->fetchColumn() === 0;
         } catch (Exception $e) {
             return true;

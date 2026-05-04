@@ -301,6 +301,31 @@ try {
 
     viabixLogActivity($userId, 'signup_trial', 'Tenant criado via onboarding público', 'tenant', $tenantId);
 
+    // Send welcome email to new user
+    $welcomeEmailResult = viabixSendWelcomeEmail(
+        $email,
+        $contactName,
+        (getenv('APP_URL') ?: 'https://app.viabix.com') . '/login.html'
+    );
+    
+    if (!$welcomeEmailResult['success']) {
+        // Log email failure but don't block signup
+        logError('Email de welcome não foi enviado', [
+            'email' => $email,
+            'user_id' => $userId,
+            'error' => $welcomeEmailResult['message']
+        ]);
+        
+        // Registrar no Sentry
+        if (function_exists('viabixSentryMessage')) {
+            viabixSentryMessage(
+                "Welcome email failed for new signup: {$email}",
+                'warning',
+                ['user_id' => $userId, 'tenant_id' => $tenantId]
+            );
+        }
+    }
+
     // Clear rate limit on successful signup
     viabixClearRateLimit('signup');
 
