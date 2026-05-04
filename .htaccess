@@ -5,8 +5,8 @@
 
 DirectoryIndex index.html index.php
 
-# Ativar rewrite engine
-RewriteEngine On
+# Desativar rewrite engine completamente para permitir acesso direto a todos os arquivos
+RewriteEngine Off
 
 # Bloquear listagem de diretórios
 Options -Indexes
@@ -23,20 +23,5 @@ Options -Indexes
 </FilesMatch>
 
 # ======================================================
-# Redirecionamentos e regras de reescrita
+# Sem reescrita de URL - todos os arquivos são servidos diretamente
 # ======================================================
-
-# IMPORTANTE: NÃO REESCREVER nenhum arquivo físico
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
-
-# IMPORTANTE: NÃO REESCREVER nenhum diretório físico
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# IMPORTANTE: NÃO REESCREVER a pasta /api
-RewriteCond %{REQUEST_URI} ^/api(/|$)
-RewriteRule ^ - [L]
-
-# SPA routing DESATIVADO - permitir que todos os arquivos existentes sejam servidos
-# Se adicionar SPA routing no futuro, verificar padrão corretamente
