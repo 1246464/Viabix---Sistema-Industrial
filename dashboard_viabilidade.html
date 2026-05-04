@@ -4,17 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Compatibilidade/Viabilidade - VIABIX</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a3d2e 0%, #2e7d32 100%);
+            color: #333;
             min-height: 100vh;
-            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .system-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-title i {
+            font-size: 1.5rem;
+        }
+
+        .user-info {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .user-info i {
+            font-size: 1.2rem;
+        }
+
+        .tenant-badge {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
         }
         
         .container-dashboard {
@@ -30,7 +123,7 @@
         }
         
         .header h1 {
-            color: #667eea;
+            color: #2e7d32;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -60,7 +153,7 @@
         }
         
         .input-group-demo button {
-            background: #667eea;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -71,7 +164,7 @@
         }
         
         .input-group-demo button:hover {
-            background: #764ba2;
+            background: linear-gradient(135deg, #2e7d32, #0a3d2e);
         }
         
         .viabilidade-score {
@@ -136,7 +229,7 @@
         }
         
         .secao h2 {
-            color: #333;
+            color: #2e7d32;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -172,7 +265,7 @@
         
         .secao-recursos .secao-icon {
             background: #F3E5F5;
-            color: #9C27B0;
+            color: #2e7d32;
         }
         
         .item-compatibilidade {
@@ -420,28 +513,50 @@
     </style>
 </head>
 <body>
-    <div class="container container-dashboard">
-        <!-- Header -->
-        <div class="header">
-            <h1>
-                <i class="bi bi-graph-up"></i>
-                Dashboard de Compatibilidade/Viabilidade
-            </h1>
-            <p>Análise completa de um projeto ANVI mostrando incompatibilidades e incoerências</p>
-            
-            <div class="input-group-demo">
-                <input type="number" id="anvi-id" placeholder="Digite o número do ANVI..." min="1" value="1">
-                <button onclick="carregarDashboard()">Carregar Análise</button>
-            </div>
+    <div class="top-bar">
+        <div class="system-title">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard de Viabilidade - VIABIX</span>
         </div>
+        <div class="user-info">
+            <span id="tenantBadge" class="tenant-badge" style="display:none"></span>
+            <a href="dashboard.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
+            <i class="fas fa-user-circle"></i>
+            <span id="userName">Usuário</span>
+            <a href="api/logout_redirect.php" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </a>
+        </div>
+    </div>
 
-        <!-- Área de Conteúdo -->
-        <div id="conteudo">
-            <div class="loading">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Carregando...</span>
+    <div class="main-content">
+        <div class="container container-dashboard">
+            <!-- Header -->
+            <div class="header">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard de Compatibilidade/Viabilidade
+                </h1>
+                <p>Análise completa de um projeto ANVI mostrando incompatibilidades e incoerências</p>
+                
+                <div class="input-group-demo">
+                    <input type="number" id="anvi-id" placeholder="Digite o número do ANVI..." min="1" value="1">
+                    <button onclick="carregarDashboard()">Carregar Análise</button>
                 </div>
-                <p style="color: white; margin-top: 15px;">Digite um ANVI e clique em "Carregar Análise"</p>
+            </div>
+
+            <!-- Área de Conteúdo -->
+            <div id="conteudo">
+                <div class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p style="color: white; margin-top: 15px;">Digite um ANVI e clique em "Carregar Análise"</p>
+                </div>
             </div>
         </div>
     </div>
@@ -862,7 +977,43 @@
                     carregarDashboard();
                 }
             });
+            
+            // Verificar sessão ao carregar
+            verificarSessao();
         });
+
+        // Verificar sessão e carregar dados do usuário
+        async function verificarSessao() {
+            try {
+                const response = await fetch('api/check_session.php', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.logado) {
+                    document.getElementById('userName').textContent = data.nome || data.usuario;
+                    
+                    const tenantBadge = document.getElementById('tenantBadge');
+                    if (data.tenant && (data.tenant.nome || data.subscription?.plano_nome)) {
+                        const tenantNome = data.tenant.nome || 'Conta ativa';
+                        const planoNome = data.subscription?.plano_nome ? ` • ${data.subscription.plano_nome}` : '';
+                        tenantBadge.textContent = `${tenantNome}${planoNome}`;
+                        tenantBadge.style.display = 'inline-block';
+                    }
+                } else {
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error('Erro ao verificar sessão:', e);
+                // Não redireciona imediatamente para não impedir visualização
+            }
+        }
     </script>
 </body>
 </html>
