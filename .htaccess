@@ -38,8 +38,11 @@ RewriteRule ^ - [L]
 RewriteCond %{REQUEST_URI} ^/api(/|$)
 RewriteRule ^ - [L]
 
-# Reescrever apenas requisições sem caminho para index.html
-RewriteRule ^/?$ index.html [L]
-
-# Reescrever APENAS requisições SPA (sem extensão, não existem como arquivo, não são diretório, não são API)
-RewriteRule ^ index.html [L]
+# Apenas reescrever se a requisição é:
+# 1. Não um arquivo
+# 2. Não um diretório
+# 3. Não contém ponto (não é um arquivo com extensão)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.
+RewriteRule ^(.*)$ index.html [L]
