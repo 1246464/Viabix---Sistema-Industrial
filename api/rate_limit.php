@@ -47,7 +47,7 @@ function viabixInitializeRedis() {
             $redis = new Redis();
             
             // Set connection timeout
-            $redis->settimeout(5000); // 5 seconds
+            $redis->setTimeout(5000); // 5 seconds
             
             // Connect
             if ($redisPassword) {
