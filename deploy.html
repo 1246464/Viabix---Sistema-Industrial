@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy - Viabix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #229954;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            display: none;
+        }
+        .success {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        .error {
+            background: #fadbd8;
+            color: #c0392b;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deploy Viabix</h1>
+        <p>Clique no botão abaixo para fazer pull do repositório GitHub:</p>
+        <button onclick="deploy()">Fazer Deploy (git pull) <span id="spinner" class="loading"></span></button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function deploy() {
+            const btn = event.target;
+            const spinner = document.getElementById('spinner');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            spinner.textContent = '⏳';
+            result.style.display = 'block';
+            result.textContent = 'Processando...';
+            result.className = '';
+
+            // Tentar chamar o api/deploy.php
+            fetch('/api/deploy.php')
+                .then(response => response.json())
+                .then(data => {
+                    spinner.textContent = '';
+                    if (data.success || data.output.includes('Already up to date')) {
+                        result.className = 'success';
+                        result.textContent = 'Deploy realizado com sucesso!\n\n' + 
+                            JSON.stringify(data, null, 2);
+                        // Refresh page after 3 seconds
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    } else {
+                        result.className = 'error';
+                        result.textContent = 'Erro no deploy:\n\n' + 
+                            JSON.stringify(data, null, 2);
+                    }
+                })
+                .catch(error => {
+                    spinner.textContent = '';
+                    result.className = 'error';
+                    result.textContent = 'Erro: ' + error.message;
+                    btn.disabled = false;
+                });
+        }
+    </script>
+</body>
+</html>
