@@ -606,9 +606,7 @@ function viabixLogCrud($resource, $action, $resource_id, $details = []) {
     return viabixAudit()->logCrudOperation($resource, $action, $resource_id, $details);
 }
 
-function viabixLogSecurityEvent($action, $details = []) {
-    return viabixAudit()->logSecurityEvent($action, $details);
-}
+// viabixLogSecurityEvent() is declared in auth_system.php
 
 function viabixLogDataAccess($accessed_user_id, $data_type, $access_type = 'read') {
     return viabixAudit()->logDataAccess($accessed_user_id, $data_type, $access_type);
