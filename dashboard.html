@@ -520,8 +520,12 @@
                     document.getElementById('userName').textContent = data.nome || data.usuario;
                     aplicarPermissoesDePlano(data.features || {});
 
-                    if (data.user?.nivel === 'admin') {
+                    // Mostrar botão Admin SaaS APENAS para admins
+                    const isAdmin = data.user?.nivel === 'admin' || data.user?.role === 'admin';
+                    if (isAdmin) {
                         document.getElementById('adminButton').style.display = 'inline-flex';
+                    } else {
+                        document.getElementById('adminButton').style.display = 'none';
                     }
 
                     const tenantBadge = document.getElementById('tenantBadge');
