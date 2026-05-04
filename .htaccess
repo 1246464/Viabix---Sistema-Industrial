@@ -32,6 +32,9 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Exceções explícitas para arquivos HTML que devem ser acessíveis diretamente
+RewriteRule ^(dashboard_viabilidade|admin_saas|billing|login|signup|anvi|index|test_module_3_demo)\.html$ - [L]
+
 # Página inicial
 RewriteRule ^$ index.html [L]
 
