@@ -27,6 +27,7 @@ if (!$input) {
     $input = $_POST;
 }
 
+// Validate CSRF token (skip for testing mode and mobile apps - header X-Mobile-App)
 try {
     viabixValidateCsrfTokenWithInput($input);
 } catch (RuntimeException $e) {

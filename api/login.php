@@ -34,16 +34,20 @@ if (session_status() === PHP_SESSION_NONE) {
 // Inicializar proteção CSRF
 viabixInitializeCsrfProtection();
 
-// Validar CSRF token (skip em modo teste)
-if (!defined('TESTING_MODE') || !TESTING_MODE) {
-    try {
-        // Passar o input já decodificado para evitar ler php://input novamente
-        viabixValidateCsrfTokenWithInput($input);
-    } catch (RuntimeException $e) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
-        exit;
-    }
+// Validar CSRF token (skip para apps mobile - header X-Mobile-App)
+// Log para debug
+error_log('[CSRF DEBUG] Mobile App Header: ' . ($_SERVER['HTTP_X_MOBILE_APP'] ?? 'NOT_SET'));
+error_log('[CSRF DEBUG] Request Method: ' . $_SERVER['REQUEST_METHOD']);
+
+try {
+    // Passar o input já decodificado para evitar ler php://input novamente
+    viabixValidateCsrfTokenWithInput($input);
+    error_log('[CSRF DEBUG] CSRF Validation PASSED or SKIPPED (mobile)');
+} catch (RuntimeException $e) {
+    error_log('[CSRF DEBUG] CSRF Validation FAILED: ' . $e->getMessage());
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página.']);
+    exit;
 }
 
 // ======================================================

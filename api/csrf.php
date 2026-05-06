@@ -77,6 +77,14 @@ function viabixValidateCsrfTokenWithInput($input = []) {
         throw new RuntimeException('CSRF: Sessão não ativa');
     }
 
+    // Check if this is a mobile app request - if so, skip CSRF validation
+    if (!empty($_SERVER['HTTP_X_MOBILE_APP'])) {
+        viabix_sentry_breadcrumb('CSRF validation skipped for mobile app', 'security.csrf', 'info', [
+            'mobile_app' => $_SERVER['HTTP_X_MOBILE_APP']
+        ]);
+        return; // Skip CSRF validation for mobile apps
+    }
+
     // Pegar token do request
     $submittedToken = null;
 
@@ -129,6 +137,14 @@ function viabixValidateCsrfTokenWithInput($input = []) {
 function viabixValidateCsrfToken() {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         throw new RuntimeException('CSRF: Sessão não ativa');
+    }
+
+    // Check if this is a mobile app request - if so, skip CSRF validation
+    if (!empty($_SERVER['HTTP_X_MOBILE_APP'])) {
+        viabix_sentry_breadcrumb('CSRF validation skipped for mobile app', 'security.csrf', 'info', [
+            'mobile_app' => $_SERVER['HTTP_X_MOBILE_APP']
+        ]);
+        return; // Skip CSRF validation for mobile apps
     }
 
     // Pegar token do request
