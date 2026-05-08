@@ -1,1 +1,0 @@
-<?php echo "OK - ESTE ARQUIVO FUNCIONA"; ?>
