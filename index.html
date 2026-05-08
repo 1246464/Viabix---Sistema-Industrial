@@ -52,10 +52,10 @@
             position: sticky;
             top: 0;
             z-index: 20;
-            backdrop-filter: blur(18px);
-            background: rgba(245, 241, 232, 0.95);
-            border-bottom: 1px solid rgba(22, 33, 28, 0.08);
-            box-shadow: 0 2px 12px rgba(8, 29, 26, 0.06);
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid rgba(22, 33, 28, 0.06);
+            box-shadow: 0 4px 16px rgba(8, 29, 26, 0.08);
         }
 
         .topbar-inner {
@@ -76,15 +76,16 @@
         }
 
         .brand-mark {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
             display: grid;
             place-items: center;
             color: var(--white);
-            background: linear-gradient(135deg, var(--pine-700), var(--pine-900));
-            box-shadow: 0 8px 20px rgba(13, 47, 39, 0.25);
-            font-size: 1.3rem;
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.3);
+            font-size: 1.4rem;
+            font-weight: 800;
         }
 
         .nav {
@@ -123,26 +124,28 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, var(--pine-700), var(--pine-900));
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
             color: var(--white);
-            box-shadow: 0 10px 30px rgba(31, 90, 73, 0.3);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.28);
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(31, 90, 73, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(27, 94, 32, 0.4);
         }
 
         .btn-secondary {
             background: transparent;
-            color: var(--ink-700);
-            border: 1.5px solid rgba(22, 33, 28, 0.15);
+            color: #1B5E20;
+            border: 2px solid #1B5E20;
         }
 
         .btn-secondary:hover {
-            border-color: var(--signal);
-            color: var(--signal);
-            background: rgba(240, 138, 36, 0.05);
+            border-color: #1B5E20;
+            color: var(--white);
+            background: #1B5E20;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(27, 94, 32, 0.25);
         }
 
         .btn-ghost {
@@ -183,11 +186,12 @@
         }
 
         .hero-copy h1 {
-            font-size: 2.8rem;
-            line-height: 1.2;
+            font-size: 3.2rem;
+            line-height: 1.15;
             margin: 20px 0;
-            letter-spacing: -0.02em;
-            color: var(--ink-900);
+            letter-spacing: -0.025em;
+            color: #0d3d1a;
+            font-weight: 800;
         }
 
         .hero-copy p {
@@ -617,16 +621,17 @@
             background: linear-gradient(135deg, var(--signal), #f5ac4d);
             color: var(--white);
             border: none;
-            padding: 12px 28px;
+            padding: 14px 32px;
             border-radius: 10px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(240, 138, 36, 0.25);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(240, 138, 36, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(240, 138, 36, 0.35);
         }
 
         .btn-cancel {
@@ -959,7 +964,7 @@
                 <a href="#planos">Planos</a>
                 <a href="#depoimentos">Depoimentos</a>
                 <a href="#como-funciona">Como Funciona</a>
-                <a href="app-demo.html" style="color: var(--signal); font-weight: 600;"><i class="fas fa-mobile-alt"></i> App Mobile</a>
+                <a href="anvi.html" style="color: var(--signal); font-weight: 600;"><i class="fas fa-mobile-alt"></i> Acessar App</a>
             </nav>
             <div class="nav-actions">
                 <a class="btn-secondary" href="login.html"><i class="fas fa-right-to-bracket"></i> Login</a>
@@ -1233,7 +1238,7 @@
                         <h2>Planos Públicos para Contratar</h2>
                         <p>Valores seguem o catálogo comercial atual e combinam com os códigos de plano do sistema</p>
                     </div>
-                    <a class="btn-ghost" href="PLANO_COMERCIALIZACAO.html"><i class="fas fa-file-lines"></i> Material Completo</a>
+                    <a class="btn-ghost" href="#planos"><i class="fas fa-file-lines"></i> Ver Planos Detalhados</a>
                 </div>
                 <div class="plan-grid">
                     <article class="plan-card">
@@ -1392,7 +1397,7 @@
                 <div class="faq-grid">
                     <article class="faq-card">
                         <h3><i class="fas fa-eye"></i> Onde vejo os planos?</h3>
-                        <p>Nesta página, na seção de planos. Para material comercial detalhado, acesse PLANO_COMERCIALIZACAO.html</p>
+                        <p>Nesta página, na seção de planos acima. Veja as opções de Starter, Pro e Enterprise com valores e inclusos.</p>
                     </article>
                     <article class="faq-card">
                         <h3><i class="fas fa-sign-in-alt"></i> Como crio meu acesso?</h3>
@@ -1467,9 +1472,10 @@
             <span>
                 <a href="signup.html">Teste Grátis</a> · 
                 <a href="login.html">Login</a> · 
-                <a href="PLANO_COMERCIALIZACAO.html">Planos</a> ·
+                <a href="#planos">Planos</a> ·
                 <a href="#depoimentos">Depoimentos</a> ·
-                <a href="LICENSE.html"><i class="fas fa-file-contract"></i> Licença</a>
+                <a href="#como-funciona">Como Funciona</a>
+            </span>
             </span>
         </div>
         </div>
