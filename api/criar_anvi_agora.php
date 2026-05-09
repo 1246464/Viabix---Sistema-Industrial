@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 try {
     // Conexão PDO DIRETA (usar localhost, não IP externo)
     $dsn = "mysql:host=localhost;port=3306;dbname=viabix_db;charset=utf8mb4";
-    $pdo = new PDO($dsn, 'doadmin', '59380204Mm', [
+    $pdo = new PDO($dsn, 'root', '59380204Mm', [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
