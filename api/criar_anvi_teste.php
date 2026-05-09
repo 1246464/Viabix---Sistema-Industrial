@@ -7,35 +7,42 @@ require 'config.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
+    // Usar tenant_id admin (precisa estar criado no banco primeiro)
+    $tenant_id = 'admin';
     
-    // Verificar se já existe
-    $result = $pdo->query("SELECT COUNT(*) as count FROM anvis");
-    $count = $result->fetch()['count'];
+    // Verificar se já existe ANVI para este tenant
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM anvis WHERE tenant_id = ?");
+    $stmt->execute([$tenant_id]);
+    $count = $stmt->fetch()['count'];
     
     if ($count > 0) {
+        // Listar ANVIs existentes
+        $stmt = $pdo->prepare("SELECT id, numero, cliente, projeto FROM anvis WHERE tenant_id = ? LIMIT 5");
+        $stmt->execute([$tenant_id]);
+        $anvis = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
         echo json_encode([
             'status' => 'info',
-            'mensagem' => 'Já existem ' . $count . ' ANVI(s) no banco',
-            'anvis' => $count
+            'mensagem' => 'Já existem ' . $count . ' ANVI(s) no banco para este tenant',
+            'total_anvis' => $count,
+            'anvis_existentes' => $anvis
         ]);
         exit;
     }
     
-    // Criar ANVI com dados realistas
-    $stmt = $pdo->prepare("
-        INSERT INTO anvis (
-            numero, revisao, cliente, projeto, produto, status,
-            data_anvi, data_criacao, data_atualizacao,
-            dados, dados_financeiros
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
+    // Gerar ID único para ANVI
+    $anvi_id = 'ANVI-' . date('YmdHis') . '-001';
     
+    // Preparar dados JSON com estrutura correcta
     $dados = json_encode([
         'financeiro' => [
             'orcamento' => 150000,
             'gasto' => 87500,
             'margem_prevista' => 35,
-            'margem_realizada' => 42
+            'margem_realizada' => 42,
+            'investimento_total' => 150000,
+            'roi_esperado_pct' => 45,
+            'payback_meses' => 18
         ],
         'planejamento' => [
             'duracao_prevista_dias' => 180,
@@ -56,40 +63,39 @@ try {
         ]
     ]);
     
-    $dados_financeiros = json_encode([
-        'investimento_total' => 150000,
-        'roi_esperado_pct' => 45,
-        'payback_meses' => 18,
-        'duracao_meses' => 36,
-        'riscos_identificados' => ['critica' => 0, 'alta' => 2, 'media' => 5, 'baixa' => 8],
-        'receita_esperada_mensal' => 4167,
-        'custo_fixo_mensal' => 2500,
-        'ponto_equilibrio_mes' => 8
-    ]);
+    // Inserir ANVI com schema CORRETO (sem dados_financeiros)
+    $stmt = $pdo->prepare("
+        INSERT INTO anvis (
+            id, tenant_id, numero, revisao, cliente, projeto, produto, 
+            status, volume_mensal, data_anvi, dados, criado_por
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
     
     $stmt->execute([
-        'ANVI-2026-001',  // numero
-        1,                // revisao
-        'Empresa XYZ',    // cliente
+        $anvi_id,           // id
+        $tenant_id,         // tenant_id
+        'ANVI-2026-001',    // numero
+        1,                  // revisao
+        'Empresa XYZ',      // cliente
         'Sistema de Gestão', // projeto
-        'Software SaaS',  // produto
-        'ativo',          // status
-        date('Y-m-d'),    // data_anvi
-        date('Y-m-d H:i:s'), // data_criacao
-        date('Y-m-d H:i:s'), // data_atualizacao
-        $dados,
-        $dados_financeiros
+        'Software SaaS',    // produto
+        'em-andamento',     // status
+        1000,               // volume_mensal
+        date('Y-m-d'),      // data_anvi
+        $dados,             // dados (JSON com tudo)
+        'user-admin'        // criado_por
     ]);
-    
-    $anvi_id = $pdo->lastInsertId();
     
     echo json_encode([
         'status' => 'sucesso',
-        'mensagem' => 'ANVI criado com sucesso!',
+        'mensagem' => 'ANVI de teste criado com sucesso!',
         'anvi_id' => $anvi_id,
         'numero' => 'ANVI-2026-001',
         'cliente' => 'Empresa XYZ',
         'projeto' => 'Sistema de Gestão',
+        'tenant_id' => $tenant_id,
         'proximo_passo' => 'Acesse https://viabix.com.br/dashboard_viabilidade.html e clique em "Carregar Análise" com ID: ' . $anvi_id
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
@@ -99,6 +105,7 @@ try {
         'status' => 'erro',
         'mensagem' => $e->getMessage(),
         'arquivo' => $e->getFile(),
-        'linha' => $e->getLine()
+        'linha' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
