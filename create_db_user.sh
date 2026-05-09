@@ -13,6 +13,6 @@ FLUSH PRIVILEGES;
 
 -- Verify user exists
 SELECT user, host, plugin FROM mysql.user WHERE user='viabix';
+SQL
 
 echo "✅ Database user 'viabix' created with password authentication!"
-SQL
