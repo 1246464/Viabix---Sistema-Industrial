@@ -2,8 +2,8 @@
 header('Content-Type: application/json');
 
 try {
-    // Use mysqli instead of PDO to bypass auth plugin issues
-    $mysqli = new mysqli('localhost', 'root', '', 'viabix_db');
+    // Use mysqli with dedicated application user (not root which uses auth_socket)
+    $mysqli = new mysqli('localhost', 'viabix', '59380204Mm', 'viabix_db');
     
     if ($mysqli->connect_error) {
         die(json_encode([
