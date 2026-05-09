@@ -15,7 +15,10 @@ try {
     // Generate test ANVI
     $anvi_id = 'ANVI-' . date('YmdHis') . '-001';
     $numero = 'ANVI-' . date('Y') . '-001';
+    $revisao = '1.0';
     $tenant_id = 'admin';
+    $cliente = 'Empresa XYZ';
+    $projeto = 'Sistema de Gestão';
     $criado_por = 'user-admin';
     
     $dados = json_encode([
@@ -25,9 +28,9 @@ try {
         'recursos' => ['disponibilidade' => 95, 'alocacao' => 75]
     ]);
     
-    $sql = "INSERT INTO anvis (id, tenant_id, numero, dados, criado_por) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO anvis (id, tenant_id, numero, revisao, cliente, projeto, dados, criado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $mysqli->prepare($sql);
-    $stmt->bind_param('sssss', $anvi_id, $tenant_id, $numero, $dados, $criado_por);
+    $stmt->bind_param('ssssssss', $anvi_id, $tenant_id, $numero, $revisao, $cliente, $projeto, $dados, $criado_por);
     
     if ($stmt->execute()) {
         echo json_encode([
@@ -35,8 +38,9 @@ try {
             'mensagem' => 'ANVI de teste criada com sucesso!',
             'anvi_id' => $anvi_id,
             'numero' => $numero,
-            'cliente' => 'Empresa XYZ',
-            'projeto' => 'Sistema de Gestão'
+            'revisao' => $revisao,
+            'cliente' => $cliente,
+            'projeto' => $projeto
         ]);
     } else {
         echo json_encode([
