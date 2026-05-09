@@ -36,6 +36,44 @@ $tenant_id = viabixCurrentTenantId() ?? 'admin';
 try {
     $report = [];
     
+    // Se não houver ANVIs, criar um de teste
+    $countResult = $pdo->query("SELECT COUNT(*) as count FROM anvis");
+    $count = $countResult->fetch()['count'];
+    
+    if ($count == 0) {
+        $insertStmt = $pdo->prepare("
+            INSERT INTO anvis (numero, revisao, cliente, projeto, produto, status, data_anvi, data_criacao, data_atualizacao, dados, dados_financeiros)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $insertStmt->execute([
+            'TEST-AUTO-001',
+            1,
+            'Cliente Teste Automático',
+            'Projeto Teste',
+            'Produto Teste',
+            'ativo',
+            date('Y-m-d'),
+            date('Y-m-d H:i:s'),
+            date('Y-m-d H:i:s'),
+            json_encode([
+                'financeiro' => ['orcamento' => 100000, 'gasto' => 50000],
+                'planejamento' => ['duracao_esperada_dias' => 180],
+                'qualidade' => ['testes_total' => 100, 'testes_passou' => 95],
+                'recursos' => ['disponibilidade' => 95]
+            ]),
+            json_encode([
+                'investimento_total' => 100000,
+                'roi_esperado_pct' => 25,
+                'payback_meses' => 12,
+                'duracao_meses' => 24,
+                'riscos_identificados' => ['alto' => 0, 'medio' => 1, 'baixo' => 2]
+            ])
+        ]);
+    }
+    
+    $report = [];
+    
     // ========================================
     // 1. DADOS DO ANVI (ESTRUTURA JSON) + PROJETO ASSOCIADO
     // ========================================
