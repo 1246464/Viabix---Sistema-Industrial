@@ -10,10 +10,11 @@ try {
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_TIMEOUT => 30,
         ]
     );
     
-    // 1. Criar tabela anvis
+    // 1. Criar tabela anvis (sem FOREIGN KEY para evitar timeout)
     $pdo->exec("CREATE TABLE IF NOT EXISTS anvis (
         id VARCHAR(50) PRIMARY KEY,
         tenant_id VARCHAR(50) NOT NULL,
@@ -24,7 +25,6 @@ try {
         dados JSON,
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
         INDEX idx_tenant (tenant_id),
         INDEX idx_numero (numero)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
