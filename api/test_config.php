@@ -1,28 +1,36 @@
 <?php
 header('Content-Type: application/json');
 
+$debug = [];
+
 try {
+    // Debug 1: Show connection parameters
+    $debug['db_host'] = getenv('DB_HOST') ?: 'default (should be 127.0.0.1)';
+    $debug['db_user'] = getenv('DB_USER') ?: 'default (should be viabix)';
+    $debug['db_name'] = getenv('DB_NAME') ?: 'default (should be viabix_db)';
+    
     require_once __DIR__ . '/config.php';
     
-    // Test 1: Check database connection
-    $stmt = $pdo->query("SELECT VERSION() as version");
-    $result = $stmt->fetch();
+    $debug['defined_db_host'] = DB_HOST;
+    $debug['defined_db_user'] = DB_USER;
+    $debug['defined_db_name'] = DB_NAME;
     
-    // Test 2: Check if anvis table exists
-    $stmt = $pdo->query("SHOW TABLES LIKE 'anvis'");
-    $tables = $stmt->fetchAll();
+    // Debug 2: List all tables
+    $stmt = $pdo->query("SHOW TABLES");
+    $all_tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $debug['all_tables'] = $all_tables;
+    $debug['anvis_exists'] = in_array('anvis', $all_tables);
     
-    // Test 3: Count anvis
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM anvis");
-    $count = $stmt->fetch();
+    // Debug 3: Try to query anvis
+    if (in_array('anvis', $all_tables)) {
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM anvis");
+        $count = $stmt->fetch();
+        $debug['anvis_count'] = $count['total'];
+    }
     
     echo json_encode([
         'status' => 'OK',
-        'database_version' => $result['version'],
-        'anvis_table_exists' => count($tables) > 0,
-        'anvis_count' => $count['total'],
-        'db_user' => DB_USER,
-        'db_name' => DB_NAME
+        'debug' => $debug
     ], JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
@@ -30,7 +38,8 @@ try {
     echo json_encode([
         'status' => 'ERROR',
         'message' => $e->getMessage(),
-        'code' => $e->getCode()
-    ]);
+        'code' => $e->getCode(),
+        'debug' => $debug
+    ], JSON_PRETTY_PRINT);
 }
 ?>
