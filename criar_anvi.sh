@@ -1,8 +1,8 @@
+#!/bin/bash
+php -d error_reporting=E_ALL << 'PHPCODE'
 <?php
-header('Content-Type: application/json');
-
 try {
-    // Conexão PDO DIRETA (usar localhost, não IP externo)
+    // Conexão PDO DIRETA
     $dsn = "mysql:host=localhost;port=3306;dbname=viabix_db;charset=utf8mb4";
     $pdo = new PDO($dsn, 'doadmin', '59380204Mm', [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -70,24 +70,25 @@ try {
         ':criado_por' => 'user-admin'
     ]);
     
-    echo json_encode([
-        'status' => 'sucesso',
-        'mensagem' => 'ANVI de teste criada com sucesso!',
-        'anvi_id' => $anvi_id,
-        'numero' => 'ANVI-2026-001',
-        'cliente' => 'Empresa XYZ',
-        'projeto' => 'Sistema de Gestão',
-        'tenant_id' => $tenant_id,
-        'dados_json_size' => strlen($dados),
-        'proximo_passo' => 'Acesse /dashboard_viabilidade.html e clique em "Carregar Análise" com ID: ' . $anvi_id
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($result) {
+        echo "✓ SUCESSO! ANVI criada\n";
+        echo "ID: $anvi_id\n";
+        echo "Número: ANVI-2026-001\n";
+        echo "Cliente: Empresa XYZ\n";
+        echo "Projeto: Sistema de Gestão\n";
+        echo "Tenant: $tenant_id\n";
+        
+        // Verificar
+        $check = $pdo->query("SELECT COUNT(*) as cnt FROM anvis WHERE id = '$anvi_id'");
+        $row = $check->fetchAll();
+        $cnt = $row[0]['cnt'] ?? 0;
+        echo "\nVerificação: $cnt registro(s) encontrado(s)\n";
+    }
     
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'erro',
-        'mensagem' => $e->getMessage(),
-        'arquivo' => $e->getFile(),
-        'linha' => $e->getLine()
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    echo "✗ ERRO: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . "\n";
+    echo "Line: " . $e->getLine() . "\n";
 }
+?>
+PHPCODE
