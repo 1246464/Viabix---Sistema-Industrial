@@ -24,7 +24,8 @@ try {
 try {
     echo "2. Verificando banco viabix_db...";
     $result = $pdo->query("SELECT DATABASE()");
-    $db = $result->fetch(PDO::FETCH_COLUMN);
+    $rows = $result->fetchAll(PDO::FETCH_COLUMN);
+    $db = $rows[0] ?? null;
     echo " ✓ Conectado a: $db\n";
 } catch (Exception $e) {
     echo " ✗ ERRO: " . $e->getMessage() . "\n";
@@ -50,7 +51,8 @@ try {
 try {
     echo "4. Tentando contar ANVIs...";
     $stmt = $pdo->query("SELECT COUNT(*) as cnt FROM anvis");
-    $cnt = $stmt->fetch()['cnt'];
+    $row = $stmt->fetchAll();
+    $cnt = $row[0]['cnt'] ?? 0;
     echo " ✓ Total: $cnt\n";
 } catch (Exception $e) {
     echo " ✗ ERRO: " . $e->getMessage() . "\n";
