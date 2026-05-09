@@ -191,6 +191,7 @@ try {
         PDO::ATTR_TIMEOUT => 10,
         PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
         PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+        PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
     ];
     
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
