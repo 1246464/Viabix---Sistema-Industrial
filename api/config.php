@@ -147,10 +147,10 @@ if (!defined('DB_NAME')) {
     define('DB_NAME', viabix_env('DB_NAME', 'viabix_db'));
 }
 if (!defined('DB_USER')) {
-    define('DB_USER', viabix_env('DB_USER', 'root'));
+    define('DB_USER', viabix_env('DB_USER', 'viabix'));
 }
 if (!defined('DB_PASS')) {
-    define('DB_PASS', viabix_env('DB_PASS', ''));
+    define('DB_PASS', viabix_env('DB_PASS', '59380204Mm'));
 }
 if (!defined('DB_CHARSET')) {
     define('DB_CHARSET', viabix_env('DB_CHARSET', 'utf8mb4'));
