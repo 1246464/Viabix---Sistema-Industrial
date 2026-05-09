@@ -118,6 +118,32 @@ try {
             'score_geral' => round($viabilidade_geral, 1),
             'status' => $status_viabilidade,
             'recomendacao' => $viabilidade_geral >= 75 ? 'Projeto recomendado para implementação' : 'Recomenda-se revisar escopo e recursos'
+        ],
+        'compatibilidades' => [
+            [
+                'area' => 'Financeiro',
+                'status' => $financeiro_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($financeiro_score, 1),
+                'detalhes' => 'ROI de ' . ($dados_financeiros['roi_esperado_pct'] ?? 0) . '% com payback em ' . ($dados_financeiros['payback_meses'] ?? 0) . ' meses'
+            ],
+            [
+                'area' => 'Planejamento',
+                'status' => $planejamento_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($planejamento_score, 1),
+                'detalhes' => 'Duração de ' . ($dados['planejamento']['duracao_meses'] ?? 0) . ' meses em ' . ($dados['planejamento']['fases'] ?? 0) . ' fases'
+            ],
+            [
+                'area' => 'Qualidade',
+                'status' => $qualidade_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($qualidade_score, 1),
+                'detalhes' => 'Cobertura de testes ' . ($dados['qualidade']['cobertura_testes'] ?? 0) . '% com score de código ' . ($dados['qualidade']['score_codigo'] ?? 0)
+            ],
+            [
+                'area' => 'Recursos',
+                'status' => $recursos_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($recursos_score, 1),
+                'detalhes' => 'Equipe de ' . ($dados['recursos']['equipe'] ?? 0) . ' pessoas com ' . ($dados['recursos']['especialistas'] ?? 0) . ' especialistas'
+            ]
         ]
     ];
     
