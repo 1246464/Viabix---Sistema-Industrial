@@ -7,7 +7,6 @@ require 'config.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    echo "Criando ANVI de teste...\n\n";
     
     // Verificar se já existe
     $result = $pdo->query("SELECT COUNT(*) as count FROM anvis");
