@@ -716,5 +716,13 @@ try {
     
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['erro' => 'Erro ao processar relatório']);
+    echo json_encode([
+        'erro' => 'Erro ao processar relatório',
+        'debug' => [
+            'mensagem' => $e->getMessage(),
+            'arquivo' => $e->getFile(),
+            'linha' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
