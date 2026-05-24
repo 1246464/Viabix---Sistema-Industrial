@@ -1,9 +1,12 @@
 <?php
-// Desabilita output buffering (deve vir antes de headers)
-@apache_setenv('no-gzip', 1);
+// Desabilita output buffering (compatível com PHP-FPM e mod_php)
+if (function_exists('apache_setenv')) {
+    apache_setenv('no-gzip', 1);
+}
 @ini_set('zlib.output_compression', 0);
 @ini_set('implicit_flush', 1);
 ob_implicit_flush(1);
+while (ob_get_level() > 0) { ob_end_clean(); }
 
 require_once 'config.php';
 
