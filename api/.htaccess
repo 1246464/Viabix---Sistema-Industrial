@@ -1,0 +1,22 @@
+# ======================================================
+# Configuração Apache - Pasta API
+# Permite acesso direto a todos os arquivos PHP
+# ======================================================
+
+# Desabilitará herança de regras de rewrite da pasta pai
+RewriteEngine Off
+
+# Permitir acesso a todos os arquivos
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# Bloquear listagem de diretório
+Options -Indexes
+
+# Bloquear acesso a arquivos sensíveis apenas
+<FilesMatch "\.(env|sql|bak|ini|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

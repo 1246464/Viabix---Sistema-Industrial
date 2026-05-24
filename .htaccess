@@ -1,0 +1,27 @@
+# ======================================================
+# Configuração Apache - Sistema Viabix
+# PHP-FPM compatible configuration
+# ======================================================
+
+DirectoryIndex index.html index.php
+
+# Desativar rewrite engine completamente para permitir acesso direto a todos os arquivos
+RewriteEngine Off
+
+# Bloquear listagem de diretórios
+Options -Indexes
+
+# Bloquear acesso a arquivos sensíveis
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|bak|config|env)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ======================================================
+# Sem reescrita de URL - todos os arquivos são servidos diretamente
+# ======================================================

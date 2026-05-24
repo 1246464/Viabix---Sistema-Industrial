@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#000000</color>
+    <color name="error">#B3261E</color>
+    <color name="gray">#808080</color>
+    <color name="info">#1976D2</color>
+    <color name="light_gray">#CCCCCC</color>
+    <color name="success">#388E3C</color>
+    <color name="viabix_accent">#4caf50</color>
+    <color name="viabix_green">#0a3d2e</color>
+    <color name="viabix_light_green">#2e7d32</color>
+    <color name="viabix_surface">#F5F5F5</color>
+    <color name="warning">#FBC02D</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_description">Sistema Industrial Completo</string>
+    <string name="app_name">Viabix</string>
+    <string name="back">Voltar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="close">Fechar</string>
+    <string name="delete">Deletar</string>
+    <string name="edit">Editar</string>
+    <string name="error">Erro</string>
+    <string name="error_empty_fields">Preencha todos os campos obrigatórios</string>
+    <string name="error_network">Erro de conexão com o servidor</string>
+    <string name="error_server">Erro do servidor. Tente novamente mais tarde</string>
+    <string name="error_session_expired">Sua sessão expirou. Faça login novamente</string>
+    <string name="error_unauthorized">Você não tem permissão para acessar este recurso</string>
+    <string name="home_welcome">Bem-vindo ao Viabix</string>
+    <string name="loading">Carregando...</string>
+    <string name="login_button">Entrar</string>
+    <string name="login_create_account">Não tem conta? Criar agora</string>
+    <string name="login_error">Erro ao fazer login</string>
+    <string name="login_password">Senha</string>
+    <string name="login_subtitle">Sistema Industrial Completo</string>
+    <string name="login_title">Bem-vindo ao Viabix</string>
+    <string name="login_username">Usuário</string>
+    <string name="logout">Sair</string>
+    <string name="module_anvi">ANVI</string>
+    <string name="module_anvi_desc">Análise de Viabilidade Industrial</string>
+    <string name="module_projetos">Projetos</string>
+    <string name="module_projetos_desc">Controle de Cronogramas</string>
+    <string name="module_viabilidade">Viabilidade</string>
+    <string name="module_viabilidade_desc">Dashboard Técnico</string>
+    <string name="save">Salvar</string>
+    <string name="settings">Configurações</string>
+    <string name="success">Sucesso</string>
+    <style name="Theme.ViabixAndroid" parent="android:Theme.Material.Light.DarkActionBar">
+        
+        <item name="android:colorPrimary">@color/viabix_green</item>
+        
+        <item name="android:colorAccent">@color/viabix_light_green</item>
+        
+        <item name="android:statusBarColor">@color/viabix_green</item>
+    </style>
+</resources>

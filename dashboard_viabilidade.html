@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Compatibilidade/Viabilidade - VIABIX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a3d2e 0%, #1a5a3a 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar .navbar-brand {
+            font-weight: bold;
+            color: #0a3d2e !important;
+        }
+
+        .container-dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #0a3d2e 0%, #1a5a3a 100%);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0a3d2e 0%, #1a5a3a 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1a5a3a 0%, #0a3d2e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .score-badge {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 24px;
+            margin: 10px;
+        }
+
+        .score-high {
+            background: linear-gradient(135deg, #0a3d2e 0%, #2a6e3b 100%);
+        }
+
+        .score-medium {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .score-low {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .status-viavel {
+            color: #2a6e3b;
+            font-weight: bold;
+        }
+
+        .status-inviavel {
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        .status-atencao {
+            color: #fee140;
+            font-weight: bold;
+        }
+
+        .compatibilidade-item {
+            padding: 15px;
+            border-left: 4px solid #0a3d2e;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .compatibilidade-item.compativel {
+            border-left-color: #2a6e3b;
+        }
+
+        .compatibilidade-item.incompativel {
+            border-left-color: #f5576c;
+        }
+
+        .analise-section {
+            margin-top: 20px;
+        }
+
+        .analise-item {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #0a3d2e;
+        }
+
+        .analise-item.financeiro {
+            border-left-color: #0a3d2e;
+        }
+
+        .analise-item.planejamento {
+            border-left-color: #f093fb;
+        }
+
+        .analise-item.qualidade {
+            border-left-color: #f5576c;
+        }
+
+        .analise-item.recursos {
+            border-left-color: #fee140;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error-message {
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .score-badge {
+                width: 60px;
+                height: 60px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-chart-bar"></i> Dashboard de Viabilidade - VIABIX</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html"><i class="fas fa-arrow-left"></i> Voltar</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                            <i class="fas fa-user"></i> Usuário
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="api/logout_redirect.php"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-dashboard">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="mb-0"><i class="fas fa-chart-area"></i> Dashboard de Compatibilidade/Viabilidade</h1>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Análise completa de um projeto ANVI mostrando incompatibilidades e incoerências</p>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="anviInput" 
+                           placeholder="Digite o ID do ANVI (ex: ANVI-20260509232203-001)..."
+                           value="">
+                </div>
+                <button class="btn btn-primary btn-lg" onclick="carregarAnalise()">
+                    <i class="fas fa-search"></i> Carregar Análise
+                </button>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div id="status" class="alert alert-info">
+            <div class="loading show">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+                <p>Carregando...</p>
+            </div>
+            <div id="empty-message" style="display: block;">
+                <p>Digite um ANVI e clique em "Carregar Análise"</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorContainer" class="alert alert-danger error-message">
+            <h4><i class="fas fa-exclamation-circle"></i> Erro ao carregar</h4>
+            <p id="errorMessage"></p>
+            <p class="text-muted">Certifique-se de que o ANVI existe e que você tem acesso a ele.</p>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsContainer" style="display: none;">
+            <!-- ANVI Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-info-circle"></i> Informações do ANVI</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID:</strong> <span id="anviId"></span></p>
+                            <p><strong>Número:</strong> <span id="anviNumero"></span></p>
+                            <p><strong>Cliente:</strong> <span id="anviCliente"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Projeto:</strong> <span id="anviProjeto"></span></p>
+                            <p><strong>Status:</strong> <span id="anviStatus"></span></p>
+                            <p><strong>Data ANVI:</strong> <span id="anviData"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Viabilidade Geral -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-thumbs-up"></i> Viabilidade Geral</h2>
+                </div>
+                <div class="card-body text-center">
+                    <div id="scoreBadge" class="score-badge"></div>
+                    <h3 id="viabilidadeStatus"></h3>
+                    <p id="viabilidadeRecomendacao" class="lead text-muted"></p>
+                </div>
+            </div>
+
+            <!-- Análise Detalhada -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-microscope"></i> Análise Detalhada</h2>
+                </div>
+                <div class="card-body analise-section" id="analiseContainer">
+                </div>
+            </div>
+
+            <!-- Compatibilidades -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-check-circle"></i> Compatibilidades por Área</h2>
+                </div>
+                <div class="card-body" id="compatibilidadesContainer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function formatarData(dataStr) {
+            if (!dataStr) return 'N/A';
+            const data = new Date(dataStr + 'T00:00:00');
+            return data.toLocaleDateString('pt-BR');
+        }
+
+        function obterClasseScore(score) {
+            if (score >= 80) return 'score-high';
+            if (score >= 60) return 'score-medium';
+            return 'score-low';
+        }
+
+        function renderizarAnalise(analise) {
+            const container = document.getElementById('analiseContainer');
+            container.innerHTML = '';
+
+            if (analise.financeiro) {
+                const fin = analise.financeiro;
+                container.innerHTML += `
+                    <div class="analise-item financeiro">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge score-high">${fin.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Financeiro</h4>
+                                <p><strong>Investimento:</strong> R$ ${(fin.investimento || 0).toLocaleString('pt-BR')}</p>
+                                <p><strong>ROI Esperado:</strong> ${fin.roi_esperado}%</p>
+                                <p><strong>Payback:</strong> ${fin.payback_meses} meses</p>
+                                <p><strong>Margem:</strong> ${fin.margem}%</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analise.planejamento) {
+                const plan = analise.planejamento;
+                container.innerHTML += `
+                    <div class="analise-item planejamento">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge score-high">${plan.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Planejamento</h4>
+                                <p><strong>Fases:</strong> ${plan.fases}</p>
+                                <p><strong>Duração:</strong> ${plan.duracao_meses} meses</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analise.qualidade) {
+                const qual = analise.qualidade;
+                container.innerHTML += `
+                    <div class="analise-item qualidade">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge ${obterClasseScore(qual.score)}">${qual.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Qualidade</h4>
+                                <p><strong>Cobertura de Testes:</strong> ${qual.cobertura_testes}%</p>
+                                <p><strong>Score de Código:</strong> ${qual.score_codigo}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analise.recursos) {
+                const rec = analise.recursos;
+                container.innerHTML += `
+                    <div class="analise-item recursos">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge ${obterClasseScore(rec.score)}">${rec.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Recursos</h4>
+                                <p><strong>Equipe:</strong> ${rec.equipe} pessoas</p>
+                                <p><strong>Especialistas:</strong> ${rec.especialistas}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderizarCompatibilidades(compatibilidades) {
+            const container = document.getElementById('compatibilidadesContainer');
+            container.innerHTML = '';
+
+            if (!compatibilidades || compatibilidades.length === 0) {
+                container.innerHTML = '<p class="text-muted">Nenhuma compatibilidade registrada</p>';
+                return;
+            }
+
+            compatibilidades.forEach(comp => {
+                const classe = comp.status === 'compativel' ? 'compativel' : 'incompativel';
+                const icone = comp.status === 'compativel' ? 'check-circle text-success' : 'times-circle text-danger';
+                
+                container.innerHTML += `
+                    <div class="compatibilidade-item ${classe}">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center">
+                                <i class="fas fa-2x fa-${icone}"></i>
+                            </div>
+                            <div class="col-md-4">
+                                <h5>${comp.area}</h5>
+                                <p class="mb-0"><strong>Score:</strong> ${comp.score}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-0">${comp.detalhes}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function exibirErro(mensagem) {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('errorContainer').classList.add('show');
+            document.getElementById('errorMessage').textContent = mensagem;
+        }
+
+        function carregarAnalise() {
+            const anviId = document.getElementById('anviInput').value.trim();
+
+            if (!anviId) {
+                exibirErro('Por favor, digite um ID do ANVI válido.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('status').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border mb-3" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                    <p>Carregando dados do ANVI...</p>
+                </div>
+            `;
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('errorContainer').classList.remove('show');
+
+            // Fetch data
+            fetch(`/api/dashboard_viabilidade_simple.php?anvi_id=${anviId}&t=${Date.now()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar dados');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dados recebidos:', data);
+                    
+                    if (!data || !data.anvi) {
+                        exibirErro('Dados inválidos recebidos do servidor.');
+                        return;
+                    }
+
+                    // Hide loading and show results
+                    document.getElementById('status').style.display = 'none';
+                    document.getElementById('errorContainer').classList.remove('show');
+                    document.getElementById('resultsContainer').style.display = 'block';
+
+                    // Populate ANVI info
+                    document.getElementById('anviId').textContent = data.anvi.id || 'N/A';
+                    document.getElementById('anviNumero').textContent = data.anvi.numero || 'N/A';
+                    document.getElementById('anviCliente').textContent = data.anvi.cliente || 'N/A';
+                    document.getElementById('anviProjeto').textContent = data.anvi.projeto || 'N/A';
+                    document.getElementById('anviStatus').textContent = data.anvi.status || 'N/A';
+                    document.getElementById('anviData').textContent = formatarData(data.anvi.data_anvi);
+
+                    // Populate viability
+                    if (data.viabilidade) {
+                        const viab = data.viabilidade;
+                        const scoreClass = obterClasseScore(viab.score_geral);
+                        const statusClass = viab.status === 'VIÁVEL' ? 'status-viavel' : 'status-inviavel';
+                        
+                        document.getElementById('scoreBadge').className = `score-badge ${scoreClass}`;
+                        document.getElementById('scoreBadge').textContent = viab.score_geral;
+                        document.getElementById('viabilidadeStatus').innerHTML = `<span class="${statusClass}">${viab.status}</span>`;
+                        document.getElementById('viabilidadeRecomendacao').textContent = viab.recomendacao || '';
+                    }
+
+                    // Render analysis
+                    if (data.analise) {
+                        renderizarAnalise(data.analise);
+                    }
+
+                    // Render compatibilities
+                    if (data.compatibilidades) {
+                        renderizarCompatibilidades(data.compatibilidades);
+                    }
+                })
+                .catch(erro => {
+                    console.error('Erro:', erro);
+                    exibirErro(erro.message || 'Erro desconhecido ao carregar dados.');
+                });
+        }
+
+        // Allow Enter key to load analysis
+        document.getElementById('anviInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                carregarAnalise();
+            }
+        });
+    </script>
+    <script src="chat-widget.js"></script>
+</body>
+</html>

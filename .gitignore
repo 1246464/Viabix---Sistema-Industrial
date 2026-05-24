@@ -1,0 +1,40 @@
+.env
+.env.local
+.env.production
+/logs/*.log
+/.phpunit.result.cache
+
+# Android build artifacts (generated files)
+viabix-android/.gradle/
+viabix-android/app/build/
+viabix-android/build/
+viabix-android/local.properties
+viabix-android/gradle-*.zip
+viabix-android/*.zip
+viabix-android/*.hprof
+*.hprof
+gradle-*.zip
+
+# Debug/test PHP files (never in production)
+fix_encoding.php
+test_debug.php
+test_api.php
+api/debug_*.php
+api/test_*.php
+api/list_users.php
+api/check_user.php
+api/generate_test_token.php
+teste-jwt.html
+
+# Exclude files with exposed credentials
+auto-setup-digitalocean.sh
+fix-producao.sh
+setup_producao.sh
+GUIA_CORRECAO_LOGIN.md
+VISUAL_SUMMARY.txt
+ANALISE_ERROS_LOGIN.md
+ca-certificado.crt
+quick_test.sh
+test_quick.sh
+diagnostico_ssh.sh
+diagnostico_remoto.sh

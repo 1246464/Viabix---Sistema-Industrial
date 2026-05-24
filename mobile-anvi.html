@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ANVI - Viabix Mobile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --primary-color: #0a3d2e;
+            --success-color: #2e7d32;
+        }
+        body {
+            background-color: #f2f7f2;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: var(--primary-color);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .anvis-list {
+            padding: 20px;
+        }
+        .anvi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .anvi-card h5 {
+            margin: 0 0 8px 0;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .anvi-card p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .btn-open {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-open:hover {
+            background: var(--success-color);
+        }
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <i class="fas fa-chart-line"></i> ANVI
+    </div>
+    <div id="userName">--</div>
+    <button onclick="fazerLogout()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+</div>
+
+<div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Carregando ANVIs...</p>
+</div>
+
+<div id="error" class="error" style="display: none;"></div>
+
+<div id="anvisList" class="anvis-list" style="display: none;"></div>
+
+<div id="empty" class="empty" style="display: none;">
+    <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; display: block; margin-bottom: 15px;"></i>
+    <p>Nenhuma ANVI encontrada</p>
+</div>
+
+<script>
+    console.log('[MOBILE-ANVI] Script iniciado');
+
+    // ============================
+    // FLUXO DE AUTENTICAÇÃO
+    // ============================
+    
+    // Extrair token via JavascriptInterface do Kotlin OU localStorage
+    function obterToken() {
+        let token = null;
+        
+        // 1. Tentar JavascriptInterface (quando rodando em Android WebView)
+        if (typeof ViabixApp !== 'undefined' && ViabixApp.getToken) {
+            try {
+                token = ViabixApp.getToken();
+                console.log('[MOBILE-ANVI] Token obtido via ViabixApp.getToken()');
+            } catch (e) {
+                console.warn('[MOBILE-ANVI] ⚠️ Erro ao chamar ViabixApp.getToken():', e.message);
+            }
+        }
+        
+        // 2. Tentar window.viabixToken (injetado via JavaScript)
+        if (!token && window.viabixToken) {
+            token = window.viabixToken;
+            console.log('[MOBILE-ANVI] Token obtido via window.viabixToken');
+        }
+        
+        // 3. Tentar localStorage
+        if (!token) {
+            token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+            if (token) {
+                console.log('[MOBILE-ANVI] Token obtido via localStorage');
+            }
+        }
+        
+        if (token) {
+            console.log('[MOBILE-ANVI] ✅ Token encontrado! Tamanho:', token.length);
+            localStorage.setItem('jwt_token', token); // Guardar para próximas vezes
+        } else {
+            console.warn('[MOBILE-ANVI] ❌ Nenhum token disponível');
+        }
+        
+        return token;
+    }
+    
+    async function verificarSessao() {
+        console.log('[MOBILE-ANVI] Verificando sessão...');
+        try {
+            // Obter token
+            const token = obterToken();
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Adicionar Authorization header se temos token
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                console.log('[MOBILE-ANVI] Authorization header adicionado');
+            }
+            
+            // PRIMEIRO: Chamar debug para ver o que servidor recebe
+            console.log('[MOBILE-ANVI] Chamando debug_check_session.php para diagnóstico...');
+            const debugResponse = await fetch('api/debug_check_session.php', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            const debugData = await debugResponse.json();
+            console.log('[MOBILE-ANVI] DEBUG RESPONSE:', JSON.stringify(debugData, null, 2));
+            
+            // DEPOIS: Chamar check_session normal
+            const response = await fetch('api/check_session.php', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            console.log('[MOBILE-ANVI] Resposta status:', response.status);
+            
+            if (!response.ok) {
+                console.error('[MOBILE-ANVI] Erro HTTP:', response.status);
+                mostrarErro('Erro ao verificar sessão: ' + response.status);
+                return null;
+            }
+            
+            const text = await response.text();
+            console.log('[MOBILE-ANVI] Resposta raw:', text);
+            
+            const data = JSON.parse(text);
+            console.log('[MOBILE-ANVI] Dados parseados:', data);
+            
+            if (data.logado) {
+                console.log('[MOBILE-ANVI] ✅ Autenticado como:', data.user?.login);
+                document.getElementById('userName').textContent = data.user?.nome || data.usuario || 'Usuário';
+                return data;
+            } else {
+                console.error('[MOBILE-ANVI] ❌ Não autenticado (logado=false)');
+                mostrarErro('Não autenticado. Por favor, faça login novamente.');
+                return null;
+            }
+        } catch (e) {
+            console.error('[MOBILE-ANVI] EXCEÇÃO em verificarSessao():', e.message, e.stack);
+            mostrarErro('Erro: ' + e.message);
+            return null;
+        }
+    }
+
+    // ============================
+    // CARREGAR ANVIs
+    // ============================
+    
+    async function carregarANVIs() {
+        console.log('[MOBILE-ANVI] Carregando ANVIs...');
+        try {
+            const token = obterToken();
+            
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const response = await fetch('api/anvi.php', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            console.log('[MOBILE-ANVI] anvi.php status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[MOBILE-ANVI] Erro:', response.status, errorText);
+                mostrarErro('Erro ao carregar ANVIs: ' + errorText);
+                return [];
+            }
+            
+            const anvis = await response.json();
+            console.log('[MOBILE-ANVI] ANVIs recebidas:', anvis);
+            
+            return Array.isArray(anvis) ? anvis : [];
+        } catch (e) {
+            console.error('[MOBILE-ANVI] EXCEÇÃO em carregarANVIs():', e.message);
+            mostrarErro('Erro: ' + e.message);
+            return [];
+        }
+    }
+
+    // ============================
+    // INTERFACE
+    // ============================
+    
+    function mostrarErro(msg) {
+        console.error('[MOBILE-ANVI] Erro:', msg);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').textContent = msg;
+        document.getElementById('error').style.display = 'block';
+    }
+
+    function renderizarANVIs(anvis) {
+        console.log('[MOBILE-ANVI] Renderizando', anvis.length, 'ANVIs');
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        
+        if (anvis.length === 0) {
+            document.getElementById('empty').style.display = 'block';
+            return;
+        }
+        
+        document.getElementById('empty').style.display = 'none';
+        
+        const list = document.getElementById('anvisList');
+        list.innerHTML = '';
+        
+        anvis.forEach(anvi => {
+            const card = document.createElement('div');
+            card.className = 'anvi-card';
+            card.innerHTML = `
+                <h5>${anvi.numero || 'ANVI-S/N'}</h5>
+                <p><strong>Cliente:</strong> ${anvi.cliente || '--'}</p>
+                <p><strong>Projeto:</strong> ${anvi.projeto || '--'}</p>
+                <p><strong>Status:</strong> ${anvi.status || '--'}</p>
+                <p><strong>Revisão:</strong> ${anvi.revisao || '--'}</p>
+                <button class="btn-open" onclick="abrirANVI('${anvi.id}')">
+                    <i class="fas fa-folder-open"></i> Abrir
+                </button>
+            `;
+            list.appendChild(card);
+        });
+        
+        list.style.display = 'block';
+    }
+
+    function abrirANVI(anviId) {
+        console.log('[MOBILE-ANVI] Abrindo ANVI:', anviId);
+        // Para mobile, poderia abrir um modal ou navegar
+        // Por enquanto, apenas log
+        alert('Abrindo ANVI: ' + anviId);
+    }
+
+    function fazerLogout() {
+        console.log('[MOBILE-ANVI] Logout');
+        // Limpar dados
+        localStorage.removeItem('jwt_token');
+        sessionStorage.removeItem('jwt_token');
+        // Redirecionar para login
+        window.location.href = 'login.html';
+    }
+
+    // ============================
+    // INICIALIZAÇÃO
+    // ============================
+    
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('[MOBILE-ANVI] DOMContentLoaded disparado');
+        
+        // Aguardar um pouco para injeção Kotlin completar (se houver)
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // 1. Verificar autenticação
+        const user = await verificarSessao();
+        if (!user) {
+            console.error('[MOBILE-ANVI] Autenticação falhou');
+            return;
+        }
+        
+        // 2. Carregar ANVIs
+        const anvis = await carregarANVIs();
+        
+        // 3. Renderizar
+        renderizarANVIs(anvis);
+        
+        console.log('[MOBILE-ANVI] Inicialização concluída');
+    });
+
+    console.log('[MOBILE-ANVI] Script carregado, aguardando DOMContentLoaded...');
+</script>
+
+</body>
+</html>
