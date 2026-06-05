@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos e Preços | Viabix - Sistema Industrial SaaS</title>
+    <meta name="description" content="Compare os planos Starter, Pro e Enterprise do Viabix. Escolha o melhor plano para sua operação industrial. Trial gratuito de 14 dias.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pine-950: #081d1a;
+            --pine-900: #0d2f27;
+            --pine-800: #164539;
+            --pine-700: #1f5a49;
+            --moss-400: #abc55d;
+            --sand-100: #f5f1e8;
+            --ink-900: #16211c;
+            --ink-700: #44534d;
+            --ink-500: #6c7a73;
+            --signal: #f08a24;
+            --white: #ffffff;
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 18px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            color: var(--ink-900);
+            background:
+                radial-gradient(circle at top left, rgba(171, 197, 93, 0.16), transparent 24%),
+                radial-gradient(circle at right 10% top 18%, rgba(240, 138, 36, 0.18), transparent 18%),
+                linear-gradient(180deg, #f8f5ef 0%, #f1ebdf 100%);
+            line-height: 1.6;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        .shell { width: min(1220px, calc(100% - 32px)); margin: 0 auto; }
+
+        /* TOPBAR */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid rgba(22, 33, 28, 0.06);
+            box-shadow: 0 4px 16px rgba(8, 29, 26, 0.08);
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 0;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-size: 1.15rem;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            color: var(--white);
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.3);
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .btn, .btn-secondary {
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
+            color: var(--white);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.28);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(27, 94, 32, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #1B5E20;
+            border: 2px solid #1B5E20;
+        }
+
+        .btn-secondary:hover {
+            border-color: #1B5E20;
+            color: var(--white);
+            background: #1B5E20;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(27, 94, 32, 0.25);
+        }
+
+        /* HERO */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(171, 197, 93, 0.15), transparent 70%);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.15;
+            margin: 0 0 24px;
+            letter-spacing: -0.025em;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            color: var(--ink-500);
+            margin: 0 auto 40px;
+            max-width: 700px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--signal);
+            margin-bottom: 16px;
+        }
+
+        /* PRICING CARDS */
+        .pricing-section {
+            padding: 60px 0;
+        }
+
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            margin-bottom: 80px;
+        }
+
+        .plan-card {
+            background: var(--white);
+            border: 2px solid rgba(22, 33, 28, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .plan-card:hover {
+            border-color: var(--signal);
+            transform: translateY(-8px);
+            box-shadow: 0 24px 60px rgba(8, 29, 26, 0.15);
+        }
+
+        .plan-card.featured {
+            border-color: var(--signal);
+            box-shadow: 0 20px 60px rgba(240, 138, 36, 0.15);
+        }
+
+        .plan-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--signal), #f5ac4d);
+            color: var(--white);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .plan-card h3 {
+            font-size: 1.6rem;
+            margin: 12px 0 12px;
+            color: var(--pine-700);
+        }
+
+        .plan-price {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--pine-900);
+            margin: 24px 0 8px;
+        }
+
+        .plan-price small {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--ink-500);
+        }
+
+        .plan-note {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--ink-500);
+            margin-bottom: 28px;
+        }
+
+        .plan-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+        }
+
+        .plan-card li {
+            padding: 10px 0;
+            font-size: 0.95rem;
+            color: var(--ink-700);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-card li i {
+            color: var(--signal);
+            font-size: 1rem;
+        }
+
+        .plan-actions {
+            margin-top: 28px;
+        }
+
+        .plan-actions a {
+            width: 100%;
+            text-align: center;
+            padding: 12px !important;
+        }
+
+        /* COMPARISON TABLE */
+        .comparison-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(8, 29, 26, 0.02), rgba(171, 197, 93, 0.05));
+        }
+
+        .section-head {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-head h2 {
+            font-size: 2.5rem;
+            margin: 0 0 16px;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .section-head p {
+            font-size: 1.1rem;
+            color: var(--ink-500);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .comparison-table {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(8, 29, 26, 0.1);
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table thead {
+            background: linear-gradient(135deg, var(--pine-900), var(--pine-700));
+            color: var(--white);
+        }
+
+        .comparison-table th {
+            padding: 24px 20px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .comparison-table th:first-child {
+            width: 40%;
+        }
+
+        .comparison-table th:not(:first-child) {
+            text-align: center;
+        }
+
+        .comparison-table tbody tr {
+            border-bottom: 1px solid rgba(22, 33, 28, 0.08);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(171, 197, 93, 0.05);
+        }
+
+        .comparison-table td {
+            padding: 20px;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--ink-900);
+        }
+
+        .comparison-table td:not(:first-child) {
+            text-align: center;
+        }
+
+        .feature-category {
+            background: linear-gradient(90deg, rgba(171, 197, 93, 0.15), transparent);
+            font-weight: 700;
+            color: var(--pine-700);
+            font-size: 1rem;
+        }
+
+        .feature-category td {
+            padding: 16px 20px;
+        }
+
+        .check-icon {
+            color: #4caf50;
+            font-size: 1.3rem;
+        }
+
+        .times-icon {
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+
+        .highlight-cell {
+            background: rgba(240, 138, 36, 0.05);
+            font-weight: 600;
+            color: var(--signal);
+        }
+
+        /* CTA PANEL */
+        .cta-panel {
+            background: linear-gradient(135deg, var(--pine-900), var(--pine-800));
+            color: var(--white);
+            padding: 60px 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
+            margin: 80px 0;
+        }
+
+        .cta-panel h2 {
+            font-size: 1.8rem;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .cta-panel p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 12px 0 0;
+        }
+
+        .cta-stack {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .comparison-table {
+                overflow-x: auto;
+            }
+
+            .comparison-table table {
+                min-width: 800px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .plan-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-panel {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .cta-stack {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .cta-stack a {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .section-head h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark"><i class="fas fa-industry"></i></div>
+                <div>Viabix</div>
+            </a>
+            <div>
+                <a class="btn" href="signup.html?plan=pro"><i class="fas fa-rocket"></i> Teste Grátis</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero">
+            <div class="shell">
+                <div class="eyebrow"><i class="fas fa-tags"></i> Escolha o Plano Ideal</div>
+                <h1>Planos Transparentes para sua Operação Industrial</h1>
+                <p>Todos os planos incluem 14 dias de trial gratuito. Sem cartão de crédito. Cancele quando quiser.</p>
+            </div>
+        </section>
+
+        <!-- PRICING CARDS -->
+        <section class="pricing-section">
+            <div class="shell">
+                <div class="plan-grid">
+                    <article class="plan-card">
+                        <span class="plan-badge"><i class="fas fa-play-circle"></i> Starter</span>
+                        <h3>Starter</h3>
+                        <p>Entrada para operações menores que precisam padronizar viabilidade sem sobrecarregar o time.</p>
+                        <div class="plan-price">R$297 <small>/mês</small></div>
+                        <span class="plan-note">ou R$ 2.970 anual (economize 17%)</span>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Até 3 usuários</li>
+                            <li><i class="fas fa-check"></i> ANVI + Projetos</li>
+                            <li><i class="fas fa-check"></i> Exportação padrão</li>
+                            <li><i class="fas fa-check"></i> Trial de 14 dias</li>
+                            <li><i class="fas fa-check"></i> Suporte por email</li>
+                        </ul>
+                        <div class="plan-actions"><a class="btn-secondary" href="signup.html?plan=starter">Começar Trial</a></div>
+                    </article>
+
+                    <article class="plan-card featured">
+                        <span class="plan-badge"><i class="fas fa-star"></i> Mais Popular</span>
+                        <h3>Pro</h3>
+                        <p>Plano para operação madura, com equipe maior e necessidade de integração e governança.</p>
+                        <div class="plan-price">R$697 <small>/mês</small></div>
+                        <span class="plan-note">ou R$ 6.970 anual (economize 17%)</span>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Até 15 usuários</li>
+                            <li><i class="fas fa-check"></i> API liberada</li>
+                            <li><i class="fas fa-check"></i> Operação comercial completa</li>
+                            <li><i class="fas fa-check"></i> Melhor equilíbrio e escala</li>
+                            <li><i class="fas fa-check"></i> Suporte prioritário</li>
+                        </ul>
+                        <div class="plan-actions"><a class="btn" href="signup.html?plan=pro">Começar Trial</a></div>
+                    </article>
+
+                    <article class="plan-card">
+                        <span class="plan-badge"><i class="fas fa-rocket"></i> Enterprise</span>
+                        <h3>Enterprise</h3>
+                        <p>Estrutura para contas com governança corporativa e demandas pesadas de integração.</p>
+                        <div class="plan-price">R$1.497 <small>/mês</small></div>
+                        <span class="plan-note">ou R$ 14.970 anual (economize 17%)</span>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Usuários ilimitados</li>
+                            <li><i class="fas fa-check"></i> API + SSO</li>
+                            <li><i class="fas fa-check"></i> Suporte dedicado</li>
+                            <li><i class="fas fa-check"></i> Multi-área</li>
+                            <li><i class="fas fa-check"></i> SLA garantido</li>
+                        </ul>
+                        <div class="plan-actions"><a class="btn" href="signup.html?plan=enterprise">Solicitar Avaliação</a></div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARISON TABLE -->
+        <section class="comparison-section">
+            <div class="shell">
+                <div class="section-head">
+                    <h2>Comparação Detalhada de Recursos</h2>
+                    <p>Veja lado a lado tudo que cada plano oferece</p>
+                </div>
+
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Recurso</th>
+                                <th>Starter</th>
+                                <th>Pro</th>
+                                <th>Enterprise</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- USUÁRIOS E ACESSO -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-users"></i> Usuários e Acessos</td>
+                            </tr>
+                            <tr>
+                                <td>Usuários incluídos</td>
+                                <td>Até 3</td>
+                                <td>Até 15</td>
+                                <td class="highlight-cell">Ilimitados</td>
+                            </tr>
+                            <tr>
+                                <td>Usuários adicionais</td>
+                                <td>R$ 99/usuário</td>
+                                <td>R$ 69/usuário</td>
+                                <td>Inclusos</td>
+                            </tr>
+                            <tr>
+                                <td>Controle de permissões</td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Single Sign-On (SSO)</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+
+                            <!-- FUNCIONALIDADES -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-cogs"></i> Funcionalidades</td>
+                            </tr>
+                            <tr>
+                                <td>Módulo ANVI completo</td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Gestão de Projetos</td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Dashboards e Relatórios</td>
+                                <td>Básicos</td>
+                                <td>Avançados</td>
+                                <td class="highlight-cell">Personalizados</td>
+                            </tr>
+                            <tr>
+                                <td>Exportação de dados</td>
+                                <td>Excel/PDF</td>
+                                <td>Excel/PDF/CSV</td>
+                                <td>Excel/PDF/CSV/API</td>
+                            </tr>
+                            <tr>
+                                <td>ANVIs simultâneas</td>
+                                <td>Até 10</td>
+                                <td>Até 50</td>
+                                <td class="highlight-cell">Ilimitadas</td>
+                            </tr>
+                            <tr>
+                                <td>Projetos simultâneos</td>
+                                <td>Até 5</td>
+                                <td>Até 25</td>
+                                <td class="highlight-cell">Ilimitados</td>
+                            </tr>
+
+                            <!-- INTEGRAÇÕES -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-plug"></i> Integrações</td>
+                            </tr>
+                            <tr>
+                                <td>API REST</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Webhooks</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td>10 eventos</td>
+                                <td class="highlight-cell">Ilimitados</td>
+                            </tr>
+                            <tr>
+                                <td>Integrações nativas</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td>5 integrações</td>
+                                <td class="highlight-cell">Todas</td>
+                            </tr>
+
+                            <!-- ARMAZENAMENTO -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-database"></i> Armazenamento</td>
+                            </tr>
+                            <tr>
+                                <td>Espaço em disco</td>
+                                <td>5 GB</td>
+                                <td>50 GB</td>
+                                <td class="highlight-cell">500 GB</td>
+                            </tr>
+                            <tr>
+                                <td>Backup automático</td>
+                                <td>Semanal</td>
+                                <td>Diário</td>
+                                <td>Contínuo</td>
+                            </tr>
+                            <tr>
+                                <td>Retenção de dados</td>
+                                <td>1 ano</td>
+                                <td>3 anos</td>
+                                <td class="highlight-cell">Ilimitado</td>
+                            </tr>
+
+                            <!-- SUPORTE -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-headset"></i> Suporte</td>
+                            </tr>
+                            <tr>
+                                <td>Suporte técnico</td>
+                                <td>Email (48h)</td>
+                                <td>Email/Chat (24h)</td>
+                                <td class="highlight-cell">Dedicado (4h)</td>
+                            </tr>
+                            <tr>
+                                <td>Onboarding personalizado</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td>1 sessão</td>
+                                <td class="highlight-cell">Completo</td>
+                            </tr>
+                            <tr>
+                                <td>Gerente de conta</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>SLA garantido</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td>99.9% uptime</td>
+                            </tr>
+
+                            <!-- SEGURANÇA -->
+                            <tr class="feature-category">
+                                <td colspan="4"><i class="fas fa-shield-alt"></i> Segurança</td>
+                            </tr>
+                            <tr>
+                                <td>Criptografia SSL</td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Autenticação 2FA</td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Auditoria de ações</td>
+                                <td>Básica</td>
+                                <td>Completa</td>
+                                <td class="highlight-cell">Avançada</td>
+                            </tr>
+                            <tr>
+                                <td>IP Whitelisting</td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-times times-icon"></i></td>
+                                <td><i class="fas fa-check check-icon"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- CTA -->
+                <div class="cta-panel">
+                    <div>
+                        <h2>Pronto para começar?</h2>
+                        <p>Teste qualquer plano gratuitamente por 14 dias. Sem compromisso.</p>
+                    </div>
+                    <div class="cta-stack">
+                        <a class="btn" href="signup.html?plan=pro"><i class="fas fa-rocket"></i> Começar Agora</a>
+                        <a class="btn-secondary" href="index.html"><i class="fas fa-arrow-left"></i> Voltar ao Site</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>

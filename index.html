@@ -1139,6 +1139,155 @@
             font-weight: 600;
         }
 
+        /* VIDEO DEMO SECTION */
+        .video-demo-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, rgba(8, 29, 26, 0.03), rgba(171, 197, 93, 0.05));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-demo-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -20%;
+            width: 40%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(240, 138, 36, 0.08), transparent 70%);
+            filter: blur(80px);
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 50px auto 0;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(8, 29, 26, 0.2);
+            background: var(--white);
+            border: 3px solid rgba(171, 197, 93, 0.3);
+            z-index: 1;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* Aspect ratio 16:9 */
+            height: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--pine-900), var(--pine-700));
+        }
+
+        .video-wrapper iframe,
+        .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: linear-gradient(135deg, var(--pine-900), var(--pine-700));
+            color: var(--white);
+        }
+
+        .video-placeholder i {
+            font-size: 5rem;
+            color: var(--moss-400);
+            opacity: 0.8;
+        }
+
+        .video-placeholder h3 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--white);
+        }
+
+        .video-placeholder p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+        }
+
+        .play-button {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--signal), #f5ac4d);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(240, 138, 36, 0.4);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(240, 138, 36, 0.6);
+        }
+
+        .play-button i {
+            font-size: 2rem;
+            color: var(--white);
+            margin-left: 5px;
+        }
+
+        .video-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .video-feature {
+            text-align: center;
+            padding: 24px;
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid rgba(22, 33, 28, 0.08);
+            transition: all 0.3s;
+        }
+
+        .video-feature:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(8, 29, 26, 0.1);
+        }
+
+        .video-feature i {
+            font-size: 2.5rem;
+            color: var(--signal);
+            margin-bottom: 16px;
+        }
+
+        .video-feature h4 {
+            font-size: 1.1rem;
+            color: var(--pine-700);
+            margin: 12px 0 8px;
+            font-weight: 700;
+        }
+
+        .video-feature p {
+            font-size: 0.9rem;
+            color: var(--ink-500);
+            line-height: 1.6;
+            margin: 0;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .hero-grid,
@@ -1170,7 +1319,8 @@
             .industry-grid,
             .industry-content,
             .step-grid,
-            .faq-grid {
+            .faq-grid,
+            .video-features {
                 grid-template-columns: 1fr;
             }
 
@@ -1200,6 +1350,23 @@
             .site-footer-inner {
                 flex-direction: column;
                 text-align: center;
+            }
+
+            .video-demo-section {
+                padding: 60px 0;
+            }
+
+            .video-placeholder h3 {
+                font-size: 1.3rem;
+            }
+
+            .play-button {
+                width: 70px;
+                height: 70px;
+            }
+
+            .play-button i {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -1258,7 +1425,7 @@
                         </a>
                     </div>
                 </div>
-                <a href="#planos">Planos</a>
+                <a href="planos.html">Planos</a>
                 <a href="#depoimentos">Depoimentos</a>
                 <a href="#como-funciona">Como Funciona</a>
             </nav>
@@ -1279,7 +1446,7 @@
                     <p>Viabix integra análise de viabilidade industrial, controle de projetos e operação SaaS em uma única plataforma. Seus clientes entendem o valor, testam por 14 dias e convertem para planos pagos.</p>
                     <div class="hero-actions">
                         <a class="btn" href="signup.html?plan=pro"><i class="fas fa-bolt"></i> Começar Teste Grátis</a>
-                        <a class="btn-secondary" href="#planos"><i class="fas fa-tags"></i> Ver Planos</a>
+                        <a class="btn-secondary" href="planos.html"><i class="fas fa-tags"></i> Ver Planos</a>
                     </div>
                     <div class="hero-metrics">
                         <div class="metric">
@@ -1303,6 +1470,66 @@
                         <i class="fas fa-download"></i> Download App Android
                     </a>
                 </aside>
+            </div>
+        </section>
+
+        <!-- VÍDEO DEMONSTRATIVO -->
+        <section class="video-demo-section" id="demo">
+            <div class="shell">
+                <div class="section-head" style="text-align: center; display: block;">
+                    <div class="eyebrow" style="justify-content: center; margin-bottom: 16px;">
+                        <i class="fas fa-play-circle"></i> Veja o Sistema em Ação
+                    </div>
+                    <h2 style="margin: 0 auto 20px; max-width: 700px;">Conheça o Viabix em 60 Segundos</h2>
+                    <p style="margin: 0 auto; max-width: 600px; color: var(--ink-500);">
+                        Assista uma demonstração rápida e veja como transformamos análise de viabilidade em execução operacional
+                    </p>
+                </div>
+
+                <div class="video-container">
+                    <div class="video-wrapper">
+                        <!-- OPÇÃO 1: Para vídeo do YouTube (descomente e adicione seu ID do vídeo) -->
+                        <!-- <iframe src="https://www.youtube.com/embed/SEU_VIDEO_ID?rel=0&modestbranding=1" allowfullscreen></iframe> -->
+                        
+                        <!-- OPÇÃO 2: Para vídeo do Vimeo (descomente e adicione seu ID do vídeo) -->
+                        <!-- <iframe src="https://player.vimeo.com/video/SEU_VIDEO_ID?title=0&byline=0&portrait=0" allowfullscreen></iframe> -->
+                        
+                        <!-- OPÇÃO 3: Para arquivo de vídeo local (MP4 ou WebM) -->
+                        <!-- <video controls poster="img/video-thumbnail.jpg">
+                            <source src="videos/viabix-demo.mp4" type="video/mp4">
+                            <source src="videos/viabix-demo.webm" type="video/webm">
+                            Seu navegador não suporta vídeos HTML5.
+                        </video> -->
+
+                        <!-- PLACEHOLDER (Remover quando adicionar vídeo real) -->
+                        <div class="video-placeholder">
+                            <i class="fas fa-video"></i>
+                            <h3>Vídeo Demonstrativo</h3>
+                            <p>Adicione seu vídeo do YouTube, Vimeo ou arquivo local</p>
+                            <button class="play-button">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-features">
+                    <div class="video-feature">
+                        <i class="fas fa-clock"></i>
+                        <h4>Rápido e Objetivo</h4>
+                        <p>60 segundos para entender todo o potencial da plataforma</p>
+                    </div>
+                    <div class="video-feature">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <h4>Interface Intuitiva</h4>
+                        <p>Navegue facilmente por todos os módulos do sistema</p>
+                    </div>
+                    <div class="video-feature">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Resultados Reais</h4>
+                        <p>Veja análises de viabilidade e dashboards em ação</p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1626,63 +1853,6 @@
             </div>
         </section>
 
-        <!-- PLANOS -->
-        <section class="block" id="planos">
-            <div class="shell">
-                <div class="section-head">
-                    <div>
-                        <h2>Planos Públicos para Contratar</h2>
-                        <p>Valores seguem o catálogo comercial atual e combinam com os códigos de plano do sistema</p>
-                    </div>
-                    <a class="btn-ghost" href="#planos"><i class="fas fa-file-lines"></i> Ver Planos Detalhados</a>
-                </div>
-                <div class="plan-grid">
-                    <article class="plan-card">
-                        <span class="plan-badge"><i class="fas fa-play-circle"></i> Starter</span>
-                        <h3>Starter</h3>
-                        <p>Entrada para operações menores que precisam padronizar viabilidade sem sobrecarregar o time.</p>
-                        <div class="plan-price">R$297 <small>/mês</small></div>
-                        <span class="plan-note">ou R$ 2.970 anual</span>
-                        <ul>
-                            <li><i class="fas fa-check"></i> Até 3 usuários</li>
-                            <li><i class="fas fa-check"></i> ANVI + Projetos</li>
-                            <li><i class="fas fa-check"></i> Exportação padrão</li>
-                            <li><i class="fas fa-check"></i> Trial de 14 dias</li>
-                        </ul>
-                        <div class="plan-actions"><a class="btn-secondary" href="signup.html?plan=starter">Testar Starter</a></div>
-                    </article>
-                    <article class="plan-card featured">
-                        <span class="plan-badge"><i class="fas fa-star"></i> Mais Popular</span>
-                        <h3>Pro</h3>
-                        <p>Plano para operação madura, com equipe maior e necessidade de integração e governança.</p>
-                        <div class="plan-price">R$697 <small>/mês</small></div>
-                        <span class="plan-note">ou R$ 6.970 anual</span>
-                        <ul>
-                            <li><i class="fas fa-check"></i> Até 15 usuários</li>
-                            <li><i class="fas fa-check"></i> API liberada</li>
-                            <li><i class="fas fa-check"></i> Operação comercial completa</li>
-                            <li><i class="fas fa-check"></i> Melhor equilibrio e escala</li>
-                        </ul>
-                        <div class="plan-actions"><a class="btn" href="signup.html?plan=pro">Começar Trial</a></div>
-                    </article>
-                    <article class="plan-card">
-                        <span class="plan-badge"><i class="fas fa-rocket"></i> Enterprise</span>
-                        <h3>Enterprise</h3>
-                        <p>Estrutura para contas com governança corporativa e demandas pesadas de integração.</p>
-                        <div class="plan-price">R$1.497 <small>/mês</small></div>
-                        <span class="plan-note">ou R$ 14.970 anual</span>
-                        <ul>
-                            <li><i class="fas fa-check"></i> Usuários ilimitados</li>
-                            <li><i class="fas fa-check"></i> API + SSO</li>
-                            <li><i class="fas fa-check"></i> Suporte dedicado</li>
-                            <li><i class="fas fa-check"></i> Multi-área</li>
-                        </ul>
-                        <div class="plan-actions"><a class="btn" href="signup.html?plan=enterprise">Solicitar Avaliação</a></div>
-                    </article>
-                </div>
-            </div>
-        </section>
-
         <!-- DEPOIMENTOS E COMENTÁRIOS -->
         <section id="depoimentos" class="block">
             <div class="shell">
@@ -1793,7 +1963,7 @@
                 <div class="faq-grid">
                     <article class="faq-card">
                         <h3><i class="fas fa-eye"></i> Onde vejo os planos?</h3>
-                        <p>Nesta página, na seção de planos acima. Veja as opções de Starter, Pro e Enterprise com valores e inclusos.</p>
+                        <p>Na <a href="planos.html" style="color: var(--signal); text-decoration: underline;">página de planos</a> você encontra uma comparação completa entre Starter, Pro e Enterprise com valores e recursos detalhados.</p>
                     </article>
                     <article class="faq-card">
                         <h3><i class="fas fa-sign-in-alt"></i> Como crio meu acesso?</h3>
@@ -1870,7 +2040,7 @@
                     <ul class="footer-links">
                         <li><a href="#produto"><i class="fas fa-chevron-right"></i> Produto</a></li>
                         <li><a href="#modulos"><i class="fas fa-chevron-right"></i> Módulos</a></li>
-                        <li><a href="#planos"><i class="fas fa-chevron-right"></i> Planos</a></li>
+                        <li><a href="planos.html"><i class="fas fa-chevron-right"></i> Planos</a></li>
                         <li><a href="#depoimentos"><i class="fas fa-chevron-right"></i> Depoimentos</a></li>
                         <li><a href="#como-funciona"><i class="fas fa-chevron-right"></i> Como Funciona</a></li>
                     </ul>
