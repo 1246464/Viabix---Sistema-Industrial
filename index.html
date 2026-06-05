@@ -111,6 +111,102 @@
 
         .nav a:hover { color: var(--signal); }
 
+        /* DROPDOWN MENU */
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-item > a {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: calc(100% + 15px);
+            left: 0;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(8, 29, 26, 0.15);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            border: 1px solid rgba(22, 33, 28, 0.08);
+        }
+
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 12px;
+            height: 12px;
+            background: var(--white);
+            transform: rotate(45deg);
+            border-left: 1px solid rgba(22, 33, 28, 0.08);
+            border-top: 1px solid rgba(22, 33, 28, 0.08);
+        }
+
+        .dropdown-item {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--ink-700);
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(22, 33, 28, 0.06);
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(90deg, rgba(171, 197, 93, 0.1), transparent);
+            color: var(--pine-700);
+            padding-left: 25px;
+        }
+
+        .dropdown-item i {
+            font-size: 1.2rem;
+            color: var(--moss-400);
+            width: 24px;
+            text-align: center;
+        }
+
+        .dropdown-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .dropdown-item-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-item-desc {
+            font-size: 0.8rem;
+            color: var(--ink-500);
+            line-height: 1.3;
+        }
+
         .nav-actions {
             display: flex;
             align-items: center;
@@ -168,7 +264,9 @@
         .hero {
             padding: 80px 0 60px;
             position: relative;
-            background: linear-gradient(135deg, rgba(8, 29, 26, 0.03), rgba(171, 197, 93, 0.08));
+            background: 
+                linear-gradient(135deg, rgba(8, 29, 26, 0.92), rgba(27, 94, 32, 0.88)),
+                url('img/apresentação-sistema-viabix.png') center/cover no-repeat;
             overflow: hidden;
         }
 
@@ -179,7 +277,7 @@
             right: -20%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(171, 197, 93, 0.08), transparent 70%);
+            background: radial-gradient(circle, rgba(171, 197, 93, 0.15), transparent 70%);
             border-radius: 50%;
             filter: blur(40px);
         }
@@ -198,15 +296,17 @@
             line-height: 1.15;
             margin: 20px 0;
             letter-spacing: -0.025em;
-            color: #0d3d1a;
+            color: var(--white);
             font-weight: 800;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
         }
 
         .hero-copy p {
             font-size: 1.1rem;
             line-height: 1.7;
-            color: var(--ink-700);
+            color: rgba(255, 255, 255, 0.95);
             margin: 24px 0;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.2);
         }
 
         .eyebrow {
@@ -217,7 +317,8 @@
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--signal);
+            color: var(--moss-400);
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
         }
 
         .hero-actions {
@@ -242,28 +343,31 @@
         .metric strong {
             display: block;
             font-size: 1.3rem;
-            color: var(--pine-700);
+            color: var(--moss-400);
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
         }
 
         .metric span {
             font-size: 0.95rem;
-            color: var(--ink-500);
+            color: rgba(255, 255, 255, 0.85);
             line-height: 1.4;
         }
 
         .hero-card {
             position: relative;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 241, 232, 0.85));
+            background: rgba(255, 255, 255, 0.05);
             border-radius: var(--radius-lg);
             border: 1px solid rgba(171, 197, 93, 0.3);
-            padding: 50px 40px;
-            box-shadow: 0 30px 80px rgba(8, 29, 26, 0.12);
-            backdrop-filter: blur(10px);
+            padding: 30px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
             animation: floatUp 3.5s ease-in-out infinite;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 520px;
+            overflow: hidden;
         }
 
         @keyframes floatUp {
@@ -272,7 +376,20 @@
         }
 
         .hero-illustration {
-            filter: drop-shadow(0 10px 30px rgba(8, 29, 26, 0.08));
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.4));
+        }
+        
+        .hero-app-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .hero-app-image:hover {
+            transform: scale(1.05);
         }
 
         /* BLOCKS */
@@ -666,41 +783,83 @@
             padding: 80px 0;
         }
 
-        .industry-grid {
+        .industry-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 32px;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .industry-image {
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(8, 29, 26, 0.15);
+            transition: transform 0.3s;
+        }
+
+        .industry-image:hover {
+            transform: scale(1.02);
+        }
+
+        .industry-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .industry-card {
             background: var(--white);
-            padding: 36px;
-            border-radius: var(--radius-lg);
-            border-left: 4px solid var(--signal);
+            padding: 20px 24px;
+            border-radius: 14px;
+            border-left: 3px solid var(--signal);
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 4px 12px rgba(8, 29, 26, 0.06);
         }
 
         .industry-card:hover {
-            transform: translateX(6px);
-            box-shadow: 0 16px 40px rgba(8, 29, 26, 0.1);
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(8, 29, 26, 0.12);
+            border-left-color: var(--moss-400);
         }
 
         .industry-card i {
-            font-size: 2.4rem;
+            font-size: 2rem;
             color: var(--signal);
-            margin-bottom: 16px;
+            min-width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(240, 138, 36, 0.1), rgba(171, 197, 93, 0.1));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .industry-card:hover i {
+            background: linear-gradient(135deg, rgba(240, 138, 36, 0.2), rgba(171, 197, 93, 0.2));
+            transform: rotate(5deg) scale(1.05);
+        }
+
+        .industry-card-content {
+            flex: 1;
         }
 
         .industry-card h4 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--pine-700);
-            margin: 0 0 12px;
+            margin: 0 0 6px;
+            font-weight: 700;
         }
 
         .industry-card p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--ink-500);
-            line-height: 1.6;
+            line-height: 1.5;
+            margin: 0;
         }
 
         /* STEP GRID */
@@ -797,11 +956,129 @@
         }
 
         /* FOOTER */
+        /* FOOTER */
         .site-footer {
-            background: var(--ink-900);
+            background: linear-gradient(135deg, var(--pine-900), var(--ink-900));
             color: var(--white);
-            padding: 40px 0;
+            padding: 60px 0 30px;
             margin-top: 40px;
+            border-top: 3px solid var(--moss-400);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-brand h3 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--moss-400);
+            font-weight: 800;
+        }
+
+        .footer-brand p {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .footer-column h4 {
+            font-size: 1rem;
+            margin: 0 0 20px 0;
+            color: var(--moss-400);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover {
+            color: var(--moss-400);
+            transform: translateX(5px);
+        }
+
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .contact-item i {
+            color: var(--moss-400);
+            margin-top: 3px;
+            font-size: 1.1rem;
+        }
+
+        .contact-item a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item a:hover {
+            color: var(--moss-400);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(171, 197, 93, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--moss-400);
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid rgba(171, 197, 93, 0.3);
+        }
+
+        .social-links a:hover {
+            background: var(--moss-400);
+            color: var(--ink-900);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(171, 197, 93, 0.3);
         }
 
         .site-footer-inner {
@@ -810,6 +1087,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
+            padding-top: 20px;
         }
 
         .site-footer-inner a {
@@ -821,52 +1099,9 @@
             opacity: 1;
         }
 
-        /* FOOTER STATS */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 30px;
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 40px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .stat-item {
-            opacity: 0;
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .stat-item:nth-child(1) { animation-delay: 0.1s; }
-        .stat-item:nth-child(2) { animation-delay: 0.2s; }
-        .stat-item:nth-child(3) { animation-delay: 0.3s; }
-        .stat-item:nth-child(4) { animation-delay: 0.4s; }
-        .stat-item:nth-child(5) { animation-delay: 0.5s; }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--moss-400);
-            margin-bottom: 6px;
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            font-weight: 500;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .footer-copyright {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
         }
 
         /* STATUS RIBBON */
@@ -933,6 +1168,7 @@
             .module-grid,
             .plan-grid,
             .industry-grid,
+            .industry-content,
             .step-grid,
             .faq-grid {
                 grid-template-columns: 1fr;
@@ -955,6 +1191,16 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .site-footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -969,12 +1215,54 @@
             <nav class="nav">
                 <a href="#produto">Produto</a>
                 <a href="#modulos">Módulos</a>
+                <div class="nav-item">
+                    <a href="#segmentos">
+                        Segmentos
+                        <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
+                    </a>
+                    <div class="dropdown">
+                        <a href="segmento-manufatura.html" class="dropdown-item">
+                            <i class="fas fa-industry"></i>
+                            <div class="dropdown-item-content">
+                                <div class="dropdown-item-title">Indústria Manufatureira</div>
+                                <div class="dropdown-item-desc">Fabricação e produção industrial</div>
+                            </div>
+                        </a>
+                        <a href="segmento-consultoria.html" class="dropdown-item">
+                            <i class="fas fa-user-tie"></i>
+                            <div class="dropdown-item-content">
+                                <div class="dropdown-item-title">Consultoria Técnica</div>
+                                <div class="dropdown-item-desc">Consultores e engenheiros</div>
+                            </div>
+                        </a>
+                        <a href="segmento-projetos.html" class="dropdown-item">
+                            <i class="fas fa-project-diagram"></i>
+                            <div class="dropdown-item-content">
+                                <div class="dropdown-item-title">Gestão de Projetos</div>
+                                <div class="dropdown-item-desc">Coordenação e implantação</div>
+                            </div>
+                        </a>
+                        <a href="segmento-metalurgica.html" class="dropdown-item">
+                            <i class="fas fa-hammer"></i>
+                            <div class="dropdown-item-content">
+                                <div class="dropdown-item-title">Metalúrgica</div>
+                                <div class="dropdown-item-desc">Produtos metálicos e usinagem</div>
+                            </div>
+                        </a>
+                        <a href="segmento-quimica.html" class="dropdown-item">
+                            <i class="fas fa-flask"></i>
+                            <div class="dropdown-item-content">
+                                <div class="dropdown-item-title">Química e Petroquímica</div>
+                                <div class="dropdown-item-desc">Processos químicos industriais</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
                 <a href="#planos">Planos</a>
                 <a href="#depoimentos">Depoimentos</a>
                 <a href="#como-funciona">Como Funciona</a>
             </nav>
             <div class="nav-actions">
-                <a class="btn-ghost" href="downloads/viabix-app-1.0.0.apk" download="viabix-app.apk"><i class="fas fa-android"></i> App Android</a>
                 <a class="btn-secondary" href="login.html"><i class="fas fa-right-to-bracket"></i> Login</a>
                 <a class="btn" href="signup.html?plan=pro"><i class="fas fa-rocket"></i> Teste Grátis</a>
             </div>
@@ -1010,75 +1298,10 @@
                 </article>
 
                 <aside class="hero-card">
-                    <svg class="hero-illustration" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 340px; height: auto; margin: 0 auto; display: block;">
-                        <!-- Definições de gradientes -->
-                        <defs>
-                            <linearGradient id="heroGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#1f5a49;stop-opacity:0.15" />
-                                <stop offset="100%" style="stop-color:#abc55d;stop-opacity:0.2" />
-                            </linearGradient>
-                            <linearGradient id="heroGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#f08a24;stop-opacity:0.85" />
-                                <stop offset="100%" style="stop-color:#1f5a49;stop-opacity:0.85" />
-                            </linearGradient>
-                        </defs>
-                        
-                        <!-- Estrutura industrial - cilindro/reator -->
-                        <rect x="60" y="100" width="280" height="260" rx="20" fill="url(#heroGrad1)" stroke="#1f5a49" stroke-width="2.5" opacity="0.8"/>
-                        <circle cx="200" cy="120" r="140" fill="url(#heroGrad2)" opacity="0.25"/>
-                        
-                        <!-- Tubulações principais -->
-                        <path d="M 100 140 Q 80 170 90 220" stroke="#1f5a49" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
-                        <path d="M 300 140 Q 320 170 310 220" stroke="#1f5a49" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.8"/>
-                        <rect x="100" y="240" width="200" height="10" rx="5" fill="#1f5a49" opacity="0.6"/>
-                        
-                        <!-- Válvulas circulares de controle -->
-                        <circle cx="120" cy="160" r="10" fill="none" stroke="#f08a24" stroke-width="2.5" opacity="0.8"/>
-                        <line x1="120" y1="150" x2="120" y2="160" stroke="#f08a24" stroke-width="2" stroke-linecap="round"/>
-                        <circle cx="280" cy="160" r="10" fill="none" stroke="#f08a24" stroke-width="2.5" opacity="0.8"/>
-                        <line x1="280" y1="150" x2="280" y2="160" stroke="#f08a24" stroke-width="2" stroke-linecap="round"/>
-                        
-                        <!-- Medidor de pressão central -->
-                        <circle cx="200" cy="210" r="22" fill="none" stroke="#1f5a49" stroke-width="2.5" opacity="0.6"/>
-                        <circle cx="200" cy="210" r="18" fill="#f5f1e8" opacity="0.4"/>
-                        <line x1="200" y1="192" x2="200" y2="210" stroke="#f08a24" stroke-width="3" stroke-linecap="round"/>
-                        <circle cx="200" cy="210" r="2" fill="#f08a24"/>
-                        
-                        <!-- Painel de controle digital -->
-                        <rect x="110" y="320" width="180" height="120" rx="10" fill="#f5f1e8" stroke="#1f5a49" stroke-width="2.5" opacity="0.95"/>
-                        
-                        <!-- Indicadores de status (LEDs) -->
-                        <circle cx="135" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
-                        <circle cx="165" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
-                        <circle cx="195" cy="345" r="6" fill="#f08a24" opacity="0.8"/>
-                        <circle cx="225" cy="345" r="6" fill="#f08a24" opacity="0.8"/>
-                        <circle cx="255" cy="345" r="6" fill="#abc55d" opacity="0.9"/>
-                        
-                        <!-- Displays/Readouts -->
-                        <rect x="130" y="365" width="60" height="20" rx="4" fill="#1f5a49" opacity="0.15"/>
-                        <rect x="210" y="365" width="60" height="20" rx="4" fill="#1f5a49" opacity="0.15"/>
-                        
-                        <!-- Botões de controle -->
-                        <circle cx="135" cy="410" r="5" fill="#f08a24" opacity="0.7"/>
-                        <circle cx="165" cy="410" r="5" fill="#f08a24" opacity="0.7"/>
-                        <circle cx="195" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
-                        <circle cx="225" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
-                        <circle cx="255" cy="410" r="5" fill="#abc55d" opacity="0.7"/>
-                        
-                        <!-- Animações de dados fluindo -->
-                        <circle cx="200" cy="70" r="7" fill="#abc55d" opacity="0.7">
-                            <animate attributeName="cy" values="70;50;70" dur="2.5s" repeatCount="indefinite"/>
-                            <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2.5s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="140" cy="85" r="6" fill="#f08a24" opacity="0.6">
-                            <animate attributeName="cx" values="140;155;140" dur="2s" repeatCount="indefinite"/>
-                            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="260" cy="90" r="6" fill="#1f5a49" opacity="0.5">
-                            <animate attributeName="cx" values="260;245;260" dur="2.3s" repeatCount="indefinite"/>
-                            <animate attributeName="opacity" values="0.5;0.15;0.5" dur="2.3s" repeatCount="indefinite"/>
-                        </circle>
-                    </svg>
+                    <img src="img/apresentação-app-viabix.png" alt="App Viabix - Sistema Industrial" class="hero-app-image">
+                    <a href="downloads/viabix-app-1.0.0.apk" download="viabix-app.apk" class="btn" style="margin-top: 25px; width: 100%; justify-content: center;">
+                        <i class="fas fa-download"></i> Download App Android
+                    </a>
                 </aside>
             </div>
         </section>
@@ -1092,26 +1315,39 @@
                         <p>Viabix atende especificamente necessidades de operações industriais, desde consultoria até manufatura</p>
                     </div>
                 </div>
-                <div class="industry-grid">
-                    <div class="industry-card">
-                        <i class="fas fa-tools"></i>
-                        <h4>Indústria Manufatureira</h4>
-                        <p>Fabricação de componentes, produtos metálicos, plásticos e químicos com análise completa de custos.</p>
+                <div class="industry-content">
+                    <div class="industry-grid">
+                        <div class="industry-card">
+                            <i class="fas fa-tools"></i>
+                            <div class="industry-card-content">
+                                <h4>Indústria Manufatureira</h4>
+                                <p>Fabricação de componentes, produtos metálicos, plásticos e químicos com análise completa de custos.</p>
+                            </div>
+                        </div>
+                        <div class="industry-card">
+                            <i class="fas fa-drafting-compass"></i>
+                            <div class="industry-card-content">
+                                <h4>Consultoria Técnica</h4>
+                                <p>Consultores e engenheiros que precisam apresentar análises de viabilidade e ROI para clientes.</p>
+                            </div>
+                        </div>
+                        <div class="industry-card">
+                            <i class="fas fa-project-diagram"></i>
+                            <div class="industry-card-content">
+                                <h4>Gestão de Projetos Industriais</h4>
+                                <p>Coordenação de implantação, modernização e acompanhamento de produção por fases.</p>
+                            </div>
+                        </div>
+                        <div class="industry-card">
+                            <i class="fas fa-handshake"></i>
+                            <div class="industry-card-content">
+                                <h4>Agências B2B</h4>
+                                <p>Revendedores que precisam demonstrar viabilidade econômica a prospects antes do comprometimento.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="industry-card">
-                        <i class="fas fa-drafting-compass"></i>
-                        <h4>Consultoria Técnica</h4>
-                        <p>Consultores e engenheiros que precisam apresentar análises de viabilidade e ROI para clientes.</p>
-                    </div>
-                    <div class="industry-card">
-                        <i class="fas fa-project-diagram"></i>
-                        <h4>Gestão de Projetos Industriais</h4>
-                        <p>Coordenação de implantação, modernização e acompanhamento de produção por fases.</p>
-                    </div>
-                    <div class="industry-card">
-                        <i class="fas fa-handshake"></i>
-                        <h4>Agências B2B</h4>
-                        <p>Revendedores que precisam demonstrar viabilidade econômica a prospects antes do comprometimento.</p>
+                    <div>
+                        <img src="img/Projetado-para-Indústria-Manufatureira.png" alt="Indústria Manufatureira" class="industry-image">
                     </div>
                 </div>
             </div>
@@ -1604,41 +1840,87 @@
 
     <footer class="site-footer">
         <div class="shell">
-            <div class="stats-grid" id="statsContainer">
-                <div class="stat-item">
-                    <div class="stat-number" id="anvisTotal">—</div>
-                    <div class="stat-label">ANVIs Criadas</div>
+            <div class="footer-content">
+                <!-- Coluna da Marca -->
+                <div class="footer-brand">
+                    <h3>Viabix</h3>
+                    <p>Plataforma SaaS completa para análise de viabilidade industrial (ANVI), controle de projetos e gestão operacional. Transforme análise em execução.</p>
+                    <div class="social-links">
+                        <a href="https://linkedin.com/company/viabix" target="_blank" aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="https://facebook.com/viabix" target="_blank" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://instagram.com/viabix" target="_blank" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://twitter.com/viabix" target="_blank" aria-label="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://youtube.com/@viabix" target="_blank" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="projetosTotal">—</div>
-                    <div class="stat-label">Projetos Ativos</div>
+
+                <!-- Coluna de Links Rápidos -->
+                <div class="footer-column">
+                    <h4>Navegação</h4>
+                    <ul class="footer-links">
+                        <li><a href="#produto"><i class="fas fa-chevron-right"></i> Produto</a></li>
+                        <li><a href="#modulos"><i class="fas fa-chevron-right"></i> Módulos</a></li>
+                        <li><a href="#planos"><i class="fas fa-chevron-right"></i> Planos</a></li>
+                        <li><a href="#depoimentos"><i class="fas fa-chevron-right"></i> Depoimentos</a></li>
+                        <li><a href="#como-funciona"><i class="fas fa-chevron-right"></i> Como Funciona</a></li>
+                    </ul>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="usuariosTotal">—</div>
-                    <div class="stat-label">Usuários</div>
+
+                <!-- Coluna de Ações -->
+                <div class="footer-column">
+                    <h4>Acesso</h4>
+                    <ul class="footer-links">
+                        <li><a href="signup.html"><i class="fas fa-bolt"></i> Teste Grátis</a></li>
+                        <li><a href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                        <li><a href="downloads/viabix-app-1.0.0.apk" download="viabix-app.apk"><i class="fas fa-download"></i> Download App</a></li>
+                        <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    </ul>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="lideresTotal">—</div>
-                    <div class="stat-label">Líderes de Time</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number" id="anvisRecentes">—</div>
-                    <div class="stat-label">Últimos 30 Dias</div>
+
+                <!-- Coluna de Contato -->
+                <div class="footer-column">
+                    <h4>Contato</h4>
+                    <div class="footer-contact">
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:contato@viabix.com.br">contato@viabix.com.br</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+5511999999999">(11) 99999-9999</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-whatsapp"></i>
+                            <a href="https://wa.me/5511999999999" target="_blank">WhatsApp</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-headset"></i>
+                            <span>Suporte: Segunda a Sexta, 9h às 18h</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="shell site-footer-inner">
-            <span><strong>Viabix</strong> — Plataforma SaaS para ANVI, projetos e operação industrial</span>
-            <span>
-                <a href="signup.html">Teste Grátis</a> · 
-                <a href="login.html">Login</a> · 
-                <a href="#planos">Planos</a> ·
-                <a href="#depoimentos">Depoimentos</a> ·
-                <a href="#como-funciona">Como Funciona</a> ·
-                <a href="downloads/viabix-app-1.0.0.apk" download="viabix-app.apk"><i class="fas fa-download"></i> Download App</a>
-            </span>
-            </span>
-        </div>
+
+            <div class="site-footer-inner">
+                <div class="footer-copyright">
+                    © 2026 Viabix. Todos os direitos reservados.
+                </div>
+                <span>
+                    <a href="#">Termos de Uso</a> · 
+                    <a href="#">Política de Privacidade</a> · 
+                    <a href="#">Documentação</a>
+                </span>
+            </div>
         </div>
     </footer>
 

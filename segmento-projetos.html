@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viabix para Gestão de Projetos Industriais | Controle e Execução</title>
+    <meta name="description" content="Viabix integra análise de viabilidade e gestão de projetos. Da ANVI aprovada à execução: controle fases, cronogramas, custos e equipes em um único sistema.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pine-950: #081d1a;
+            --pine-900: #0d2f27;
+            --pine-800: #164539;
+            --pine-700: #1f5a49;
+            --moss-400: #abc55d;
+            --sand-100: #f5f1e8;
+            --ink-900: #16211c;
+            --ink-700: #44534d;
+            --ink-500: #6c7a73;
+            --signal: #f08a24;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            color: var(--ink-900);
+            background: linear-gradient(180deg, #f8f5ef 0%, #f1ebdf 100%);
+            line-height: 1.6;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        .shell { width: min(1220px, calc(100% - 32px)); margin: 0 auto; }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid rgba(22, 33, 28, 0.06);
+            box-shadow: 0 4px 16px rgba(8, 29, 26, 0.08);
+        }
+
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 0;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-size: 1.15rem;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            color: var(--white);
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.3);
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #1B5E20, #2e7d32);
+            color: var(--white);
+            box-shadow: 0 8px 24px rgba(27, 94, 32, 0.28);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(27, 94, 32, 0.4);
+        }
+
+        .hero {
+            padding: 100px 0 80px;
+            background: linear-gradient(135deg, var(--pine-900), var(--pine-700));
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(171, 197, 93, 0.15), transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            font-weight: 800;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .hero-icon {
+            font-size: 4rem;
+            color: var(--moss-400);
+            margin-bottom: 20px;
+        }
+
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--pine-700);
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--ink-700);
+            margin-bottom: 50px;
+            max-width: 700px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .benefit-card {
+            background: var(--white);
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid rgba(22, 33, 28, 0.08);
+            box-shadow: 0 10px 30px rgba(8, 29, 26, 0.08);
+            transition: transform 0.3s;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(8, 29, 26, 0.12);
+        }
+
+        .benefit-icon {
+            font-size: 2.5rem;
+            color: var(--moss-400);
+            margin-bottom: 20px;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--pine-700);
+        }
+
+        .benefit-card p {
+            color: var(--ink-700);
+            line-height: 1.7;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, var(--pine-800), var(--pine-700));
+            color: var(--white);
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .section-title { font-size: 2rem; }
+            .benefits-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark"><i class="fas fa-industry"></i></div>
+                <div>Viabix</div>
+            </a>
+            <a class="btn" href="signup.html?plan=pro&segmento=projetos">
+                <i class="fas fa-rocket"></i> Começar Agora
+            </a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="shell">
+            <div class="hero-content">
+                <div class="hero-icon"><i class="fas fa-project-diagram"></i></div>
+                <h1>Viabix para Gestão de Projetos Industriais</h1>
+                <p class="hero-subtitle">
+                    Da análise de viabilidade aprovada para a execução sem gaps. Controle fases, cronogramas, orçamentos e equipes. 
+                    Um sistema completo do ANVI ao acompanhamento de produção.
+                </p>
+                <a href="signup.html?plan=pro&segmento=projetos" class="btn">
+                    <i class="fas fa-rocket"></i> Teste Grátis por 14 Dias
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="shell">
+            <h2 class="section-title">Gestão Integrada: Do Planejamento à Operação</h2>
+            <p class="section-subtitle">
+                Elimine retrabalho, mantenha o histórico e acompanhe cada etapa do projeto
+            </p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-link"></i></div>
+                    <h3>Continuidade do ANVI</h3>
+                    <p>Análise aprovada? Converta automaticamente em projeto. Premissas, custos e cronogramas já estão no sistema.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-tasks"></i></div>
+                    <h3>Controle de Fases</h3>
+                    <p>Organize por etapas: estudos preliminares, detalhamento, aquisições, implantação, comissionamento, startup.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Cronograma Integrado</h3>
+                    <p>Acompanhe prazos, marcos, dependências e caminho crítico. Alertas automáticos para atrasos.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <h3>Orçamento vs Realizado</h3>
+                    <p>Compare custos planejados vs executados em tempo real. Identifique desvios antes que virem problemas.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-users"></i></div>
+                    <h3>Gestão de Equipe</h3>
+                    <p>Defina responsáveis, atribua tarefas e acompanhe o progresso. Comunicação centralizada e histórico completo.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3>Dashboards Executivos</h3>
+                    <p>Visão consolidada de todos os projetos: status, saúde financeira, riscos e próximas ações.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="shell">
+            <h2>Simplifique a Gestão dos Seus Projetos Industriais</h2>
+            <p>Teste Viabix gratuitamente por 14 dias. Veja a diferença de ter tudo integrado.</p>
+            <a href="signup.html?plan=pro&segmento=projetos" class="btn" style="font-size: 1.1rem; padding: 14px 30px;">
+                <i class="fas fa-bolt"></i> Começar Teste Grátis
+            </a>
+        </div>
+    </section>
+</body>
+</html>

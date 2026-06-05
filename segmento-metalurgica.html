@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viabix para Indústria Metalúrgica | Soluções para Metais e Usinagem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --pine-900: #0d2f27;
+            --pine-700: #1f5a49;
+            --moss-400: #abc55d;
+            --ink-700: #44534d;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Sora', sans-serif; color: #16211c; background: linear-gradient(180deg, #f8f5ef 0%, #f1ebdf 100%); line-height: 1.6; }
+        a { color: inherit; text-decoration: none; }
+        .shell { width: min(1220px, calc(100% - 32px)); margin: 0 auto; }
+        .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid rgba(22, 33, 28, 0.06); box-shadow: 0 4px 16px rgba(8, 29, 26, 0.08); }
+        .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 0; }
+        .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -0.03em; font-size: 1.15rem; }
+        .brand-mark { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; color: var(--white); background: linear-gradient(135deg, #1B5E20, #2e7d32); box-shadow: 0 8px 24px rgba(27, 94, 32, 0.3); font-size: 1.4rem; font-weight: 800; }
+        .btn { padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; background: linear-gradient(135deg, #1B5E20, #2e7d32); color: var(--white); box-shadow: 0 8px 24px rgba(27, 94, 32, 0.28); border: none; cursor: pointer; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(27, 94, 32, 0.4); }
+        .hero { padding: 100px 0 80px; background: linear-gradient(135deg, var(--pine-900), var(--pine-700)); color: var(--white); position: relative; overflow: hidden; }
+        .hero-content { position: relative; z-index: 1; max-width: 800px; }
+        .hero h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px; font-weight: 800; }
+        .hero-subtitle { font-size: 1.3rem; margin-bottom: 30px; color: rgba(255, 255, 255, 0.9); }
+        .hero-icon { font-size: 4rem; color: var(--moss-400); margin-bottom: 20px; }
+        .section { padding: 80px 0; }
+        .section-title { font-size: 2.5rem; margin-bottom: 20px; color: var(--pine-700); font-weight: 700; }
+        .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
+        .benefit-card { background: var(--white); padding: 35px; border-radius: 16px; border: 1px solid rgba(22, 33, 28, 0.08); box-shadow: 0 10px 30px rgba(8, 29, 26, 0.08); transition: transform 0.3s; }
+        .benefit-card:hover { transform: translateY(-5px); }
+        .benefit-icon { font-size: 2.5rem; color: var(--moss-400); margin-bottom: 20px; }
+        .benefit-card h3 { font-size: 1.3rem; margin-bottom: 12px; color: var(--pine-700); }
+        .cta-section { background: linear-gradient(135deg, #164539, var(--pine-700)); color: var(--white); padding: 80px 0; text-align: center; }
+        .cta-section h2 { font-size: 2.8rem; margin-bottom: 20px; }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.2rem; } .benefits-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a href="index.html" class="brand">
+                <div class="brand-mark"><i class="fas fa-industry"></i></div>
+                <div>Viabix</div>
+            </a>
+            <a class="btn" href="signup.html?plan=pro&segmento=metalurgica"><i class="fas fa-rocket"></i> Começar Agora</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="shell">
+            <div class="hero-content">
+                <div class="hero-icon"><i class="fas fa-hammer"></i></div>
+                <h1>Viabix para Indústria Metalúrgica</h1>
+                <p class="hero-subtitle">Análise de viabilidade e controle de projetos para fabricação de produtos metálicos, usinagem, fundição e tratamento de superfície.</p>
+                <a href="signup.html?plan=pro&segmento=metalurgica" class="btn"><i class="fas fa-rocket"></i> Teste Grátis por 14 Dias</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="shell">
+            <h2 class="section-title">Soluções Específicas para Metalurgia</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-tools"></i></div>
+                    <h3>Custos de Usinagem</h3>
+                    <p>Calcule tempo de máquina, ferramental, matéria-prima, refugo e setup. Análise por lote e volume de produção.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-fire"></i></div>
+                    <h3>Processos Térmicos</h3>
+                    <p>Avalie custos de fundição, forjamento, tratamento térmico e soldagem. Energia, consumíveis e mão de obra especializada.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-weight"></i></div>
+                    <h3>Controle de Matéria-Prima</h3>
+                    <p>Gerencie custos de chapas, barras, tubos e perfis. Otimize aproveitamento e reduza desperdício.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon"><i class="fas fa-cog"></i></div>
+                    <h3>Investimento em Equipamentos</h3>
+                    <p>Analise ROI de tornos CNC, centros de usinagem, prensas, fornos e equipamentos de acabamento.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="shell">
+            <h2>Otimize sua Metalúrgica com Viabix</h2>
+            <p>Teste gratuitamente por 14 dias</p>
+            <a href="signup.html?plan=pro&segmento=metalurgica" class="btn" style="font-size: 1.1rem; padding: 14px 30px;"><i class="fas fa-bolt"></i> Começar Teste Grátis</a>
+        </div>
+    </section>
+</body>
+</html>
