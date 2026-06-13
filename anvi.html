@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"/>
@@ -227,7 +227,71 @@
         border-radius: 12px;
         box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
-    
+
+    .anvi-stepper {
+        background: linear-gradient(145deg, #f4fbf4, #e9f3e9);
+        border: 1px solid rgba(14, 73, 45, 0.12);
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 25px;
+    }
+
+    .anvi-stepper .step-button {
+        border-radius: 999px;
+        border: 1px solid rgba(10, 48, 36, 0.12);
+        background: white;
+        color: var(--primary-dark);
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .anvi-stepper .step-button.active,
+    .anvi-stepper .step-button:hover {
+        border-color: var(--primary-color);
+        background: linear-gradient(145deg, var(--primary-color), var(--primary-light));
+        color: white;
+        box-shadow: 0 8px 18px rgba(10, 48, 36, 0.15);
+    }
+
+    .anvi-stepper .stepper-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .anvi-stepper .stepper-progress {
+        width: 100%;
+        min-width: 240px;
+        height: 10px;
+        border-radius: 99px;
+        overflow: hidden;
+        background: rgba(10, 48, 36, 0.08);
+    }
+
+    .anvi-stepper .stepper-progress .progress-bar {
+        background: linear-gradient(145deg, var(--primary-color), var(--primary-light));
+    }
+
+    .anvi-stepper .step-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 16px;
+    }
+
+    .anvi-stepper .step-summary .badge {
+        background: rgba(255,255,255,0.95);
+        color: var(--text-primary);
+        border: 1px solid rgba(10, 48, 36, 0.12);
+        font-weight: 600;
+    }
+
     footer {
         background: linear-gradient(145deg, var(--primary-dark), var(--primary-color));
         color: white;
@@ -915,6 +979,80 @@
         font-size: 0.7rem;
         padding: 4px 8px;
     }
+
+    .linked-project-card {
+        display: none;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+        border: 1px solid #b6d4fe;
+        border-left: 6px solid #0d6efd;
+        border-radius: 8px;
+        background: #f8fbff;
+        box-shadow: 0 3px 10px rgba(13, 110, 253, 0.08);
+    }
+
+    .linked-project-card.visible {
+        display: flex;
+    }
+
+    .linked-project-main {
+        min-width: 240px;
+        flex: 1 1 auto;
+    }
+
+    .linked-project-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        color: #073b7a;
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .linked-project-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .linked-project-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 9px;
+        border-radius: 8px;
+        background: #ffffff;
+        border: 1px solid #dbeafe;
+        color: #26435f;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .linked-project-progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 420px;
+    }
+
+    .linked-project-progress .progress {
+        flex: 1 1 auto;
+        height: 8px;
+        min-width: 120px;
+        background: #e7f0ff;
+    }
+
+    .linked-project-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+    }
     
     /* Estilo para o painel de validação de capacidade */
     .capacity-validation {
@@ -1085,6 +1223,20 @@
         .capacity-validation {
             flex-direction: column;
             text-align: center;
+        }
+
+        .linked-project-card {
+            flex-direction: column;
+        }
+
+        .linked-project-actions {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .linked-project-progress {
+            max-width: 100%;
         }
         
         .capacity-validation .items {
@@ -1839,6 +1991,30 @@
             </div>
         </div>
 
+        <div class="linked-project-card" id="linkedProjectCard" aria-live="polite">
+            <div class="linked-project-main">
+                <div class="linked-project-title">
+                    <i class="fas fa-link"></i>
+                    <span id="linkedProjectTitle">Projeto vinculado</span>
+                </div>
+                <div class="linked-project-meta" id="linkedProjectMeta"></div>
+                <div class="linked-project-progress">
+                    <div class="progress" role="progressbar" aria-label="Progresso do projeto" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="progress-bar bg-primary" id="linkedProjectProgress" style="width: 0%"></div>
+                    </div>
+                    <strong id="linkedProjectProgressText">0%</strong>
+                </div>
+            </div>
+            <div class="linked-project-actions">
+                <button class="btn btn-sm btn-outline-primary" type="button" onclick="verificarVinculoComProjeto()">
+                    <i class="fas fa-rotate me-1"></i>Atualizar
+                </button>
+                <button class="btn btn-sm btn-primary" type="button" onclick="abrirProjetoVinculado()">
+                    <i class="fas fa-external-link-alt me-1"></i>Abrir
+                </button>
+            </div>
+        </div>
+
         <!-- PAINEL DE VALIDAÇÃO DE CONSISTÊNCIA - ALTA VISIBILIDADE -->
         <div id="painelValidacao" class="mb-4" style="display: none;"></div>
         
@@ -1857,6 +2033,26 @@
             </div>
             <div class="text-muted small">
                 <i class="fas fa-clock me-1"></i><span id="dataHoraValidacao"></span>
+            </div>
+        </div>
+
+        <div class="anvi-stepper">
+            <div class="d-flex flex-wrap gap-2" id="anviStepButtons"></div>
+            <div class="stepper-footer">
+                <div class="stepper-progress">
+                    <div id="anviStepProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="prevStepBtn">Anterior</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="nextStepBtn">Próximo</button>
+                </div>
+            </div>
+            <div class="step-summary" id="anviStepSummary">
+                <span class="badge bg-info">Status: <strong id="anviResumoStatus">Em andamento</strong></span>
+                <span class="badge bg-success">Margem: R$ <strong id="anviResumoMargem">0.00</strong></span>
+                <span class="badge bg-secondary">Custo Total: R$ <strong id="anviResumoCustoTotal">0.00</strong></span>
+                <span class="badge bg-warning text-dark">Preço Sugerido: R$ <strong id="anviResumoPreco">0.00</strong></span>
+                <span class="badge bg-light text-dark">Salvo às <strong id="anviResumoSalvo">--:--</strong></span>
             </div>
         </div>
 
@@ -4769,7 +4965,8 @@
 
 <!-- Bootstrap JS e dependências -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="js/anvi-api-core.js"></script>
+<script src="js/anvi-operations.js"></script>
 <!-- SCRIPT PRINCIPAL - COM SUPORTE A MULTIUSUÁRIO E MYSQL -->
 <script>
     // ==================================================================================
@@ -4807,54 +5004,27 @@
 
     // Verificar sessão ao carregar a página
     async function verificarSessao() {
-        console.log('🔍 [VERIFICAR_SESSAO] Iniciando...', new Date().toISOString());
         try {
-            console.log('🔍 [VERIFICAR_SESSAO] Preparando fetch para api/check_session.php');
-            const response = await fetch('api/check_session.php', {
-                credentials: 'include'
-            });
-            console.log('🔍 [VERIFICAR_SESSAO] Fetch completado - Status HTTP:', response.status, response.statusText);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ [VERIFICAR_SESSAO] HTTP Error:', response.status, 'Body:', errorText);
-                throw new Error('HTTP ' + response.status);
-            }
-            
-            console.log('🔍 [VERIFICAR_SESSAO] Tentando fazer parse JSON...');
-            let data;
-            try {
-                data = await response.json();
-                console.log('🔍 [VERIFICAR_SESSAO] JSON parseado com sucesso:', data);
-            } catch (parseError) {
-                const text = await response.text();
-                console.error('❌ [VERIFICAR_SESSAO] Erro ao fazer parse JSON. Response text:', text);
-                throw parseError;
-            }
-            
-            const autenticado = data.logado === true || data.logged === true;
-            console.log('🔍 [VERIFICAR_SESSAO] Autenticado?', autenticado, 'data.logado=', data.logado, 'data.logged=', data.logged);
-            
+            const data = await ViabixApiCore.checkSession();
+            const autenticado = ViabixApiCore.isAuthenticatedSession(data);
+
             if (autenticado) {
-                console.log('✅ [VERIFICAR_SESSAO] AUTENTICADO! User:', data.user?.id, data.user?.login);
                 usuarioAtual = data.user;
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainSystem').style.display = 'block';
                 atualizarInterfaceUsuario();
                 setTimeout(() => {
-                    console.log('⏱️ [VERIFICAR_SESSAO] setTimeout iniciado (500ms) - Chamando carregarANVIs()');
                     calculateArea();
                     updateAllCalculations();
                     carregarANVIs();
                     updateDateTime();
                 }, 500);
             } else {
-                console.log('❌ [VERIFICAR_SESSAO] NÃO AUTENTICADO - check_session retornou logado=false');
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('mainSystem').style.display = 'none';
             }
         } catch (e) {
-            console.error('❌ [VERIFICAR_SESSAO] EXCEÇÃO CAPTURADA:', e.message, e.stack);
+            console.error('Erro ao verificar sessao:', e);
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainSystem').style.display = 'none';
         }
@@ -4871,13 +5041,7 @@
         }
 
         try {
-            const response = await fetch('api/login.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ login, senha })
-            });
-            const data = await response.json();
+            const data = await ViabixApiCore.login(login, senha);
 
             if (data.success) {
                 usuarioAtual = data.user;
@@ -4891,7 +5055,7 @@
                     updateDateTime();
                 }, 500);
             } else {
-                mostrarErroLogin('Usuário ou senha inválidos');
+                mostrarErroLogin(data.message || 'Usuário ou senha inválidos');
             }
         } catch (e) {
             console.error('Erro no login:', e);
@@ -4910,10 +5074,7 @@
 
     async function fazerLogout() {
         try {
-            await fetch('api/logout.php', {
-                method: 'POST',
-                credentials: 'include'
-            });
+            await ViabixApiCore.logout();
         } catch (e) {
             console.error('Erro no logout:', e);
         }
@@ -4975,11 +5136,8 @@
         }
 
         try {
-            const response = await fetch('api/usuarios.php', {
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Erro ao carregar usuários');
-            const usuarios = await response.json();
+            const usuarios = await ViabixApiCore.listUsers();
+            if (!Array.isArray(usuarios)) throw new Error('Erro ao carregar usuários');
 
             const tbody = document.getElementById('usuariosTableBody');
             tbody.innerHTML = '';
@@ -5027,11 +5185,8 @@
 
     async function editarUsuario(id) {
         try {
-            const response = await fetch(`api/usuarios.php?id=${id}`, {
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Erro ao carregar usuário');
-            const usuario = await response.json();
+            const usuario = await ViabixApiCore.getUserById(id);
+            if (!usuario || !usuario.id) throw new Error('Erro ao carregar usuário');
 
             document.getElementById('usuarioFormModalLabel').textContent = 'Editar Usuário';
             document.getElementById('usuarioEditId').value = usuario.id;
@@ -5072,14 +5227,7 @@
         }
 
         try {
-            const response = await fetch('api/usuarios.php', {
-                method: id ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ id, login, nome, senha, nivel })
-            });
-
-            const data = await response.json();
+            const data = await ViabixApiCore.saveUser({ id, login, nome, senha, nivel });
 
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('usuarioFormModal')).hide();
@@ -5100,14 +5248,7 @@
         }
 
         try {
-            const response = await fetch('api/usuarios.php', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ id })
-            });
-
-            const data = await response.json();
+            const data = await ViabixApiCore.deleteUserById(id);
 
             if (data.success) {
                 abrirModalUsuarios(); // Recarrega a lista
@@ -5121,277 +5262,7 @@
         }
     }
 
-    // =========================================
-    // FUNÇÕES PARA ANVI (MySQL via PHP)
-    // =========================================
-
-    async function salvarANVI() {
-        if (!usuarioAtual) {
-            alert('Você precisa estar logado para salvar.');
-            return;
-        }
-
-        if (usuarioAtual.nivel === 'visitante') {
-            alert('Visitantes não podem salvar ANVIs.');
-            return;
-        }
-
-        if (window.rateioBloqueado) {
-            alert('❌ Não é possível salvar com percentuais de rateio > 100%. Ajuste os custos indiretos antes de salvar.');
-            return;
-        }
-
-        const anviNumber = document.getElementById('anviNumber').value;
-        const revisaoANVI = document.getElementById('revisaoANVI').value;
-
-        if (!anviNumber || !revisaoANVI) {
-            alert('Por favor, preencha o Nº ANVI e a Revisão antes de salvar.');
-            return;
-        }
-
-        const anviData = capturarTodosDados();
-        anviData.id = `${anviNumber}_${revisaoANVI}`;
-        anviData.numero = anviNumber;
-        anviData.revisao = revisaoANVI;
-        anviData.cliente = document.getElementById('client').value;
-        anviData.projeto = document.getElementById('project').value;
-        anviData.produto = document.getElementById('productDescription').value;
-        anviData.volumeMensal = document.getElementById('monthlyVolume').value;
-        anviData.dataANVI = document.getElementById('dataANVI').value;
-        anviData.status = document.getElementById('statusAprovacao').value;
-console.log('Dados a salvar:', anviData);
-
-        try {
-            const response = await fetch('api/anvi.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(anviData)
-            });
-
-            const result = await response.json();
-
-            if (response.status === 409 && result.duplicate) {
-                // DUPLICATA DETECTADA - Perguntar se quer substituir
-                const confirmacao = confirm(
-                    `${result.message}\n\n` +
-                    `Cliente: ${result.existing.cliente || 'N/A'}\n\n` +
-                    `Deseja SUBSTITUIR o registro existente?\n\n` +
-                    `• Clique OK para SUBSTITUIR\n` +
-                    `• Clique Cancelar para NÃO salvar`
-                );
-                
-                if (confirmacao) {
-                    // Salvar com force=true para substituir
-                    anviData.force = true;
-                    const responseForce = await fetch('api/anvi.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify(anviData)
-                    });
-                    
-                    const resultForce = await responseForce.json();
-                    
-                    if (resultForce.success) {
-                        carregarANVIs();
-                        mostrarNotificacao(`✅ ANVI ${anviNumber} Rev. ${revisaoANVI} salva com sucesso!`, 'success');
-                    } else {
-                        alert(resultForce.message || 'Erro ao salvar ANVI');
-                    }
-                } else {
-                    mostrarNotificacao('Salvamento cancelado pelo usuário', 'info');
-                }
-            } else if (result.success) {
-                carregarANVIs();
-                mostrarNotificacao(`✅ ANVI ${anviNumber} Rev. ${revisaoANVI} salva com sucesso!`, 'success');
-            } else {
-                alert(result.message || 'Erro ao salvar ANVI');
-            }
-        } catch (e) {
-            console.error('Erro ao salvar ANVI:', e);
-            alert('Erro de conexão com o servidor');
-        }
-    }
-
-    async function carregarANVIs() {
-        console.log('📂 [CARREGAR_ANVIS] Iniciando requisição para api/anvi.php', new Date().toISOString());
-        try {
-            console.log('📂 [CARREGAR_ANVIS] Preparando fetch...');
-            const response = await fetch('api/anvi.php', {
-                credentials: 'include'
-            });
-            console.log('📡 [CARREGAR_ANVIS] Resposta recebida - Status HTTP:', response.status, response.statusText);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ [CARREGAR_ANVIS] HTTP Error:', response.status, response.statusText);
-                console.error('❌ [CARREGAR_ANVIS] Corpo da resposta:', errorText);
-                throw new Error(`Erro ao carregar ANVIs (${response.status}): ${errorText}`);
-            }
-            
-            console.log('📂 [CARREGAR_ANVIS] Tentando fazer parse JSON...');
-            const db = await response.json();
-            console.log('✅ [CARREGAR_ANVIS] ANVIs carregadas com sucesso! Count:', Object.keys(db).length, 'Data:', db);
-
-            const dirANVI = document.getElementById('dirANVI');
-            const masterANVI = document.getElementById('masterANVI');
-
-            if (dirANVI) {
-                if (Object.keys(db).length === 0) {
-                    dirANVI.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="fas fa-database fa-2x mb-2 d-block"></i>
-                                Nenhuma ANVI salva ainda. Preencha os dados e clique em "Salvar ANVI".
-                            </td>
-                        </tr>`;
-                } else {
-                    let html = '';
-                    Object.values(db).forEach(anvi => {
-                        html += `
-                            <tr>
-                                <td>${anvi.numero || ''}</td>
-                                <td>${anvi.revisao || ''}</td>
-                                <td>${anvi.cliente || ''}</td>
-                                <td>${anvi.projeto || ''}</td>
-                                <td>${anvi.dataANVI || ''}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary me-1" onclick="abrirANVI('${anvi.id}')">
-                                        <i class="fas fa-folder-open"></i> Abrir
-                                    </button>
-                                    <button class="btn btn-sm btn-success me-1" onclick="gerarPDFANVI('${anvi.id}')">
-                                        <i class="fas fa-file-pdf"></i> PDF
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" onclick="excluirANVI('${anvi.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>`;
-                    });
-                    dirANVI.innerHTML = html;
-                }
-            }
-
-            if (masterANVI) {
-                if (Object.keys(db).length === 0) {
-                    masterANVI.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                Nenhuma ANVI disponível na lista mestra.
-                            </td>
-                        </tr>`;
-                } else {
-                    let html = '';
-                    Object.values(db).forEach(anvi => {
-                        const dataCriacao = anvi.timestamps?.dataCriacao ? new Date(anvi.timestamps.dataCriacao) : new Date();
-                        const dataFormatada = dataCriacao.toLocaleDateString('pt-BR');
-
-                        html += `
-                            <tr>
-                                <td>${anvi.numero || ''}</td>
-                                <td>${anvi.revisao || ''}</td>
-                                <td>${anvi.cliente || ''}</td>
-                                <td>${anvi.projeto || ''}</td>
-                                <td>${anvi.produto || ''}</td>
-                                <td>
-                                    <span class="badge ${anvi.status === 'aprovada' ? 'bg-success' : anvi.status === 'aprovada-condicional' ? 'bg-warning' : anvi.status === 'em-andamento' ? 'bg-info' : 'bg-secondary'}">
-                                        ${anvi.status || 'N/A'}
-                                    </span>
-                                </td>
-                                <td>${dataFormatada}</td>
-                            </tr>`;
-                    });
-                    masterANVI.innerHTML = html;
-                }
-            }
-        } catch (e) {
-            console.error('❌ [CARREGAR_ANVIS] EXCEÇÃO CAPTURADA:', e.message, e.stack);
-            mostrarNotificacao(`Erro ao carregar ANVIs: ${e.message}`, 'error');
-        }
-    }
-
-    async function abrirANVI(anviId) {
-        try {
-            const response = await fetch(`api/anvi.php?id=${anviId}`, {
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Erro ao carregar ANVI');
-            const anvi = await response.json();
-
-            if (anvi.desenhos && Array.isArray(anvi.desenhos)) {
-                desenhosANVI = anvi.desenhos;
-                renderizarDesenhos();
-            } else {
-                desenhosANVI = [];
-                renderizarDesenhos();
-            }
-
-            restaurarTodosDados(anvi);
-
-            document.getElementById('anviNumber').value = anvi.numero || '';
-            document.getElementById('revisaoANVI').value = anvi.revisao || '';
-            document.getElementById('client').value = anvi.cliente || '';
-            document.getElementById('project').value = anvi.projeto || '';
-            document.getElementById('productDescription').value = anvi.produto || '';
-            document.getElementById('monthlyVolume').value = anvi.volumeMensal || 1000;
-            document.getElementById('dataANVI').value = anvi.dataANVI || '';
-            document.getElementById('statusAprovacao').value = anvi.status || '';
-
-            const dadosTab = document.getElementById('dados-tab');
-            if (dadosTab) {
-                dadosTab.click();
-            }
-
-            setTimeout(() => {
-                updateAllCalculations();
-                validarConsistenciaGeral();
-            }, 500);
-
-            mostrarNotificacao(`✅ ANVI ${anvi.numero} Rev. ${anvi.revisao} carregada com sucesso!`, 'success');
-        } catch (e) {
-            console.error('Erro ao abrir ANVI:', e);
-            alert('Erro ao carregar ANVI do servidor');
-        }
-    }
-
-    async function excluirANVI(anviId) {
-        if (!usuarioAtual) {
-            alert('Você precisa estar logado.');
-            return;
-        }
-
-        if (usuarioAtual.nivel === 'visitante') {
-            alert('Visitantes não podem excluir ANVIs.');
-            return;
-        }
-
-        if (!confirm('Tem certeza que deseja excluir esta ANVI? Esta ação não pode ser desfeita.')) {
-            return;
-        }
-
-        try {
-            const response = await fetch('api/anvi.php', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ id: anviId })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                carregarANVIs();
-                mostrarNotificacao('ANVI excluída com sucesso!', 'success');
-            } else {
-                alert(result.message || 'Erro ao excluir ANVI');
-            }
-        } catch (e) {
-            console.error('Erro ao excluir ANVI:', e);
-            alert('Erro de conexão com o servidor');
-        }
-    }
+        // Operacoes de ANVI movidas para js/anvi-operations.js.
 
     // =========================================
     // FUNÇÕES UTILITÁRIAS DE FORMATAÇÃO (MANTIDAS DO ORIGINAL)
@@ -8042,6 +7913,90 @@ console.log('Dados a salvar:', anviData);
         }
     }
 
+    function parseMoneyFromText(text) {
+        return parseFloat(String(text || '')
+            .replace('R$', '')
+            .replace('%', '')
+            .replace('meses', '')
+            .replace('peças', '')
+            .replace(/\s/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.')) || 0;
+    }
+
+    function textNumberById(id) {
+        return parseMoneyFromText(document.getElementById(id)?.textContent || document.getElementById(id)?.value || 0);
+    }
+
+    function capturarResumoFinanceiroPadronizado() {
+        updateAllCalculations();
+
+        const volumeMensal = parseFloat(document.getElementById('monthlyVolume')?.value) || 0;
+        const custoUnitario = textNumberById('resumoCustoUnitario');
+        const precoSugerido = textNumberById('precoSugeridoDestaque');
+        const receitaMensal = textNumberById('resumoFaturamentoMensal') || (precoSugerido * volumeMensal);
+        const lucroLiquidoMensal = textNumberById('dreLucroLiquido');
+        const investimentoTotal = textNumberById('resumoTotalInvestimento');
+        const margemLiquida = textNumberById('dreMargemLiquida');
+        const roi = textNumberById('roiCalculado') || textNumberById('dreROI');
+        const payback = textNumberById('paybackCalculado') || textNumberById('drePayback');
+        const custoTotalMensal = custoUnitario * volumeMensal;
+        const alertas = [];
+
+        if (margemLiquida > 0 && margemLiquida < 10) {
+            alertas.push({ tipo: 'margem_baixa', severidade: 'critico', mensagem: 'Margem líquida abaixo de 10%' });
+        } else if (margemLiquida > 0 && margemLiquida < 15) {
+            alertas.push({ tipo: 'margem_atencao', severidade: 'atencao', mensagem: 'Margem líquida abaixo do recomendado' });
+        }
+        if (roi > 0 && roi < INDUSTRY.ROI_MINIMO_RECOMENDADO) {
+            alertas.push({ tipo: 'roi_baixo', severidade: 'atencao', mensagem: 'ROI anual abaixo de 20%' });
+        }
+        if (payback > INDUSTRY.PAYBACK_MAXIMO_RECOMENDADO) {
+            alertas.push({ tipo: 'payback_longo', severidade: 'atencao', mensagem: 'Payback acima de 24 meses' });
+        }
+
+        return {
+            schema_version: 1,
+            moeda: 'BRL',
+            volume_mensal: Number(volumeMensal.toFixed(2)),
+            custos: {
+                custo_unitario: Number(custoUnitario.toFixed(2)),
+                custo_total_mensal: Number(custoTotalMensal.toFixed(2)),
+                materia_prima: textNumberById('resumoMateriaPrima'),
+                insumos: textNumberById('resumoInsumos'),
+                componentes: textNumberById('resumoComponentes'),
+                embalagem: textNumberById('resumoEmbalagem'),
+                mao_obra_direta: textNumberById('resumoMaoObraDireta'),
+                mao_obra_indireta: textNumberById('resumoMaoObraIndireta'),
+                processo: textNumberById('resumoProcesso'),
+                indiretos_fixos: textNumberById('resumoCustosIndiretosFixos'),
+                indiretos_variaveis: textNumberById('resumoCustosIndiretosVariaveis')
+            },
+            receitas: {
+                preco_sugerido: Number(precoSugerido.toFixed(2)),
+                receita_mensal: Number(receitaMensal.toFixed(2)),
+                lucro_liquido_mensal: Number(lucroLiquidoMensal.toFixed(2))
+            },
+            investimentos: {
+                investimento_total: Number(investimentoTotal.toFixed(2)),
+                ferramental: textNumberById('resumoFerramental'),
+                materiais_ferramental: textNumberById('resumoMateriaisFerramental')
+            },
+            indicadores: {
+                margem_esperada_pct: Number(margemLiquida.toFixed(2)),
+                margem_liquida_pct: Number(margemLiquida.toFixed(2)),
+                custo_total: Number(custoTotalMensal.toFixed(2)),
+                preco_sugerido: Number(precoSugerido.toFixed(2)),
+                payback_meses: Number(payback.toFixed(2)),
+                roi_pct: Number(roi.toFixed(2)),
+                desvio_estimado_realizado_valor: 0,
+                desvio_estimado_realizado_pct: 0
+            },
+            alertas,
+            calculado_em: new Date().toISOString()
+        };
+    }
+
     function capturarTodosDados() {
         const dados = {
             informacoesBasicas: {
@@ -8093,6 +8048,7 @@ console.log('Dados a salvar:', anviData);
                 aliquotaIS: document.getElementById('aliquotaIS')?.value || 0,
                 encargosSociais: document.getElementById('encargosSociais')?.value || 80
             },
+            financeiro: capturarResumoFinanceiroPadronizado(),
             checkboxes: {
                 ppap: document.getElementById('ppap').checked,
                 viabilidadeTecnica: document.getElementById('viabilidadeTecnica').checked,
@@ -11032,96 +10988,6 @@ console.log('Dados a salvar:', anviData);
         }
     }
 
-    function novaANVI() {
-        if (!usuarioAtual) {
-            alert('Você precisa estar logado.');
-            return;
-        }
-
-        if (usuarioAtual.nivel === 'visitante') {
-            alert('Visitantes não podem criar novas ANVIs.');
-            return;
-        }
-
-        if (!confirm('Deseja iniciar uma nova ANVI? Todos os dados não salvos serão perdidos.')) {
-            return;
-        }
-
-        document.getElementById('anviNumber').value = '';
-        document.getElementById('dataANVI').value = new Date().toISOString().split('T')[0];
-        document.getElementById('revisaoANVI').value = '01';
-        document.getElementById('lastUpdateDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('statusAprovacao').value = 'em-andamento';
-        document.getElementById('client').value = '';
-        document.getElementById('project').value = '';
-        document.getElementById('codigo').value = '';
-        document.getElementById('productDescription').value = '';
-        document.getElementById('segment').value = '';
-        document.getElementById('monthlyVolume').value = '1000';
-        document.getElementById('desenhoDate').value = '';
-        document.getElementById('revisao').value = '';
-        document.getElementById('glassType').value = '';
-        document.getElementById('geometry').value = '';
-        document.getElementById('thickness').value = '';
-        document.getElementById('width').value = '';
-        document.getElementById('height').value = '';
-        document.getElementById('glassColor').value = '';
-        document.getElementById('pvbType').value = '';
-        document.getElementById('responsavelTecnica').value = '';
-        document.getElementById('responsavelComercial').value = '';
-        document.getElementById('responsavelEconomica').value = '';
-        document.getElementById('responsavelFiscal').value = '';
-        document.getElementById('observacaoGeral').value = '';
-
-        document.getElementById('ppap').checked = false;
-        document.getElementById('viabilidadeTecnica').checked = false;
-        document.getElementById('viabilidadeEconomica').checked = false;
-        document.getElementById('viabilidadeComercial').checked = false;
-        document.getElementById('viabilidadeFiscal').checked = false;
-
-        const tabelas = [
-            'homologacoesTable',
-            'materiaPrimaTable',
-            'insumosTable',
-            'componentesTable',
-            'processTable',
-            'toolingTable',
-            'materiaisFerramentalTable',
-            'materiaisFerramentalMachoTable',
-            'materiaisFerramentalMatrizTable',
-            'materiaisFerramentalGabaritoTable',
-            'embalagemTable',
-            'normasTable',
-            'maoObraTable',
-            'maoObraIndiretaTable',
-            'custosIndiretosTable',
-            'classificacaoFiscalTable'
-        ];
-
-        tabelas.forEach(tableId => {
-            const table = document.getElementById(tableId);
-            if (table) {
-                const tbody = table.querySelector('tbody');
-                if (tbody) {
-                    tbody.innerHTML = '';
-                }
-            }
-        });
-
-        desenhosANVI = [];
-        renderizarDesenhos();
-
-        document.getElementById('observacoesText').value = '';
-
-        setTimeout(() => {
-            calculateArea();
-            updateAllCalculations();
-            validarConsistenciaGeral();
-        }, 100);
-
-        mostrarNotificacao('Nova ANVI criada com sucesso!', 'success');
-    }
-
     // =========================================
     // INICIALIZAÇÃO DO SISTEMA
     // =========================================
@@ -11131,6 +10997,10 @@ console.log('Dados a salvar:', anviData);
         console.log('[DOMREADY] Chamando verificarSessao()...');
 
         verificarSessao().then(() => {
+            if (!usuarioAtual) {
+                return;
+            }
+
             // Após verificar sessão, limpar bloqueios antigos
             limparBloqueiosAntigos();
 
@@ -11414,7 +11284,9 @@ console.log('Dados a salvar:', anviData);
             updateAllCalculations();
             validarMetodoRateio();
             validarConsistenciaGeral();
-            carregarANVIs();
+            if (usuarioAtual) {
+                carregarANVIs();
+            }
             updateDateTime();
             
             updateReforma2027UI();
@@ -11490,6 +11362,31 @@ console.log('Dados a salvar:', anviData);
         atualizarPontoEquilibrioCorrigido();
     });
 
+    const anviOperations = window.ViabixAnviOperations.mount({
+        api: window.ViabixApiCore,
+        getUsuarioAtual: () => usuarioAtual,
+        getRateioBloqueado: () => window.rateioBloqueado,
+        capturarTodosDados,
+        restaurarTodosDados,
+        setDesenhos: (desenhos) => {
+            desenhosANVI = desenhos;
+            renderizarDesenhos();
+        },
+        updateAllCalculations,
+        validarConsistenciaGeral,
+        mostrarNotificacao,
+        verificarVinculoComProjeto
+    });
+
+    const anviAtual = anviOperations.getState();
+    let salvarANVI = anviOperations.salvarANVI;
+    const carregarANVIs = anviOperations.carregarANVIs;
+    const abrirANVI = anviOperations.abrirANVI;
+    const excluirANVI = anviOperations.excluirANVI;
+    const limparBloqueiosAntigos = anviOperations.limparBloqueiosAntigos;
+    const desbloquearANVI = anviOperations.desbloquearANVI;
+    const abrirANVISomenteLeitura = anviOperations.abrirANVISomenteLeitura;
+
     // Exportar funções para o escopo global
     window.aplicarClassificacaoFiscal = aplicarClassificacaoFiscal;
     window.aplicarClassificacaoFiscalParaCalculos = aplicarClassificacaoFiscalParaCalculos;
@@ -11503,6 +11400,8 @@ console.log('Dados a salvar:', anviData);
     window.carregarANVIs = carregarANVIs;
     window.abrirANVI = abrirANVI;
     window.excluirANVI = excluirANVI;
+    window.abrirANVISomenteLeitura = abrirANVISomenteLeitura;
+    window.desbloquearANVI = desbloquearANVI;
     window.adicionarLinhaManual = adicionarLinhaManual;
     window.adicionarLinhaProcesso = adicionarLinhaProcesso;
     window.adicionarLinhaFerramental = adicionarLinhaFerramental;
@@ -11524,6 +11423,141 @@ console.log('Dados a salvar:', anviData);
     window.editarUsuario = editarUsuario;
     window.salvarUsuario = salvarUsuario;
     window.excluirUsuario = excluirUsuario;
+
+    const ANVI_ETAPAS = [
+        { label: 'Dados Gerais', tabId: 'dados' },
+        { label: 'Produto & Especificação', tabId: 'materia-prima' },
+        { label: 'Materiais', tabId: 'insumos' },
+        { label: 'Processos', tabId: 'fluxo' },
+        { label: 'Ferramental', tabId: 'ferramental' },
+        { label: 'Custos Indiretos', tabId: 'custos-indiretos' },
+        { label: 'Fiscal & Impostos', tabId: 'classificacao-fiscal' },
+        { label: 'Resumo Financeiro', tabId: 'memorial-calculos' },
+        { label: 'Aprovação', tabId: 'observacoes' }
+    ];
+    let currentAnviStep = 0;
+    let anviSavedTimestamp = null;
+
+    function formatTime(date) {
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function updateAnviSummary(saved = false) {
+        const status = document.getElementById('statusAprovacao')?.value || 'Em andamento';
+        const margem = parseFloat(document.getElementById('calcMargemContribuicao')?.textContent) || 0;
+        const custoTotal = parseFloat(document.getElementById('totalCustosFixosDisplay')?.value) || 0;
+        const preco = parseFloat(document.getElementById('calcPrecoBase')?.textContent) || 0;
+
+        document.getElementById('anviResumoStatus').textContent = status.replace(/-/g, ' ');
+        document.getElementById('anviResumoMargem').textContent = margem.toFixed(2);
+        document.getElementById('anviResumoCustoTotal').textContent = custoTotal.toFixed(2);
+        document.getElementById('anviResumoPreco').textContent = preco.toFixed(2);
+
+        if (saved) {
+            anviSavedTimestamp = new Date();
+            document.getElementById('anviResumoSalvo').textContent = formatTime(anviSavedTimestamp);
+        } else {
+            document.getElementById('anviResumoSalvo').textContent = anviSavedTimestamp ? 'alterado' : 'não salvo';
+        }
+    }
+
+    function updateStepper() {
+        const buttons = document.querySelectorAll('.anvi-stepper .step-button');
+        buttons.forEach((button, index) => {
+            button.classList.toggle('active', index === currentAnviStep);
+        });
+
+        const progress = ((currentAnviStep + 1) / ANVI_ETAPAS.length) * 100;
+        const progressBar = document.getElementById('anviStepProgress');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', Math.round(progress));
+        }
+
+        const prevButton = document.getElementById('prevStepBtn');
+        const nextButton = document.getElementById('nextStepBtn');
+        if (prevButton) prevButton.disabled = currentAnviStep === 0;
+        if (nextButton) nextButton.disabled = currentAnviStep === ANVI_ETAPAS.length - 1;
+    }
+
+    function goToAnviStep(index) {
+        if (index < 0 || index >= ANVI_ETAPAS.length) return;
+        currentAnviStep = index;
+        const step = ANVI_ETAPAS[index];
+        const tabButton = document.getElementById(`${step.tabId}-tab`);
+        if (tabButton) {
+            tabButton.click();
+        }
+        updateStepper();
+    }
+
+    function nextAnviStep() {
+        goToAnviStep(Math.min(currentAnviStep + 1, ANVI_ETAPAS.length - 1));
+    }
+
+    function previousAnviStep() {
+        goToAnviStep(Math.max(currentAnviStep - 1, 0));
+    }
+
+    function renderAnviStepButtons() {
+        const container = document.getElementById('anviStepButtons');
+        if (!container) return;
+        container.innerHTML = ANVI_ETAPAS.map((step, index) =>
+            `<button type="button" class="step-button btn btn-sm" data-step-index="${index}">${step.label}</button>`
+        ).join('');
+
+        container.querySelectorAll('.step-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = parseInt(button.getAttribute('data-step-index'), 10);
+                goToAnviStep(index);
+            });
+        });
+    }
+
+    function markAnviEdited() {
+        updateAnviSummary(false);
+    }
+
+    function registerAnviSummaryEvents() {
+        document.querySelectorAll('#viabilityForm input, #viabilityForm select, #viabilityForm textarea').forEach(el => {
+            el.addEventListener('input', markAnviEdited);
+            el.addEventListener('change', markAnviEdited);
+        });
+
+        const prevButton = document.getElementById('prevStepBtn');
+        const nextButton = document.getElementById('nextStepBtn');
+        if (prevButton) prevButton.addEventListener('click', previousAnviStep);
+        if (nextButton) nextButton.addEventListener('click', nextAnviStep);
+
+        document.querySelectorAll('#myTab button[data-bs-toggle="tab"]').forEach(tabButton => {
+            tabButton.addEventListener('shown.bs.tab', event => {
+                const tabId = event.target.id.replace('-tab', '');
+                const nextIndex = ANVI_ETAPAS.findIndex(step => step.tabId === tabId);
+                if (nextIndex >= 0) {
+                    currentAnviStep = nextIndex;
+                    updateStepper();
+                }
+            });
+        });
+    }
+
+    const salvarANVIOriginal = salvarANVI;
+    async function salvarANVIFase3() {
+        const saved = await salvarANVIOriginal();
+        if (saved) {
+            updateAnviSummary(true);
+        }
+        return saved;
+    }
+    salvarANVI = salvarANVIFase3;
+    window.salvarANVI = salvarANVIFase3;
+
+    window.addEventListener('load', () => {
+        renderAnviStepButtons();
+        updateStepper();
+        updateAnviSummary(false);
+        registerAnviSummaryEvents();
+    });
 
     // Inicializar eventos de fechamento do modal de desenhos
     document.addEventListener('DOMContentLoaded', function() {
@@ -11566,439 +11600,6 @@ console.log('Dados a salvar:', anviData);
             });
         }
     });
-
-// =========================================
-// CONTROLE DE CONCORRÊNCIA E EDIÇÃO SIMULTÂNEA
-// =========================================
-
-let anviAtual = {
-    id: null,
-    versao: 1,
-    bloqueada: false,
-    timerBloqueio: null,
-    ultimaVerificacao: null
-};
-
-// Limpar bloqueios antigos do próprio usuário ao iniciar
-async function limparBloqueiosAntigos() {
-    try {
-        const response = await fetch('api/anvi.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ acao: 'limpar_bloqueios' })
-        });
-        
-        if (response.ok) {
-            console.log('✓ Bloqueios antigos limpos');
-        }
-    } catch (e) {
-        console.error('Erro ao limpar bloqueios:', e);
-    }
-}
-
-// Bloquear ANVI ao abrir para edição
-async function bloquearANVI(id) {
-    if (!id) return false;
-    
-    try {
-        const response = await fetch('api/anvi.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ id: id, acao: 'bloquear' })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            anviAtual.id = id;
-            anviAtual.bloqueada = true;
-            
-            // Iniciar renovação automática do bloqueio a cada 5 minutos
-            if (anviAtual.timerBloqueio) {
-                clearInterval(anviAtual.timerBloqueio);
-            }
-            
-            anviAtual.timerBloqueio = setInterval(() => {
-                renovarBloqueioANVI(id);
-            }, 5 * 60 * 1000); // 5 minutos
-            
-            return true;
-        } else {
-            // Mostrar mensagem de bloqueio
-            mostrarNotificacao(data.message || 'ANVI bloqueada por outro usuário', 'warning');
-            
-            if (data.bloqueado_por) {
-                mostrarModalBloqueio(data.bloqueado_por, data.bloqueado_em);
-            }
-            
-            return false;
-        }
-    } catch (e) {
-        console.error('Erro ao bloquear ANVI:', e);
-        return false;
-    }
-}
-
-// Renovar bloqueio
-async function renovarBloqueioANVI(id) {
-    if (!id || !anviAtual.bloqueada) return;
-    
-    try {
-        await fetch('api/anvi.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ id: id, acao: 'bloquear' })
-        });
-        // Não precisa de resposta, apenas mantém o bloqueio
-    } catch (e) {
-        console.error('Erro ao renovar bloqueio:', e);
-    }
-}
-
-// Desbloquear ANVI ao sair
-async function desbloquearANVI(id) {
-    if (!id || !anviAtual.bloqueada) return;
-    
-    if (anviAtual.timerBloqueio) {
-        clearInterval(anviAtual.timerBloqueio);
-        anviAtual.timerBloqueio = null;
-    }
-    
-    try {
-        await fetch('api/anvi.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ id: id, acao: 'desbloquear' })
-        });
-    } catch (e) {
-        console.error('Erro ao desbloquear ANVI:', e);
-    } finally {
-        anviAtual.id = null;
-        anviAtual.bloqueada = false;
-    }
-}
-
-// Salvar ANVI com controle de versão (substitua a função salvarANVI existente)
-async function salvarANVI() {
-    if (!usuarioAtual) {
-        alert('Você precisa estar logado para salvar.');
-        return;
-    }
-
-    if (usuarioAtual.nivel === 'visitante') {
-        alert('Visitantes não podem salvar ANVIs.');
-        return;
-    }
-
-    if (window.rateioBloqueado) {
-        alert('❌ Não é possível salvar com percentuais de rateio > 100%. Ajuste os custos indiretos antes de salvar.');
-        return;
-    }
-
-    const anviNumber = document.getElementById('anviNumber').value;
-    const revisaoANVI = document.getElementById('revisaoANVI').value;
-
-    if (!anviNumber || !revisaoANVI) {
-        alert('Por favor, preencha o Nº ANVI e a Revisão antes de salvar.');
-        return;
-    }
-
-    const anviData = capturarTodosDados();
-    anviData.id = `${anviNumber}_${revisaoANVI}`;
-    anviData.numero = anviNumber;
-    anviData.revisao = revisaoANVI;
-    anviData.cliente = document.getElementById('client').value;
-    anviData.projeto = document.getElementById('project').value;
-    anviData.produto = document.getElementById('productDescription').value;
-    anviData.volumeMensal = document.getElementById('monthlyVolume').value;
-    anviData.dataANVI = document.getElementById('dataANVI').value;
-    anviData.status = document.getElementById('statusAprovacao').value;
-    anviData.versao = anviAtual.versao; // Enviar versão atual
-
-    try {
-        const response = await fetch('api/anvi.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(anviData)
-        });
-
-        const result = await response.json();
-
-        if (response.status === 409) {
-            // Verificar se é duplicata
-            if (result.duplicate) {
-                // DUPLICATA DETECTADA - Perguntar se quer substituir
-                const confirmacao = confirm(
-                    `${result.message}\n\n` +
-                    `Cliente: ${result.existing.cliente || 'N/A'}\n\n` +
-                    `Deseja SUBSTITUIR o registro existente?\n\n` +
-                    `• Clique OK para SUBSTITUIR\n` +
-                    `• Clique Cancelar para NÃO salvar`
-                );
-                
-                if (confirmacao) {
-                    // Salvar com force=true para substituir
-                    anviData.force = true;
-                    await salvarANVIForcado(anviData);
-                } else {
-                    mostrarNotificacao('Salvamento cancelado pelo usuário', 'info');
-                }
-                return;
-            }
-            
-            // CONFLITO DE VERSÃO
-            anviAtual.versao = result.versao_atual;
-            
-            // Perguntar ao usuário o que fazer
-            const acao = await mostrarModalConflito(result);
-            
-            if (acao === 'sobrescrever') {
-                // Forçar sobrescrita (enviar novamente com versão atualizada)
-                anviData.versao = result.versao_atual;
-                await salvarANVIForcado(anviData);
-            } else if (acao === 'recarregar') {
-                // Recarregar versão do servidor
-                await abrirANVI(anviData.id);
-                mostrarNotificacao('Versão mais recente carregada. Revise suas alterações.', 'info');
-            }
-            // Se cancelar, não faz nada
-            
-        } else if (result.success) {
-            anviAtual.versao = result.versao || anviAtual.versao + 1;
-            carregarANVIs();
-            mostrarNotificacao(`✅ ANVI ${anviNumber} Rev. ${revisaoANVI} salva com sucesso!`, 'success');
-            
-            // Verificar vínculo com projeto após salvar
-            await verificarVinculoComProjeto();
-        } else {
-            alert(result.message || 'Erro ao salvar ANVI');
-        }
-    } catch (e) {
-        console.error('Erro ao salvar ANVI:', e);
-        alert('Erro de conexão com o servidor');
-    }
-}
-
-// Salvar forçado em caso de conflito
-async function salvarANVIForcado(anviData) {
-    try {
-        const response = await fetch('api/anvi.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(anviData)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            anviAtual.versao = result.versao || anviAtual.versao;
-            carregarANVIs();
-            mostrarNotificacao(`✅ ANVI ${anviData.numero} Rev. ${anviData.revisao} salva com sucesso!`, 'success');
-        } else {
-            alert('Erro ao salvar: ' + (result.message || 'Desconhecido'));
-        }
-    } catch (e) {
-        console.error('Erro ao salvar ANVI:', e);
-        alert('Erro de conexão com o servidor');
-    }
-}
-
-// Mostrar modal de conflito
-function mostrarModalConflito(dadosConflito) {
-    return new Promise((resolve) => {
-        // Criar modal dinâmico
-        const modalHtml = `
-            <div class="modal fade" id="conflitoModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header" style="background: #b71c1c; color: white;">
-                            <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>CONFLITO DETECTADO</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>${dadosConflito.message}</strong></p>
-                            <p>Outro usuário salvou alterações enquanto você editava esta ANVI.</p>
-                            <div class="alert alert-warning">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Suas alterações podem sobrescrever as do outro usuário.
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-info" id="btnRecarregar">
-                                <i class="fas fa-sync-alt me-2"></i>Recarregar versão atual
-                            </button>
-                            <button type="button" class="btn btn-danger" id="btnSobrescrever">
-                                <i class="fas fa-exclamation-circle me-2"></i>Sobrescrever mesmo assim
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remover modal existente se houver
-        const modalExistente = document.getElementById('conflitoModal');
-        if (modalExistente) modalExistente.remove();
-        
-        // Adicionar ao DOM
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        const modal = new bootstrap.Modal(document.getElementById('conflitoModal'), {
-            backdrop: 'static',
-            keyboard: false
-        });
-        
-        document.getElementById('btnRecarregar').addEventListener('click', () => {
-            modal.hide();
-            resolve('recarregar');
-        });
-        
-        document.getElementById('btnSobrescrever').addEventListener('click', () => {
-            modal.hide();
-            resolve('sobrescrever');
-        });
-        
-        modal.show();
-        
-        // Limpar após fechar
-        document.getElementById('conflitoModal').addEventListener('hidden.bs.modal', function() {
-            this.remove();
-            resolve('cancelar');
-        });
-    });
-}
-
-// Mostrar modal de bloqueio
-function mostrarModalBloqueio(usuario, data) {
-    const dataFormatada = data ? new Date(data).toLocaleString('pt-BR') : 'agora';
-    
-    const modalHtml = `
-        <div class="modal fade" id="bloqueioModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header" style="background: #ff8f00; color: white;">
-                        <h5 class="modal-title"><i class="fas fa-lock me-2"></i>ANVI BLOQUEADA</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong>${usuario}</strong> está editando esta ANVI desde ${dataFormatada}.</p>
-                        <p>Você pode abrir no modo somente leitura ou aguardar.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-primary" onclick="abrirANVISomenteLeitura('${anviAtual.id}')">
-                            <i class="fas fa-eye me-2"></i>Abrir somente leitura
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    new bootstrap.Modal(document.getElementById('bloqueioModal')).show();
-}
-
-// Abrir ANVI em modo somente leitura
-async function abrirANVISomenteLeitura(id) {
-    try {
-        const response = await fetch(`api/anvi.php?id=${id}`, {
-            credentials: 'include'
-        });
-        if (!response.ok) throw new Error('Erro ao carregar ANVI');
-        const anvi = await response.json();
-
-        restaurarTodosDados(anvi);
-
-        // Desabilitar todos os inputs
-        document.querySelectorAll('input, select, textarea, button').forEach(el => {
-            if (!el.classList.contains('btn-outline-primary') && 
-                !el.classList.contains('btn-info') && 
-                !el.classList.contains('btn-warning')) {
-                el.disabled = true;
-            }
-        });
-
-        mostrarNotificacao('Modo somente leitura ativado', 'info');
-    } catch (e) {
-        console.error('Erro ao abrir ANVI:', e);
-    }
-}
-
-// Modificar a função abrirANVI existente
-async function abrirANVI(anviId) {
-    // Desbloquear ANVI anterior se houver
-    if (anviAtual.id && anviAtual.id !== anviId) {
-        await desbloquearANVI(anviAtual.id);
-    }
-
-    try {
-        const response = await fetch(`api/anvi.php?id=${anviId}`, {
-            credentials: 'include'
-        });
-        if (!response.ok) throw new Error('Erro ao carregar ANVI');
-        const anvi = await response.json();
-
-        // Tentar bloquear a ANVI
-        const bloqueado = await bloquearANVI(anviId);
-        
-        if (!bloqueado && usuarioAtual.nivel !== 'visitante') {
-            // Se não conseguiu bloquear, abrir somente leitura
-            await abrirANVISomenteLeitura(anviId);
-            return;
-        }
-
-        if (anvi.desenhos && Array.isArray(anvi.desenhos)) {
-            desenhosANVI = anvi.desenhos;
-            renderizarDesenhos();
-        } else {
-            desenhosANVI = [];
-            renderizarDesenhos();
-        }
-
-        restaurarTodosDados(anvi);
-
-        document.getElementById('anviNumber').value = anvi.numero || '';
-        document.getElementById('revisaoANVI').value = anvi.revisao || '';
-        document.getElementById('client').value = anvi.cliente || '';
-        document.getElementById('project').value = anvi.projeto || '';
-        document.getElementById('productDescription').value = anvi.produto || '';
-        document.getElementById('monthlyVolume').value = anvi.volume_mensal || 1000;
-        document.getElementById('dataANVI').value = anvi.data_anvi || '';
-        document.getElementById('statusAprovacao').value = anvi.status || '';
-
-        // Armazenar versão atual
-        anviAtual.id = anviId;
-        anviAtual.versao = anvi.versao || 1;
-
-        const dadosTab = document.getElementById('dados-tab');
-        if (dadosTab) {
-            dadosTab.click();
-        }
-
-        setTimeout(() => {
-            updateAllCalculations();
-            validarConsistenciaGeral();
-        }, 500);
-
-        mostrarNotificacao(`✅ ANVI ${anvi.numero} Rev. ${anvi.revisao} carregada com sucesso!`, 'success');
-        
-        // Verificar vínculo com projeto
-        setTimeout(() => {
-            verificarVinculoComProjeto();
-        }, 600);
-    } catch (e) {
-        console.error('Erro ao abrir ANVI:', e);
-        alert('Erro ao carregar ANVI do servidor');
-    }
-}
 
 // Modificar a função novaANVI
 function novaANVI() {
@@ -12113,6 +11714,69 @@ function novaANVI() {
 // Variável global para armazenar dados do vínculo
 let vinculoAtual = null;
 
+function esconderResumoProjetoVinculado() {
+    const card = document.getElementById('linkedProjectCard');
+    if (card) {
+        card.classList.remove('visible');
+    }
+}
+
+function textoSeguroProjeto(valor, fallback = '-') {
+    const texto = String(valor ?? '').trim();
+    return texto || fallback;
+}
+
+function formatarDataProjeto(valor) {
+    if (!valor) {
+        return 'sem atualização';
+    }
+
+    const data = new Date(String(valor).replace(' ', 'T'));
+    if (Number.isNaN(data.getTime())) {
+        return 'sem atualização';
+    }
+
+    return data.toLocaleDateString('pt-BR');
+}
+
+function renderizarResumoProjetoVinculado(projeto) {
+    const card = document.getElementById('linkedProjectCard');
+    const title = document.getElementById('linkedProjectTitle');
+    const meta = document.getElementById('linkedProjectMeta');
+    const progress = document.getElementById('linkedProjectProgress');
+    const progressText = document.getElementById('linkedProjectProgressText');
+    const progressWrap = progress?.closest('.progress');
+
+    if (!card || !title || !meta || !progress || !progressText) {
+        return;
+    }
+
+    const progresso = Math.max(0, Math.min(100, parseInt(projeto.progresso, 10) || 0));
+    title.textContent = `Projeto #${projeto.id}: ${textoSeguroProjeto(projeto.nome, 'Sem nome')}`;
+    meta.innerHTML = '';
+
+    [
+        ['fa-circle-check', textoSeguroProjeto(projeto.status, 'Pendente')],
+        ['fa-chart-line', `${progresso}% concluído`],
+        ['fa-user', textoSeguroProjeto(projeto.lider, 'Sem líder')],
+        ['fa-building', textoSeguroProjeto(projeto.cliente, 'Sem cliente')],
+        ['fa-clock', formatarDataProjeto(projeto.updated_at)]
+    ].forEach(([icone, texto]) => {
+        const item = document.createElement('span');
+        item.innerHTML = `<i class="fas ${icone}"></i>`;
+        item.append(document.createTextNode(texto));
+        meta.appendChild(item);
+    });
+
+    progress.style.width = `${progresso}%`;
+    progressText.textContent = `${progresso}%`;
+    if (progressWrap) {
+        progressWrap.setAttribute('aria-valuenow', String(progresso));
+    }
+
+    card.classList.add('visible');
+}
+
 // Verificar se a ANVI está vinculada a um projeto
 async function verificarVinculoComProjeto() {
     const anviNumber = document.getElementById('anviNumber').value;
@@ -12123,6 +11787,7 @@ async function verificarVinculoComProjeto() {
         document.getElementById('btnCriarProjeto').style.display = 'none';
         document.getElementById('btnVerProjeto').style.display = 'none';
         document.getElementById('badgeVinculo').style.display = 'none';
+        esconderResumoProjetoVinculado();
         return;
     }
     
@@ -12134,7 +11799,7 @@ async function verificarVinculoComProjeto() {
         });
         
         if (!response.ok) {
-            console.error('Erro ao verificar vínculo');
+            esconderResumoProjetoVinculado();
             return;
         }
         
@@ -12146,14 +11811,16 @@ async function verificarVinculoComProjeto() {
             document.getElementById('btnVerProjeto').style.display = 'inline-block';
             document.getElementById('badgeVinculo').style.display = 'inline-block';
             document.getElementById('vinculoStatus').textContent = `Projeto #${vinculoAtual.projeto.id}: ${vinculoAtual.projeto.nome}`;
+            renderizarResumoProjetoVinculado(vinculoAtual.projeto);
         } else {
             // ANVI não está vinculada
             document.getElementById('btnCriarProjeto').style.display = 'inline-block';
             document.getElementById('btnVerProjeto').style.display = 'none';
             document.getElementById('badgeVinculo').style.display = 'none';
+            esconderResumoProjetoVinculado();
         }
     } catch (e) {
-        console.error('Erro ao verificar vínculo:', e);
+        esconderResumoProjetoVinculado();
     }
 }
 
@@ -12337,7 +12004,8 @@ async function criarProjetoDaANVI() {
 // Abrir projeto vinculado
 function abrirProjetoVinculado() {
     if (vinculoAtual && vinculoAtual.projeto) {
-        window.open(`Controle_de_projetos/index.php?projeto_id=${vinculoAtual.projeto.id}`, '_blank');
+        const url = vinculoAtual.projeto.url || `Controle_de_projetos/index.php?projeto_id=${vinculoAtual.projeto.id}`;
+        window.open(url, '_blank');
     } else {
         alert('Nenhum projeto vinculado a esta ANVI.');
     }

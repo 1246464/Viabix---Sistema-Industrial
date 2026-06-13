@@ -7,85 +7,248 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
-        :root {
+                :root {
             --primary-color: #0a3d2e;
             --success-color: #2e7d32;
+            --warning-color: #ff8f00;
+            --info-color: #0288d1;
+            --background-color: #f2f7f2;
+            --card-bg: #ffffff;
+            --border-color: #d9e3d9;
+            --text-muted: #5f6f6f;
         }
         body {
-            background-color: #f2f7f2;
+            background-color: var(--background-color);
             font-family: 'Inter', 'Segoe UI', sans-serif;
             color: var(--primary-color);
+            margin: 0;
+            padding: 0;
         }
         .header {
             background: linear-gradient(135deg, var(--primary-color), var(--success-color));
             color: white;
-            padding: 20px;
+            padding: 18px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
-        .anvis-list {
-            padding: 20px;
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.05rem;
         }
-        .anvi-card {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--primary-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
         }
-        .anvi-card h5 {
-            margin: 0 0 8px 0;
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        .anvi-card p {
-            margin: 4px 0;
-            font-size: 0.9rem;
-            color: #666;
-        }
-        .btn-open {
-            background: var(--primary-color);
+        .header button {
+            background: rgba(255,255,255,0.22);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            padding: 8px 12px;
+            border-radius: 10px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header button:hover {
+            background: rgba(255,255,255,0.32);
+        }
+        .page-body {
+            padding: 16px 16px 36px;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 1px solid var(--border-color);
+        }
+        .summary-card strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+        }
+        .summary-card.small {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .search-panel {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-panel input,
+        .search-panel select {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+        }
+        .actions-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .actions-row button {
+            flex: 1;
+            min-width: 100px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--primary-color);
+            padding: 12px 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .actions-row button:hover {
+            background: rgba(10, 61, 46, 0.05);
+        }
+        .anvis-list {
+            display: grid;
+            gap: 12px;
+        }
+        .anvi-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--border-color);
+        }
+        .anvi-card h5 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        .anvi-card p {
+            margin: 6px 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .tag {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 10px;
+            letter-spacing: 0.01em;
+        }
+        .tag.pending { background: #fff7e3; color: #b35b00; }
+        .tag.approved { background: #e8f5e9; color: #256029; }
+        .tag.conditional { background: #fff4e5; color: #8d6100; }
+        .tag.rejected { background: #fdecea; color: #b71c1c; }
+        .action-button {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 0;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 12px;
+            font-weight: 700;
+        }
+        .action-button.primary { background: var(--primary-color); color: white; }
+        .action-button.success { background: var(--success-color); color: white; }
+        .action-button.warning { background: var(--warning-color); color: white; }
+        .action-button.secondary { background: #f3f6f3; color: var(--primary-color); }
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.35);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 16px 16px;
+            box-sizing: border-box;
+            z-index: 999;
+        }
+        .detail-panel .content {
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+        }
+        .detail-panel .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .detail-panel .detail-header h4 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+        .detail-panel .close-button {
+            background: #f3f6f3;
+            border: none;
+            border-radius: 12px;
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+        .detail-panel .detail-block {
+            background: #f8faf8;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .detail-panel .detail-block p {
+            margin: 8px 0;
+        }
+        .detail-panel textarea {
+            width: 100%;
+            min-height: 120px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            resize: vertical;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            font-family: inherit;
+        }
+        .detail-panel .detail-actions {
+            display: grid;
+            gap: 10px;
             margin-top: 10px;
         }
-        .btn-open:hover {
-            background: var(--success-color);
-        }
-        .loading {
-            text-align: center;
-            padding: 40px 20px;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .loading,
+        .error,
+        .empty {
+            border-radius: 14px;
+            margin: 0 0 16px;
         }
         .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px;
+            display: none;
         }
         .empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
+            display: none;
         }
     </style>
 </head>
@@ -101,199 +264,274 @@
     </button>
 </div>
 
-<div id="loading" class="loading">
-    <div class="spinner"></div>
-    <p>Carregando ANVIs...</p>
+<div class="page-body">
+    <div class="summary-cards" id="summaryCards"></div>
+
+    <div class="search-panel">
+        <input id="searchInput" type="text" placeholder="Buscar por nº, cliente, projeto ou produto..." />
+        <select id="statusFilter">
+            <option value="all">Todos os status</option>
+            <option value="em-andamento">Em Andamento</option>
+            <option value="aprovada">Aprovada</option>
+            <option value="aprovada-condicional">Aprovada Condicional</option>
+            <option value="declinada">Reprovada</option>
+        </select>
+    </div>
+
+    <div class="actions-row">
+        <button id="refreshBtn">Atualizar lista</button>
+        <button id="pendingBtn">Aprovação pendente</button>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Carregando ANVIs...</p>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div id="empty" class="empty">
+        <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; display: block; margin-bottom: 15px;"></i>
+        <p>Nenhuma ANVI encontrada</p>
+    </div>
+
+    <div id="anvisList" class="anvis-list"></div>
 </div>
 
-<div id="error" class="error" style="display: none;"></div>
-
-<div id="anvisList" class="anvis-list" style="display: none;"></div>
-
-<div id="empty" class="empty" style="display: none;">
-    <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; display: block; margin-bottom: 15px;"></i>
-    <p>Nenhuma ANVI encontrada</p>
+<div id="detailPanel" class="detail-panel" style="display: none;">
+    <div class="content">
+        <div class="detail-header">
+            <h4 id="detailTitle">ANVI</h4>
+            <button class="close-button" onclick="fecharDetalhes()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="detail-block">
+            <p><strong>Cliente:</strong> <span id="detailCliente">--</span></p>
+            <p><strong>Projeto:</strong> <span id="detailProjeto">--</span></p>
+            <p><strong>Status:</strong> <span id="detailStatus">--</span></p>
+            <p><strong>Revisão:</strong> <span id="detailRevisao">--</span></p>
+            <p><strong>Produto:</strong> <span id="detailProduto">--</span></p>
+            <p><strong>Última atualização:</strong> <span id="detailUpdated">--</span></p>
+        </div>
+        <div class="detail-block" id="projectCard" style="display:none;">
+            <p><strong>Projeto vinculado</strong></p>
+            <p><strong>Nome:</strong> <span id="detailProjetoNome">--</span></p>
+            <p><strong>Status:</strong> <span id="detailProjetoStatus">--</span></p>
+            <button class="action-button secondary" id="openProjectBtn" onclick="abrirProjetoVinculado()">Ver Projeto</button>
+        </div>
+        <div class="detail-block">
+            <p><strong>Observação / Pendência</strong></p>
+            <textarea id="detailObservacao" placeholder="Registrar comentário ou pendência rápida..."></textarea>
+            <button class="action-button primary" onclick="salvarObservacao()">Salvar Pendência</button>
+        </div>
+        <div class="detail-actions">
+            <button class="action-button success" onclick="aprovarAnvi()">Aprovar</button>
+            <button class="action-button warning" onclick="aprovarCondicional()">Aprovar Condicional</button>
+            <button class="action-button secondary" onclick="reprovarAnvi()">Reprovar</button>
+        </div>
+    </div>
 </div>
 
 <script>
     console.log('[MOBILE-ANVI] Script iniciado');
 
     // ============================
-    // FLUXO DE AUTENTICAÇÃO
+    // AUTENTICAÇÃO
     // ============================
-    
-    // Extrair token via JavascriptInterface do Kotlin OU localStorage
+
+    function getTokenFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('token') || params.get('jwt_token') || params.get('auth_token') || null;
+    }
+
+    function storeToken(token) {
+        if (!token) return;
+        localStorage.setItem('jwt_token', token);
+        sessionStorage.setItem('jwt_token', token);
+        document.cookie = `jwt_token=${encodeURIComponent(token)};path=/`;
+    }
+
     function obterToken() {
         let token = null;
-        
-        // 1. Tentar JavascriptInterface (quando rodando em Android WebView)
-        if (typeof ViabixApp !== 'undefined' && ViabixApp.getToken) {
+
+        if (typeof ViabixApp !== 'undefined' && typeof ViabixApp.getToken === 'function') {
             try {
                 token = ViabixApp.getToken();
                 console.log('[MOBILE-ANVI] Token obtido via ViabixApp.getToken()');
-            } catch (e) {
-                console.warn('[MOBILE-ANVI] ⚠️ Erro ao chamar ViabixApp.getToken():', e.message);
+            } catch (error) {
+                console.warn('[MOBILE-ANVI] Erro ViabixApp.getToken():', error.message);
             }
         }
-        
-        // 2. Tentar window.viabixToken (injetado via JavaScript)
+
         if (!token && window.viabixToken) {
             token = window.viabixToken;
             console.log('[MOBILE-ANVI] Token obtido via window.viabixToken');
         }
-        
-        // 3. Tentar localStorage
+
+        if (!token && window.jwt_token) {
+            token = window.jwt_token;
+            console.log('[MOBILE-ANVI] Token obtido via window.jwt_token');
+        }
+
+        if (!token && window.token) {
+            token = window.token;
+            console.log('[MOBILE-ANVI] Token obtido via window.token');
+        }
+
         if (!token) {
             token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
             if (token) {
-                console.log('[MOBILE-ANVI] Token obtido via localStorage');
+                console.log('[MOBILE-ANVI] Token obtido via armazenamento local');
             }
         }
-        
-        if (token) {
-            console.log('[MOBILE-ANVI] ✅ Token encontrado! Tamanho:', token.length);
-            localStorage.setItem('jwt_token', token); // Guardar para próximas vezes
-        } else {
-            console.warn('[MOBILE-ANVI] ❌ Nenhum token disponível');
+
+        if (!token) {
+            token = getTokenFromUrl();
+            if (token) {
+                console.log('[MOBILE-ANVI] Token obtido via parâmetro de URL');
+            }
         }
-        
+
+        if (token) {
+            storeToken(token);
+        }
+
         return token;
     }
-    
+
+    async function fetchJson(url, options = {}) {
+        const token = obterToken();
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { ...options, headers, credentials: 'include' });
+        const text = await response.text();
+        let data;
+
+        try {
+            data = text ? JSON.parse(text) : null;
+        } catch (error) {
+            throw new Error('Resposta inválida do servidor: ' + text);
+        }
+
+        if (!response.ok) {
+            throw new Error(data?.message || data?.error || response.statusText || 'Erro na requisição');
+        }
+
+        return data;
+    }
+
     async function verificarSessao() {
         console.log('[MOBILE-ANVI] Verificando sessão...');
         try {
-            // Obter token
             const token = obterToken();
-            
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-            
-            // Adicionar Authorization header se temos token
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-                console.log('[MOBILE-ANVI] Authorization header adicionado');
-            }
-            
-            // PRIMEIRO: Chamar debug para ver o que servidor recebe
-            console.log('[MOBILE-ANVI] Chamando debug_check_session.php para diagnóstico...');
-            const debugResponse = await fetch('api/debug_check_session.php', {
-                method: 'GET',
-                headers: headers,
-                credentials: 'include'
-            });
-            
-            const debugData = await debugResponse.json();
-            console.log('[MOBILE-ANVI] DEBUG RESPONSE:', JSON.stringify(debugData, null, 2));
-            
-            // DEPOIS: Chamar check_session normal
-            const response = await fetch('api/check_session.php', {
-                method: 'GET',
-                headers: headers,
-                credentials: 'include'
-            });
-            
-            console.log('[MOBILE-ANVI] Resposta status:', response.status);
-            
-            if (!response.ok) {
-                console.error('[MOBILE-ANVI] Erro HTTP:', response.status);
-                mostrarErro('Erro ao verificar sessão: ' + response.status);
+            if (!token) {
+                mostrarErro('Não encontramos token de autenticação. Verifique se o app passou o token corretamente.');
                 return null;
             }
-            
-            const text = await response.text();
-            console.log('[MOBILE-ANVI] Resposta raw:', text);
-            
-            const data = JSON.parse(text);
-            console.log('[MOBILE-ANVI] Dados parseados:', data);
-            
-            if (data.logado) {
-                console.log('[MOBILE-ANVI] ✅ Autenticado como:', data.user?.login);
-                document.getElementById('userName').textContent = data.user?.nome || data.usuario || 'Usuário';
-                return data;
-            } else {
-                console.error('[MOBILE-ANVI] ❌ Não autenticado (logado=false)');
-                mostrarErro('Não autenticado. Por favor, faça login novamente.');
+
+            const data = await fetchJson('api/check_session.php');
+            if (!data.logado) {
+                mostrarErro('Não autenticado. Faça login novamente.');
                 return null;
             }
-        } catch (e) {
-            console.error('[MOBILE-ANVI] EXCEÇÃO em verificarSessao():', e.message, e.stack);
-            mostrarErro('Erro: ' + e.message);
+            document.getElementById('userName').textContent = data.user?.nome || data.usuario || 'Usuário';
+            return data;
+        } catch (error) {
+            mostrarErro(error.message);
             return null;
         }
     }
 
     // ============================
-    // CARREGAR ANVIs
+    // ANVIs
     // ============================
-    
-    async function carregarANVIs() {
-        console.log('[MOBILE-ANVI] Carregando ANVIs...');
-        try {
-            const token = obterToken();
-            
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-            
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch('api/anvi.php', {
-                method: 'GET',
-                headers: headers,
-                credentials: 'include'
-            });
-            
-            console.log('[MOBILE-ANVI] anvi.php status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[MOBILE-ANVI] Erro:', response.status, errorText);
-                mostrarErro('Erro ao carregar ANVIs: ' + errorText);
-                return [];
-            }
-            
-            const anvis = await response.json();
-            console.log('[MOBILE-ANVI] ANVIs recebidas:', anvis);
-            
-            return Array.isArray(anvis) ? anvis : [];
-        } catch (e) {
-            console.error('[MOBILE-ANVI] EXCEÇÃO em carregarANVIs():', e.message);
-            mostrarErro('Erro: ' + e.message);
-            return [];
+
+    const mobileState = {
+        anvis: [],
+        filteredAnvis: [],
+        selectedAnvi: null,
+        projetoVinculado: null
+    };
+
+    function getAnvisArray(payload) {
+        if (!payload) return [];
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload.data)) return payload.data;
+        return [];
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '--';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function tagClass(status) {
+        switch ((status || '').toLowerCase()) {
+            case 'aprovada': return 'approved';
+            case 'aprovada-condicional': return 'conditional';
+            case 'declinada': return 'rejected';
+            default: return 'pending';
         }
     }
 
-    // ============================
-    // INTERFACE
-    // ============================
-    
-    function mostrarErro(msg) {
-        console.error('[MOBILE-ANVI] Erro:', msg);
+    function atualizarResumo(anvis) {
+        const total = anvis.length;
+        const pendentes = anvis.filter(item => ['em-andamento', 'aprovada-condicional'].includes((item.status || '').toLowerCase())).length;
+        const semProjeto = anvis.filter(item => !(item.projeto || item.projeto_id)).length;
+        const agora = new Date();
+        const semAtualizacao = anvis.filter(item => {
+            const atualizado = new Date(item.data_atualizacao || item.updated_at || item.atualizado_em || 0);
+            return !Number.isNaN(atualizado.getTime()) && (agora - atualizado) > 1000 * 60 * 60 * 24 * 14;
+        }).length;
+
+        document.getElementById('summaryCards').innerHTML = `
+            <div class="summary-card">
+                <div class="small">Total de ANVIs</div>
+                <strong>${total}</strong>
+            </div>
+            <div class="summary-card">
+                <div class="small">Aprovação pendente</div>
+                <strong>${pendentes}</strong>
+            </div>
+            <div class="summary-card">
+                <div class="small">Sem projeto vinculado</div>
+                <strong>${semProjeto}</strong>
+            </div>
+            <div class="summary-card">
+                <div class="small">Sem atualização > 14 dias</div>
+                <strong>${semAtualizacao}</strong>
+            </div>
+        `;
+    }
+
+    function mostrarErro(message) {
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').textContent = msg;
-        document.getElementById('error').style.display = 'block';
+    }
+
+    function limparErro() {
+        document.getElementById('error').style.display = 'none';
     }
 
     function renderizarANVIs(anvis) {
-        console.log('[MOBILE-ANVI] Renderizando', anvis.length, 'ANVIs');
-        
+        const list = document.getElementById('anvisList');
+        list.innerHTML = '';
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').style.display = 'none';
-        
+        limparErro();
+
         if (anvis.length === 0) {
             document.getElementById('empty').style.display = 'block';
             return;
         }
-        
+
         document.getElementById('empty').style.display = 'none';
-        
-        const list = document.getElementById('anvisList');
-        list.innerHTML = '';
-        
+
         anvis.forEach(anvi => {
             const card = document.createElement('div');
             card.className = 'anvi-card';
@@ -301,57 +539,220 @@
                 <h5>${anvi.numero || 'ANVI-S/N'}</h5>
                 <p><strong>Cliente:</strong> ${anvi.cliente || '--'}</p>
                 <p><strong>Projeto:</strong> ${anvi.projeto || '--'}</p>
-                <p><strong>Status:</strong> ${anvi.status || '--'}</p>
+                <p><strong>Status:</strong> <span class="tag ${tagClass(anvi.status)}">${(anvi.status || '--').replace(/-/g, ' ')}</span></p>
                 <p><strong>Revisão:</strong> ${anvi.revisao || '--'}</p>
-                <button class="btn-open" onclick="abrirANVI('${anvi.id}')">
-                    <i class="fas fa-folder-open"></i> Abrir
+                <button class="btn-open" type="button" onclick="abrirANVI('${anvi.id}')">
+                    <i class="fas fa-eye"></i> Ver detalhes
                 </button>
             `;
             list.appendChild(card);
         });
-        
-        list.style.display = 'block';
+    }
+
+    async function carregarANVIs() {
+        setLoading(true, 'Carregando lista de ANVIs...');
+        try {
+            const data = await fetchJson('api/anvi.php?page=1&limit=200');
+            return getAnvisArray(data);
+        } catch (error) {
+            mostrarErro(error.message);
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function carregarDetalhesAnvi(anviId) {
+        try {
+            setLoading(true, 'Carregando detalhes...');
+            const anvi = await fetchJson(`api/anvi.php?id=${encodeURIComponent(anviId)}`);
+            mobileState.selectedAnvi = anvi;
+            mobileState.projetoVinculado = null;
+            await carregarProjetoVinculado(anvi.id);
+            preencherPainelDetalhes();
+            mostrarDetalhes(true);
+        } catch (error) {
+            mostrarErro(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function carregarProjetoVinculado(anviId) {
+        try {
+            const data = await fetchJson(`api/verificar_vinculo.php?anvi_id=${encodeURIComponent(anviId)}`);
+            mobileState.projetoVinculado = data.tem_vinculo ? data.projeto : null;
+        } catch (error) {
+            mobileState.projetoVinculado = null;
+        }
+    }
+
+    function preencherPainelDetalhes() {
+        const anvi = mobileState.selectedAnvi;
+        if (!anvi) return;
+
+        document.getElementById('detailTitle').textContent = `${anvi.numero || 'ANVI'} Rev. ${anvi.revisao || '--'}`;
+        document.getElementById('detailCliente').textContent = anvi.cliente || '--';
+        document.getElementById('detailProjeto').textContent = anvi.projeto || '--';
+        document.getElementById('detailStatus').textContent = (anvi.status || '--').replace(/-/g, ' ');
+        document.getElementById('detailRevisao').textContent = anvi.revisao || '--';
+        document.getElementById('detailProduto').textContent = anvi.produto || '--';
+        document.getElementById('detailUpdated').textContent = formatDateTime(anvi.data_atualizacao || anvi.updated_at || anvi.atualizado_em);
+        document.getElementById('detailObservacao').value = anvi.observacoes || anvi.observacao || '';
+
+        if (mobileState.projetoVinculado) {
+            document.getElementById('projectCard').style.display = 'block';
+            document.getElementById('detailProjetoNome').textContent = mobileState.projetoVinculado.nome || '--';
+            document.getElementById('detailProjetoStatus').textContent = mobileState.projetoVinculado.status || '--';
+            document.getElementById('openProjectBtn').disabled = false;
+        } else {
+            document.getElementById('projectCard').style.display = 'none';
+            document.getElementById('openProjectBtn').disabled = true;
+        }
     }
 
     function abrirANVI(anviId) {
         console.log('[MOBILE-ANVI] Abrindo ANVI:', anviId);
-        // Para mobile, poderia abrir um modal ou navegar
-        // Por enquanto, apenas log
-        alert('Abrindo ANVI: ' + anviId);
+        carregarDetalhesAnvi(anviId);
     }
 
-    function fazerLogout() {
-        console.log('[MOBILE-ANVI] Logout');
-        // Limpar dados
-        localStorage.removeItem('jwt_token');
-        sessionStorage.removeItem('jwt_token');
-        // Redirecionar para login
-        window.location.href = 'login.html';
+    function mostrarDetalhes(show) {
+        document.getElementById('detailPanel').style.display = show ? 'flex' : 'none';
     }
 
-    // ============================
-    // INICIALIZAÇÃO
-    // ============================
-    
+    function fecharDetalhes() {
+        mostrarDetalhes(false);
+    }
+
+    async function salvarAnvi(mensagemOpcional = null, novoStatus = null) {
+        if (!mobileState.selectedAnvi) return;
+
+        const anvi = { ...mobileState.selectedAnvi };
+        anvi.observacoes = document.getElementById('detailObservacao').value.trim();
+        if (novoStatus) {
+            anvi.status = novoStatus;
+        }
+        if (mensagemOpcional) {
+            const atual = anvi.observacoes ? anvi.observacoes + '\n' : '';
+            anvi.observacoes = `${atual}[${new Date().toLocaleString('pt-BR')}] ${mensagemOpcional}`;
+        }
+
+        try {
+            setLoading(true, 'Salvando ANVI...');
+            const result = await fetchJson('api/anvi.php', {
+                method: 'POST',
+                body: JSON.stringify(anvi)
+            });
+            if (result && result.success) {
+                if (mensagemOpcional || novoStatus) {
+                    alert(result.message || 'Alteração salva com sucesso.');
+                }
+                await recarregarLista();
+                await carregarDetalhesAnvi(anvi.id);
+            } else {
+                throw new Error(result?.message || 'Erro ao salvar ANVI');
+            }
+        } catch (error) {
+            mostrarErro(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function salvarObservacao() {
+        salvarAnvi(null, null);
+    }
+
+    function aprovarAnvi() {
+        const mensagem = prompt('Informe observação de aprovação (opcional):', '');
+        if (mensagem === null) return;
+        salvarAnvi(mensagem ? `Aprovado: ${mensagem}` : 'Aprovado', 'aprovada');
+    }
+
+    function aprovarCondicional() {
+        const mensagem = prompt('Informe observação de aprovação condicional:', '');
+        if (mensagem === null) return;
+        salvarAnvi(mensagem ? `Aprovado Condicional: ${mensagem}` : 'Aprovado Condicional', 'aprovada-condicional');
+    }
+
+    function reprovarAnvi() {
+        const mensagem = prompt('Informe motivo da reprovação:', '');
+        if (mensagem === null) return;
+        salvarAnvi(`Reprovado: ${mensagem}`, 'declinada');
+    }
+
+    function normalizeUrl(url) {
+        if (!url) return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        if (url.startsWith('/')) {
+            return window.location.origin + url;
+        }
+        return window.location.origin + '/' + url.replace(/^\/+/, '');
+    }
+
+    function abrirProjetoVinculado() {
+        if (!mobileState.projetoVinculado?.url) {
+            alert('Nenhum projeto vinculado disponível.');
+            return;
+        }
+        const url = normalizeUrl(mobileState.projetoVinculado.url);
+        if (!url) {
+            alert('Url do projeto inválida.');
+            return;
+        }
+        window.open(url, '_blank');
+    }
+
+    function setLoading(show, message = 'Carregando...') {
+        const loader = document.getElementById('loading');
+        loader.querySelector('p').textContent = message;
+        loader.style.display = show ? 'block' : 'none';
+    }
+
+    function filtrarAnvis() {
+        const search = document.getElementById('searchInput').value.toLowerCase().trim();
+        const status = document.getElementById('statusFilter').value;
+
+        mobileState.filteredAnvis = mobileState.anvis.filter(anvi => {
+            const matchesSearch = !search || [anvi.numero, anvi.cliente, anvi.projeto, anvi.produto]
+                .filter(Boolean)
+                .some(value => value.toString().toLowerCase().includes(search));
+            const matchesStatus = status === 'all' || (anvi.status || '').toLowerCase() === status;
+            return matchesSearch && matchesStatus;
+        });
+
+        atualizarResumo(mobileState.filteredAnvis);
+        renderizarANVIs(mobileState.filteredAnvis);
+    }
+
+    async function recarregarLista() {
+        mobileState.anvis = await carregarANVIs();
+        mobileState.filteredAnvis = [...mobileState.anvis];
+        atualizarResumo(mobileState.filteredAnvis);
+        renderizarANVIs(mobileState.filteredAnvis);
+    }
+
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('[MOBILE-ANVI] DOMContentLoaded disparado');
-        
-        // Aguardar um pouco para injeção Kotlin completar (se houver)
-        await new Promise(r => setTimeout(r, 1000));
-        
-        // 1. Verificar autenticação
+        await new Promise(r => setTimeout(r, 600));
+
         const user = await verificarSessao();
         if (!user) {
             console.error('[MOBILE-ANVI] Autenticação falhou');
             return;
         }
-        
-        // 2. Carregar ANVIs
-        const anvis = await carregarANVIs();
-        
-        // 3. Renderizar
-        renderizarANVIs(anvis);
-        
+
+        document.getElementById('searchInput').addEventListener('input', filtrarAnvis);
+        document.getElementById('statusFilter').addEventListener('change', filtrarAnvis);
+        document.getElementById('refreshBtn').addEventListener('click', recarregarLista);
+        document.getElementById('pendingBtn').addEventListener('click', () => {
+            document.getElementById('statusFilter').value = 'em-andamento';
+            filtrarAnvis();
+        });
+
+        await recarregarLista();
         console.log('[MOBILE-ANVI] Inicialização concluída');
     });
 

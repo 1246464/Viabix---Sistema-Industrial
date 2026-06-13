@@ -145,6 +145,43 @@
             border-left-color: #fee140;
         }
 
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+        }
+
+        .financial-metric {
+            background: #f8f9fa;
+            border: 1px solid #e7ece9;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .financial-metric small {
+            color: #66736c;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .financial-metric strong {
+            color: #0a3d2e;
+            font-size: 1.2rem;
+        }
+
+        .financial-alert {
+            border-left: 4px solid #f0ad4e;
+            background: #fff8e5;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 10px;
+        }
+
+        .financial-alert.critico {
+            border-left-color: #c62828;
+            background: #fdecea;
+        }
+
         .loading {
             display: none;
             text-align: center;
@@ -278,6 +315,27 @@
                 </div>
             </div>
 
+            <!-- Indicadores Financeiros -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-coins"></i> Indicadores Financeiros</h2>
+                </div>
+                <div class="card-body">
+                    <div class="financial-grid" id="indicadoresFinanceiros"></div>
+                    <div id="alertasFinanceiros"></div>
+                </div>
+            </div>
+
+            <!-- Comparativo entre Revisões -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-exchange-alt"></i> Comparativo entre Revisões</h2>
+                </div>
+                <div class="card-body" id="comparativoRevisoes">
+                    <p class="text-muted mb-0">Carregue uma ANVI para comparar com a revisão anterior.</p>
+                </div>
+            </div>
+
             <!-- Análise Detalhada -->
             <div class="card">
                 <div class="card-header">
@@ -312,6 +370,77 @@
             if (score >= 80) return 'score-high';
             if (score >= 60) return 'score-medium';
             return 'score-low';
+        }
+
+        function formatarMoeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
+
+        function formatarPercentual(valor) {
+            return `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+        }
+
+        function renderizarIndicadoresFinanceiros(indicadores, alertas) {
+            const container = document.getElementById('indicadoresFinanceiros');
+            const alertasContainer = document.getElementById('alertasFinanceiros');
+            const itens = [
+                ['Margem esperada', formatarPercentual(indicadores?.margem_esperada_pct)],
+                ['Custo total', formatarMoeda(indicadores?.custo_total)],
+                ['Preço sugerido', formatarMoeda(indicadores?.preco_sugerido)],
+                ['Payback', `${Number(indicadores?.payback_meses || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`],
+                ['ROI', formatarPercentual(indicadores?.roi_esperado_pct)],
+                ['Desvio estimado x realizado', formatarPercentual(indicadores?.desvio_estimado_realizado_pct)]
+            ];
+
+            container.innerHTML = itens.map(([label, valor]) => `
+                <div class="financial-metric">
+                    <small>${label}</small>
+                    <strong>${valor}</strong>
+                </div>
+            `).join('');
+
+            const listaAlertas = Array.isArray(alertas) ? alertas : [];
+            alertasContainer.innerHTML = listaAlertas.length
+                ? listaAlertas.map(alerta => `
+                    <div class="financial-alert ${alerta.severidade === 'critico' ? 'critico' : ''}">
+                        <strong>${alerta.severidade === 'critico' ? 'Crítico' : 'Atenção'}:</strong>
+                        ${alerta.mensagem}
+                    </div>
+                `).join('')
+                : '<div class="financial-alert"><strong>OK:</strong> sem alertas financeiros relevantes para os critérios atuais.</div>';
+        }
+
+        function renderizarComparativoRevisoes(comparativo) {
+            const container = document.getElementById('comparativoRevisoes');
+
+            if (!comparativo || !comparativo.variacoes) {
+                container.innerHTML = '<p class="text-muted mb-0">Nenhuma revisão anterior encontrada para comparação.</p>';
+                return;
+            }
+
+            const variacoes = comparativo.variacoes;
+            const linhas = [
+                ['Margem', formatarPercentual(variacoes.margem_esperada_pct)],
+                ['Custo total', formatarMoeda(variacoes.custo_total)],
+                ['Preço sugerido', formatarMoeda(variacoes.preco_sugerido)],
+                ['Payback', `${Number(variacoes.payback_meses || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`],
+                ['ROI', formatarPercentual(variacoes.roi_esperado_pct)]
+            ];
+
+            container.innerHTML = `
+                <p class="text-muted">Comparando Rev. ${comparativo.revisao_atual} com Rev. ${comparativo.revisao_anterior}</p>
+                <div class="financial-grid">
+                    ${linhas.map(([label, valor]) => `
+                        <div class="financial-metric">
+                            <small>${label}</small>
+                            <strong>${valor}</strong>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
         function renderizarAnalise(analise) {
@@ -494,6 +623,9 @@
                         document.getElementById('viabilidadeRecomendacao').textContent = viab.recomendacao || '';
                     }
 
+                    renderizarIndicadoresFinanceiros(data.indicadores_financeiros || {}, data.alertas_financeiros || []);
+                    renderizarComparativoRevisoes(data.comparativo_revisoes || {});
+
                     // Render analysis
                     if (data.analise) {
                         renderizarAnalise(data.analise);
@@ -513,6 +645,15 @@
         // Allow Enter key to load analysis
         document.getElementById('anviInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                carregarAnalise();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const anviId = params.get('anvi_id');
+            if (anviId) {
+                document.getElementById('anviInput').value = anviId;
                 carregarAnalise();
             }
         });

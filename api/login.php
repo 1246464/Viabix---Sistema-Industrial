@@ -7,6 +7,13 @@ require_once 'config.php';
 
 header('Content-Type: application/json');
 
+function viabixLoginDebugLog(string $message): void
+{
+    if (defined('APP_DEBUG') && APP_DEBUG) {
+        error_log($message);
+    }
+}
+
 // Handle CORS preflight requests
 viabixHandleCorsPreflight(
     ['GET', 'POST', 'OPTIONS'],
@@ -29,29 +36,28 @@ $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 $rawInput = file_get_contents('php://input');
 $rawInputLength = strlen($rawInput);
 
-// Log inicial
-error_log('[LOGIN] ====== REQUEST START ======');
-error_log('[LOGIN] Content-Type: ' . $contentType);
-error_log('[LOGIN] Content-Length: ' . ($_SERVER['CONTENT_LENGTH'] ?? 'N/A'));
-error_log('[LOGIN] php://input length: ' . $rawInputLength);
-error_log('[LOGIN] php://input preview: ' . substr($rawInput, 0, 100));
-error_log('[LOGIN] $_POST keys: ' . json_encode(array_keys($_POST)));
+viabixLoginDebugLog('[LOGIN] ====== REQUEST START ======');
+viabixLoginDebugLog('[LOGIN] Content-Type: ' . $contentType);
+viabixLoginDebugLog('[LOGIN] Content-Length: ' . ($_SERVER['CONTENT_LENGTH'] ?? 'N/A'));
+viabixLoginDebugLog('[LOGIN] php://input length: ' . $rawInputLength);
+viabixLoginDebugLog('[LOGIN] php://input preview: ' . substr($rawInput, 0, 100));
+viabixLoginDebugLog('[LOGIN] $_POST keys: ' . json_encode(array_keys($_POST)));
 
 // Se for form-urlencoded (Android app), usar $_POST
 if (stripos($contentType, 'application/x-www-form-urlencoded') !== false) {
     $input = $_POST;
-    error_log('[LOGIN] Using $_POST data (form-urlencoded)');
-    error_log('[LOGIN] $_POST content: ' . json_encode($_POST));
+    viabixLoginDebugLog('[LOGIN] Using $_POST data (form-urlencoded)');
+    viabixLoginDebugLog('[LOGIN] $_POST content: ' . json_encode($_POST));
 } 
 // Se for JSON, decodificar
 else if (stripos($contentType, 'application/json') !== false) {
     $input = json_decode($rawInput, true) ?? [];
-    error_log('[LOGIN] Using JSON data');
+    viabixLoginDebugLog('[LOGIN] Using JSON data');
 }
 // Tentar JSON como fallback
 else if (empty($input)) {
     $input = json_decode($rawInput, true) ?? $_POST ?? [];
-    error_log('[LOGIN] Using fallback (JSON or POST)');
+    viabixLoginDebugLog('[LOGIN] Using fallback (JSON or POST)');
 }
 
 if (empty($input)) {
@@ -65,11 +71,11 @@ if (empty($input)) {
 $isMobileApp = (!empty($input['email']) || !empty($input['password'])) && empty($input['_csrf_token']);
 if ($isMobileApp) {
     $_SERVER['HTTP_X_MOBILE_APP'] = 'native'; // Marcar como mobile app
-    error_log('[LOGIN] Detected mobile app request');
+    viabixLoginDebugLog('[LOGIN] Detected mobile app request');
 }
 
-error_log('[LOGIN] Input keys: ' . json_encode(array_keys($input)));
-error_log('[LOGIN] Is mobile: ' . ($isMobileApp ? 'YES' : 'NO'));
+viabixLoginDebugLog('[LOGIN] Input keys: ' . json_encode(array_keys($input)));
+viabixLoginDebugLog('[LOGIN] Is mobile: ' . ($isMobileApp ? 'YES' : 'NO'));
 
 // Validar CSRF token
 if (session_status() === PHP_SESSION_NONE) {
@@ -82,13 +88,13 @@ viabixInitializeCsrfProtection();
 
 // ✅ Se for mobile app, PULAR COMPLETAMENTE validação CSRF
 if ($isMobileApp) {
-    error_log('[LOGIN] Skipping CSRF validation for mobile app');
+    viabixLoginDebugLog('[LOGIN] Skipping CSRF validation for mobile app');
     // Don't validate CSRF for mobile apps
 } else {
     // Validar CSRF apenas para web
     try {
         viabixValidateCsrfTokenWithInput($input);
-        error_log('[LOGIN] CSRF validation PASSED');
+        viabixLoginDebugLog('[LOGIN] CSRF validation PASSED');
     } catch (RuntimeException $e) {
         error_log('[LOGIN] CSRF validation FAILED: ' . $e->getMessage());
         http_response_code(403);

@@ -26,18 +26,10 @@ if (session_status() === PHP_SESSION_NONE) {
 // Inicializar CSRF protection
 viabixInitializeCsrfProtection();
 
-$response = ['logado' => false, 'csrf_token' => viabixGetCsrfToken()];
+$response = ['success' => false, 'message' => 'Sessão não autenticada', 'logado' => false, 'csrf_token' => viabixGetCsrfToken()];
 
 // Tentar autenticar via SESSION ou JWT (mobile apps)
 $user = viabixGetAuthenticatedUser();
-
-// DEBUG JWT
-if (!$user) {
-    $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
-    file_put_contents('php://stderr', "DEBUG check_session: viabixGetAuthenticatedUser() returned null, Authorization header: " . ($auth_header ? "present" : "missing") . "\n");
-} else {
-    file_put_contents('php://stderr', "DEBUG check_session: User authenticated - ID: " . $user['id'] . ", Source: " . ($user['source'] ?? 'unknown') . "\n");
-}
 
 // Sincronizar SESSION se for JWT - SEMPRE sincronizar para garantir dados atualizados
 if ($user) {
@@ -47,8 +39,6 @@ if ($user) {
     $_SESSION['nivel'] = $user['nivel'] ?? '';
     $_SESSION['user_level'] = $user['nivel'] ?? '';
     $_SESSION['tenant_id'] = $user['tenant_id'] ?? '';
-    
-    file_put_contents('php://stderr', "DEBUG check_session: SESSION sincronizada - user_id=" . $_SESSION['user_id'] . ", user_login=" . $_SESSION['user_login'] . "\n");
 }
 
 // Agora verifica APENAS user_id - se tem user_id, está autenticado
@@ -104,6 +94,8 @@ if ($user && isset($_SESSION['user_id'])) {
             viabixPopulateSession($user, $tenantContext);
 
             $response = [
+                'success' => true,
+                'message' => 'Sessão ativa',
                 'logado' => true,
                 'user' => [
                     'id' => $user['id'],
@@ -154,7 +146,6 @@ if ($user && isset($_SESSION['user_id'])) {
 
 // Garantir que nao ha saida antes do JSON
 // Garantir status 200 OK
-file_put_contents('php://stderr', "[CHECK_SESSION] Response: " . json_encode($response) . "\n");
 http_response_code(200);
 echo json_encode($response);
 exit;

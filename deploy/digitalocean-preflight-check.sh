@@ -355,16 +355,28 @@ fi
 echo -e "\n${BLUE}[9] BACKUP CONFIGURATION${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-if [ -f "/usr/local/bin/viabix-backup.sh" ]; then
+if [ -f "/var/www/viabix/deploy/backup-viabix.sh" ]; then
     pass "Backup script: Found"
     
-    if [ -x "/usr/local/bin/viabix-backup.sh" ]; then
+    if [ -x "/var/www/viabix/deploy/backup-viabix.sh" ]; then
         pass "Backup script: Executable"
     else
         warn "Backup script: Not executable (chmod +x needed)"
     fi
 else
-    fail "Backup script: Not found at /usr/local/bin/viabix-backup.sh"
+    fail "Backup script: Not found at /var/www/viabix/deploy/backup-viabix.sh"
+fi
+
+if [ -f "/var/www/viabix/deploy/release.sh" ]; then
+    pass "Release script: Found"
+else
+    fail "Release script: Not found at /var/www/viabix/deploy/release.sh"
+fi
+
+if [ -f "/var/www/viabix/deploy/monitor-endpoints.sh" ]; then
+    pass "Endpoint monitor: Found"
+else
+    warn "Endpoint monitor: Not found at /var/www/viabix/deploy/monitor-endpoints.sh"
 fi
 
 # Check S3 credentials
@@ -388,10 +400,10 @@ else
 fi
 
 # Log rotation
-if [ -f "/etc/logrotate.d/apache2" ]; then
-    pass "Log rotation: Apache configured"
+if [ -f "/etc/logrotate.d/viabix" ]; then
+    pass "Log rotation: Viabix configured"
 else
-    warn "Log rotation: Apache not configured"
+    warn "Log rotation: Viabix not configured"
 fi
 
 # ============================================================================
@@ -414,7 +426,7 @@ if [ $FAILED -eq 0 ]; then
     echo "1. Verify DigitalOcean infrastructure is ready"
     echo "2. Run: systemctl restart apache2 php8.2-fpm redis-server"
     echo "3. Monitor: tail -f /var/log/apache2/viabix-error.log"
-    echo "4. Healthcheck: curl https://app.viabix.com.br/api/healthcheck"
+    echo "4. Healthcheck: curl https://app.viabix.com.br/api/healthcheck.php?scope=ready"
     exit 0
 else
     echo -e "${RED}❌ FIX ERRORS BEFORE DEPLOYMENT${NC}"

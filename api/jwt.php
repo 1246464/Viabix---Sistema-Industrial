@@ -178,10 +178,24 @@ if (!function_exists('viabixGetAuthenticatedUser')) {
         $jwtPayload = viabixValidateJwtFromRequest();
         if ($jwtPayload && isset($jwtPayload['user_id'])) {
             global $pdo;
+
+            $select = 'id, login, nome, nivel, ativo';
+            if (viabixHasColumn('usuarios', 'tenant_id')) {
+                $select .= ', tenant_id';
+            }
+
+            $params = [$jwtPayload['user_id']];
+            $sql = 'SELECT ' . $select . ' FROM usuarios WHERE id = ?';
+            if (viabixHasColumn('usuarios', 'tenant_id') && !empty($jwtPayload['tenant_id'])) {
+                $sql .= ' AND tenant_id = ?';
+                $params[] = $jwtPayload['tenant_id'];
+            }
+
+            $stmt = $pdo->prepare($sql . ' LIMIT 1');
+            $stmt->execute($params);
+            $user = $stmt->fetch();
             
-            $user = viabixFindUserForAuth($jwtPayload['user_id']);
-            
-            if ($user) {
+            if ($user && (int) ($user['ativo'] ?? 1) === 1) {
                 return [
                     'id' => $jwtPayload['user_id'],
                     'login' => $user['login'] ?? null,

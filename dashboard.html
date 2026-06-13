@@ -864,6 +864,17 @@
             <section class="insight-card">
                 <div class="insight-header">
                     <h3 class="insight-title">
+                        <i class="fas fa-coins"></i>
+                        Riscos Financeiros
+                    </h3>
+                    <span class="insight-tag">ANVI</span>
+                </div>
+                <ul class="insight-list" id="listaRiscosFinanceiros"></ul>
+            </section>
+
+            <section class="insight-card">
+                <div class="insight-header">
+                    <h3 class="insight-title">
                         <i class="fas fa-heartbeat"></i>
                         Saúde Operacional
                     </h3>
@@ -1028,9 +1039,11 @@
         function renderizarInsightsOperacionais(dados) {
             const atencaoHoje = Array.isArray(dados.atencao_hoje) ? dados.atencao_hoje : [];
             const prioridades = Array.isArray(dados.prioridades) ? dados.prioridades : [];
+            const riscosFinanceiros = Array.isArray(dados.financeiro?.alertas) ? dados.financeiro.alertas : [];
             const tendencias = Array.isArray(dados.tendencias) ? dados.tendencias : [];
             const listaAtencaoHoje = document.getElementById('listaAtencaoHoje');
             const listaPrioridades = document.getElementById('listaPrioridades');
+            const listaRiscosFinanceiros = document.getElementById('listaRiscosFinanceiros');
             const tendenciaWrap = document.getElementById('tendenciaWrap');
 
             renderarHealthOperational(dados.health || {});
@@ -1049,6 +1062,26 @@
             `).join('');
 
             listaPrioridades.innerHTML = prioridades.map((item) => `
+                <li class="insight-item">
+                    <div>
+                        <strong>${escapeHtml(item.titulo)}</strong>
+                        <small>${escapeHtml(item.detalhe)}</small>
+                    </div>
+                    <div class="item-right">
+                        <span class="status-pill ${classeStatus(item.status)}">${escapeHtml(item.statusLabel)}</span>
+                        ${item.actionUrl ? `<button type="button" class="insight-action" data-url="${escapeHtml(item.actionUrl)}">${escapeHtml(item.actionLabel || 'Ver')}</button>` : ''}
+                    </div>
+                </li>
+            `).join('');
+
+            const financeiroFallback = [{
+                titulo: 'Nenhum risco financeiro relevante',
+                detalhe: 'Margem, ROI, payback e desvios estão dentro dos critérios salvos',
+                status: 'ok',
+                statusLabel: 'OK'
+            }];
+
+            listaRiscosFinanceiros.innerHTML = (riscosFinanceiros.length ? riscosFinanceiros : financeiroFallback).map((item) => `
                 <li class="insight-item">
                     <div>
                         <strong>${escapeHtml(item.titulo)}</strong>

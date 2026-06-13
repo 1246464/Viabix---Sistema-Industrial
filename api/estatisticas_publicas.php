@@ -50,9 +50,11 @@ try {
         $stats['anvis_recentes'] = 0;
     }
 
+    $stats['success'] = true;
+    $stats['message'] = 'Estatísticas públicas carregadas com sucesso';
     echo json_encode($stats);
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Erro ao carregar estatísticas']);
+    echo json_encode(['success' => false, 'message' => 'Erro ao carregar estatísticas públicas']);
 }

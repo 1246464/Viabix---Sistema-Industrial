@@ -43,6 +43,170 @@ $user_id = $_SESSION['user_id'];
 $user_level = $_SESSION['user_level'] ?? 'usuario';
 $tenant_id = viabixCurrentTenantId();
 $tenantAwareAnvis = viabixHasColumn('anvis', 'tenant_id') && $tenant_id;
+$anvisHasDadosFinanceiros = viabixHasColumn('anvis', 'dados_financeiros');
+
+function viabixFloatValue($value): float
+{
+    if (is_numeric($value)) {
+        return (float) $value;
+    }
+
+    if (!is_string($value)) {
+        return 0.0;
+    }
+
+    $normalized = trim($value);
+    $normalized = str_replace(['R$', '%', 'meses', 'mes', 'peças', 'pecas', ' '], '', $normalized);
+    $normalized = str_replace('.', '', $normalized);
+    $normalized = str_replace(',', '.', $normalized);
+
+    return is_numeric($normalized) ? (float) $normalized : 0.0;
+}
+
+function viabixRoundMoney(float $value): float
+{
+    return round($value, 2);
+}
+
+function viabixBuildFinancialSummary(array $input): array
+{
+    $financeiro = is_array($input['financeiro'] ?? null) ? $input['financeiro'] : [];
+    $indicadores = is_array($financeiro['indicadores'] ?? null) ? $financeiro['indicadores'] : [];
+    $custos = is_array($financeiro['custos'] ?? null) ? $financeiro['custos'] : [];
+    $receitas = is_array($financeiro['receitas'] ?? null) ? $financeiro['receitas'] : [];
+    $investimentos = is_array($financeiro['investimentos'] ?? null) ? $financeiro['investimentos'] : [];
+    $realizado = is_array($financeiro['realizado'] ?? null) ? $financeiro['realizado'] : [];
+    $config = is_array($input['configuracoes'] ?? null) ? $input['configuracoes'] : [];
+
+    $custoUnitario = viabixFloatValue($custos['custo_unitario'] ?? $indicadores['custo_total'] ?? 0);
+    $custoTotalMensal = viabixFloatValue($custos['custo_total_mensal'] ?? 0);
+    $precoSugerido = viabixFloatValue($receitas['preco_sugerido'] ?? $indicadores['preco_sugerido'] ?? 0);
+    $receitaMensal = viabixFloatValue($receitas['receita_mensal'] ?? 0);
+    $lucroLiquidoMensal = viabixFloatValue($receitas['lucro_liquido_mensal'] ?? 0);
+    $investimentoTotal = viabixFloatValue($investimentos['investimento_total'] ?? $indicadores['investimento_total'] ?? 0);
+    $volumeMensal = viabixFloatValue($input['volumeMensal'] ?? ($input['informacoesBasicas']['monthlyVolume'] ?? 0));
+
+    if ($custoTotalMensal <= 0 && $custoUnitario > 0 && $volumeMensal > 0) {
+        $custoTotalMensal = $custoUnitario * $volumeMensal;
+    }
+    if ($receitaMensal <= 0 && $precoSugerido > 0 && $volumeMensal > 0) {
+        $receitaMensal = $precoSugerido * $volumeMensal;
+    }
+
+    $margemEsperada = viabixFloatValue($indicadores['margem_esperada_pct'] ?? $indicadores['margem_liquida_pct'] ?? 0);
+    if ($margemEsperada == 0.0 && $receitaMensal > 0 && $lucroLiquidoMensal != 0.0) {
+        $margemEsperada = ($lucroLiquidoMensal / $receitaMensal) * 100;
+    }
+
+    $roi = viabixFloatValue($indicadores['roi_pct'] ?? $financeiro['roi_esperado_pct'] ?? 0);
+    if ($roi == 0.0 && $investimentoTotal > 0 && $lucroLiquidoMensal != 0.0) {
+        $roi = ($lucroLiquidoMensal * 12 / $investimentoTotal) * 100;
+    }
+
+    $payback = viabixFloatValue($indicadores['payback_meses'] ?? $financeiro['payback_meses'] ?? 0);
+    if ($payback == 0.0 && $lucroLiquidoMensal > 0 && $investimentoTotal > 0) {
+        $payback = $investimentoTotal / $lucroLiquidoMensal;
+    }
+
+    $custoReal = viabixFloatValue($realizado['custo_real'] ?? $financeiro['custo_real'] ?? 0);
+    $desvioValor = $custoReal > 0 ? $custoReal - $custoTotalMensal : viabixFloatValue($indicadores['desvio_estimado_realizado_valor'] ?? 0);
+    $desvioPct = $custoReal > 0 && $custoTotalMensal > 0
+        ? (($custoReal - $custoTotalMensal) / $custoTotalMensal) * 100
+        : viabixFloatValue($indicadores['desvio_estimado_realizado_pct'] ?? 0);
+
+    $alertas = [];
+    if ($margemEsperada > 0 && $margemEsperada < 10) {
+        $alertas[] = ['tipo' => 'margem_baixa', 'severidade' => 'critico', 'mensagem' => 'Margem líquida abaixo de 10%'];
+    } elseif ($margemEsperada > 0 && $margemEsperada < 15) {
+        $alertas[] = ['tipo' => 'margem_atencao', 'severidade' => 'atencao', 'mensagem' => 'Margem líquida abaixo do recomendado'];
+    }
+    if ($roi > 0 && $roi < 20) {
+        $alertas[] = ['tipo' => 'roi_baixo', 'severidade' => 'atencao', 'mensagem' => 'ROI anual abaixo de 20%'];
+    }
+    if ($payback > 24) {
+        $alertas[] = ['tipo' => 'payback_longo', 'severidade' => 'atencao', 'mensagem' => 'Payback acima de 24 meses'];
+    }
+    if ($desvioPct > 10) {
+        $alertas[] = ['tipo' => 'desvio_custo', 'severidade' => $desvioPct > 25 ? 'critico' : 'atencao', 'mensagem' => 'Custo realizado acima do estimado'];
+    }
+
+    return [
+        'schema_version' => 1,
+        'moeda' => 'BRL',
+        'volume_mensal' => viabixRoundMoney($volumeMensal),
+        'custo_unitario' => viabixRoundMoney($custoUnitario),
+        'custo_total' => viabixRoundMoney($custoTotalMensal),
+        'preco_sugerido' => viabixRoundMoney($precoSugerido),
+        'receita_mensal' => viabixRoundMoney($receitaMensal),
+        'lucro_liquido_mensal' => viabixRoundMoney($lucroLiquidoMensal),
+        'investimento_total' => viabixRoundMoney($investimentoTotal),
+        'margem_esperada_pct' => round($margemEsperada, 2),
+        'roi_esperado_pct' => round($roi, 2),
+        'payback_meses' => round($payback, 2),
+        'desvio_estimado_realizado_valor' => viabixRoundMoney($desvioValor),
+        'desvio_estimado_realizado_pct' => round($desvioPct, 2),
+        'margem_lucro_markup_pct' => round(viabixFloatValue($config['margemLucroMarkup'] ?? 0), 2),
+        'alertas' => $alertas,
+        'riscos_identificados' => array_column($alertas, 'mensagem'),
+        'calculado_em' => date('c'),
+    ];
+}
+
+function viabixSaveFinancialSummary(PDO $pdo, string $tenantId, string $anviId, string $numero, string $revisao, array $summary): void
+{
+    if (!$tenantId || !viabixHasTable('anvi_resumo_financeiro')) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        INSERT INTO anvi_resumo_financeiro (
+            tenant_id, anvi_id, anvi_numero, anvi_revisao, moeda, volume_mensal,
+            custo_unitario, custo_total, preco_sugerido, receita_mensal,
+            lucro_liquido_mensal, investimento_total, margem_esperada_pct,
+            roi_esperado_pct, payback_meses, desvio_estimado_realizado_valor,
+            desvio_estimado_realizado_pct, alertas, calculado_em
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+            anvi_numero = VALUES(anvi_numero),
+            anvi_revisao = VALUES(anvi_revisao),
+            moeda = VALUES(moeda),
+            volume_mensal = VALUES(volume_mensal),
+            custo_unitario = VALUES(custo_unitario),
+            custo_total = VALUES(custo_total),
+            preco_sugerido = VALUES(preco_sugerido),
+            receita_mensal = VALUES(receita_mensal),
+            lucro_liquido_mensal = VALUES(lucro_liquido_mensal),
+            investimento_total = VALUES(investimento_total),
+            margem_esperada_pct = VALUES(margem_esperada_pct),
+            roi_esperado_pct = VALUES(roi_esperado_pct),
+            payback_meses = VALUES(payback_meses),
+            desvio_estimado_realizado_valor = VALUES(desvio_estimado_realizado_valor),
+            desvio_estimado_realizado_pct = VALUES(desvio_estimado_realizado_pct),
+            alertas = VALUES(alertas),
+            calculado_em = NOW()
+    ");
+
+    $stmt->execute([
+        $tenantId,
+        $anviId,
+        $numero,
+        $revisao,
+        $summary['moeda'] ?? 'BRL',
+        $summary['volume_mensal'] ?? 0,
+        $summary['custo_unitario'] ?? 0,
+        $summary['custo_total'] ?? 0,
+        $summary['preco_sugerido'] ?? 0,
+        $summary['receita_mensal'] ?? 0,
+        $summary['lucro_liquido_mensal'] ?? 0,
+        $summary['investimento_total'] ?? 0,
+        $summary['margem_esperada_pct'] ?? 0,
+        $summary['roi_esperado_pct'] ?? 0,
+        $summary['payback_meses'] ?? 0,
+        $summary['desvio_estimado_realizado_valor'] ?? 0,
+        $summary['desvio_estimado_realizado_pct'] ?? 0,
+        json_encode($summary['alertas'] ?? [], JSON_UNESCAPED_UNICODE),
+    ]);
+}
 
 // Verificar método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
@@ -158,6 +322,8 @@ try {
             
             // Converter todos os dados para JSON
             $dados_json = json_encode($input, JSON_UNESCAPED_UNICODE);
+            $dados_financeiros = viabixBuildFinancialSummary($input);
+            $dados_financeiros_json = json_encode($dados_financeiros, JSON_UNESCAPED_UNICODE);
             
             // Calcular hash
             $hash = hash('sha256', $dados_json);
@@ -203,6 +369,7 @@ try {
                 // Atualizar existente
                 $nova_versao = $existente['versao'] + 1;
                 
+                $dadosFinanceirosSet = $anvisHasDadosFinanceiros ? "dados_financeiros = ?," : "";
                 $stmt = $pdo->prepare("
                     UPDATE anvis SET 
                         numero = ?, 
@@ -214,6 +381,7 @@ try {
                         data_anvi = ?, 
                         status = ?, 
                         dados = ?, 
+                        {$dadosFinanceirosSet}
                         versao = ?, 
                         hash_conteudo = ?,
                         atualizado_por = ?,
@@ -223,9 +391,12 @@ try {
 
                 $params = [
                     $numero, $revisao, $cliente, $projeto, $produto, 
-                    $volume_mensal, $data_anvi, $status, $dados_json, 
-                    $nova_versao, $hash, $user_id, $id
+                    $volume_mensal, $data_anvi, $status, $dados_json
                 ];
+                if ($anvisHasDadosFinanceiros) {
+                    $params[] = $dados_financeiros_json;
+                }
+                $params = array_merge($params, [$nova_versao, $hash, $user_id, $id]);
                 if ($tenantAwareAnvis) {
                     $params[] = $tenant_id;
                 }
@@ -239,36 +410,50 @@ try {
                 $nova_versao = 1;
                 
                 if ($tenantAwareAnvis) {
+                    $financeiroColumn = $anvisHasDadosFinanceiros ? ', dados_financeiros' : '';
+                    $financeiroPlaceholder = $anvisHasDadosFinanceiros ? ', ?' : '';
                     $stmt = $pdo->prepare("
                         INSERT INTO anvis (
                             id, tenant_id, numero, revisao, cliente, projeto, produto,
                             volume_mensal, data_anvi, status, dados, versao,
-                            hash_conteudo, criado_por, atualizado_por
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            hash_conteudo, criado_por, atualizado_por{$financeiroColumn}
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?{$financeiroPlaceholder})
                     ");
-                    $stmt->execute([
+                    $params = [
                         $id, $tenant_id, $numero, $revisao, $cliente, $projeto, $produto,
                         $volume_mensal, $data_anvi, $status, $dados_json,
                         $nova_versao, $hash, $user_id, $user_id
-                    ]);
+                    ];
+                    if ($anvisHasDadosFinanceiros) {
+                        $params[] = $dados_financeiros_json;
+                    }
+                    $stmt->execute($params);
                 } else {
+                    $financeiroColumn = $anvisHasDadosFinanceiros ? ', dados_financeiros' : '';
+                    $financeiroPlaceholder = $anvisHasDadosFinanceiros ? ', ?' : '';
                     $stmt = $pdo->prepare("
                         INSERT INTO anvis (
                             id, numero, revisao, cliente, projeto, produto, 
                             volume_mensal, data_anvi, status, dados, versao, 
-                            hash_conteudo, criado_por, atualizado_por
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            hash_conteudo, criado_por, atualizado_por{$financeiroColumn}
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?{$financeiroPlaceholder})
                     ");
-                    $stmt->execute([
+                    $params = [
                         $id, $numero, $revisao, $cliente, $projeto, $produto,
                         $volume_mensal, $data_anvi, $status, $dados_json, 
                         $nova_versao, $hash, $user_id, $user_id
-                    ]);
+                    ];
+                    if ($anvisHasDadosFinanceiros) {
+                        $params[] = $dados_financeiros_json;
+                    }
+                    $stmt->execute($params);
                 }
                 
                 $mensagem = 'ANVI criada com sucesso';
                 $versao_retorno = $nova_versao;
             }
+
+            viabixSaveFinancialSummary($pdo, (string) $tenant_id, $id, $numero, $revisao, $dados_financeiros);
             
             // Registrar log
             viabixLogActivity(

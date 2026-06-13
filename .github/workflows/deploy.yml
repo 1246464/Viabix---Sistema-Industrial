@@ -1,24 +1,62 @@
-name: Auto Deploy to DigitalOcean
+name: Deploy Viabix
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - homolog
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to DigitalOcean
-        uses: appleboy/ssh-action@master
+      - name: PHP syntax check
+        run: |
+          find api -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Deploy through server release script
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
-          password: ${{ secrets.DROPLET_PASSWORD }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: ${{ secrets.DROPLET_SSH_PORT || 22 }}
+          script_stop: true
+          envs: GITHUB_SHA,GITHUB_REF_NAME
           script: |
-            cd /var/www/html
-            git pull origin main
-            echo "Deploy completed at $(date)"
+            set -euo pipefail
+            APP_DIR="${{ secrets.APP_DIR || '/var/www/viabix' }}"
+            cd "$APP_DIR"
+            git fetch origin "$GITHUB_SHA"
+            git show "$GITHUB_SHA:deploy/release.sh" > /tmp/viabix-release.sh
+            chmod +x /tmp/viabix-release.sh
+            export APP_DIR="$APP_DIR"
+            export BRANCH="$GITHUB_REF_NAME"
+            export TARGET_REF="$GITHUB_SHA"
+            export HEALTHCHECK_URL="${{ secrets.HEALTHCHECK_URL }}"
+            if [ -x "$APP_DIR/deploy/digitalocean-preflight-check.sh" ]; then
+              bash "$APP_DIR/deploy/digitalocean-preflight-check.sh"
+            fi
+            bash /tmp/viabix-release.sh

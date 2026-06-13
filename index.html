@@ -2100,6 +2100,7 @@
         <a href="dashboard.html">Ir para o Dashboard →</a>
     </div>
 
+    <script src="js/anvi-api-core.js"></script>
     <script>
         let currentRating = 0;
         const defaultTestimonials = [
@@ -2208,11 +2209,13 @@
 
         async function checkSessionStatus() {
             try {
-                const response = await fetch('api/check_session.php', { credentials: 'include' });
-                if (response.ok) {
+                const response = await ViabixApiCore.checkSession({ ttlMs: 30000 });
+                if (response._ok && response.logado) {
                     document.getElementById('sessionRibbon').style.display = 'block';
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('Falha ao verificar sessão:', e);
+            }
         }
 
         document.addEventListener('keydown', (e) => {
@@ -2223,11 +2226,11 @@
 
         async function loadStats() {
             try {
-                const response = await fetch('api/estatisticas_publicas.php');
-                if (!response.ok) throw new Error('Erro ao carregar estatísticas');
-                
-                const data = await response.json();
-                
+                const data = await ViabixApiCore.getPublicStats();
+                if (!data._ok || !data.success) {
+                    throw new Error(data.message || 'Erro ao carregar estatísticas');
+                }
+
                 document.getElementById('anvisTotal').textContent = data.anvis_total || 0;
                 document.getElementById('projetosTotal').textContent = data.projetos_total || 0;
                 document.getElementById('usuariosTotal').textContent = data.usuarios_total || 0;
@@ -2248,6 +2251,7 @@
         checkSessionStatus();
         loadStats();
     </script>
+    <script src="js/anvi-api-core.js"></script>
     <script src="chat-widget.js"></script>
 </body>
 </html>

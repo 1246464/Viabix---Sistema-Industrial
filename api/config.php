@@ -36,6 +36,20 @@ if (!defined('SESSION_SECURE')) {
     define('SESSION_SECURE', viabix_env_bool('SESSION_SECURE', viabix_request_is_https() || APP_ENV === 'production'));
 }
 
+// Bloqueia endpoints de debug/teste em produção para reduzir superfície de ataque.
+$viabixCurrentScript = basename($_SERVER['SCRIPT_NAME'] ?? '');
+$viabixIsSensitiveDebugScript = (bool) preg_match(
+    '/^(debug_|test_|check_mysql_users\.php|diagnostico.*\.php|diagnose.*\.php|generate_test_token\.php)/i',
+    $viabixCurrentScript
+);
+
+if ($viabixIsSensitiveDebugScript && APP_ENV === 'production' && !APP_DEBUG) {
+    http_response_code(404);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Not Found']);
+    exit;
+}
+
 // ======================================================
 // CONFIGURAR E INICIALIZAR SESSÃO
 // ======================================================
@@ -146,16 +160,16 @@ $_viabix_sentry = viabix_sentry_init(SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELE
 // DEFINIR CONFIGURAÇÕES DE BANCO DE DADOS
 // ======================================================
 if (!defined('DB_HOST')) {
-    define('DB_HOST', viabix_env('DB_HOST', '127.0.0.1'));
+    define('DB_HOST', viabix_env('DB_HOST', viabix_env('MYSQL_HOST', '127.0.0.1')));
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', viabix_env('DB_NAME', 'viabix_db'));
+    define('DB_NAME', viabix_env('DB_NAME', viabix_env('MYSQL_DATABASE', 'viabix_db')));
 }
 if (!defined('DB_USER')) {
-    define('DB_USER', viabix_env('DB_USER', 'viabix'));
+    define('DB_USER', viabix_env('DB_USER', viabix_env('MYSQL_USER', 'viabix')));
 }
 if (!defined('DB_PASS')) {
-    $db_pass = viabix_env('DB_PASS', '');
+    $db_pass = viabix_env('DB_PASS', viabix_env('DB_PASSWORD', viabix_env('MYSQL_PASSWORD', '')));
     if ($db_pass === '' && viabix_env('APP_ENV', 'development') === 'production') {
         error_log('[VIABIX] CRÍTICO: DB_PASS não configurado no ambiente de produção!');
         header('Content-Type: application/json');
@@ -356,8 +370,10 @@ function hashPassword($password) {
  * Suporta tanto bcrypt (novo) quanto MD5 (legado)
  */
 function verifyPassword($password, $hash) {
-    // Verificar bcrypt (novo - começa com $2a$, $2b$, $2x$, $2y$)
-    if (preg_match('/^\$2[aby]\$/', $hash)) {
+    $hash = (string) $hash;
+
+    // Verificar hashes suportados pelo PHP, incluindo bcrypt/argon quando disponíveis.
+    if (password_get_info($hash)['algo'] !== 0) {
         return password_verify($password, $hash);
     }
     
@@ -366,6 +382,11 @@ function verifyPassword($password, $hash) {
         return md5($password) === $hash;
     }
     
+    // Verificar SHA-256 legado (64 caracteres hexadecimais)
+    if (strlen($hash) === 64 && ctype_xdigit($hash)) {
+        return hash_equals(strtolower($hash), hash('sha256', $password));
+    }
+
     // Hash desconhecido
     return false;
 }
@@ -594,7 +615,7 @@ function viabixFindUserForAuth($login) {
         $params[] = $login;
     }
 
-    $sql = 'SELECT ' . implode(', ', $select) . ' FROM usuarios WHERE ' . $where . ' LIMIT 1';
+    $sql = 'SELECT ' . implode(', ', $select) . ' FROM usuarios WHERE ' . $where . ' ORDER BY ativo DESC, id ASC LIMIT 1';
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
 

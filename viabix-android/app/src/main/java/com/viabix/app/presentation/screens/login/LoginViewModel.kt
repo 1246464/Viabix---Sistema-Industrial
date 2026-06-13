@@ -58,16 +58,24 @@ class LoginViewModel @Inject constructor(
                         Log.d("LoginViewModel", "Token recebido com sucesso")
                         tokenManager.saveToken(token)
                         
-                        // Salvar tenant_id tratando Double do Gson
-                        val tenantIdRaw = body["tenant_id"]
-                        val tenantIdStr = if (tenantIdRaw is Double) tenantIdRaw.toInt().toString() else tenantIdRaw.toString()
-                        tokenManager.saveTenantId(tenantIdStr)
+                        val tenant = body["tenant"] as? Map<String, Any>
+                        val tenantIdRaw = tenant?.get("id") ?: body["tenant_id"]
+                        val tenantIdStr = when (tenantIdRaw) {
+                            is String -> tenantIdRaw
+                            is Double -> tenantIdRaw.toInt().toString()
+                            null -> ""
+                            else -> tenantIdRaw.toString()
+                        }
+                        if (tenantIdStr.isNotBlank() && tenantIdStr != "null") {
+                            tokenManager.saveTenantId(tenantIdStr)
+                        }
 
                         // Salvar dados do usuário
                         val user = body["user"] as? Map<String, Any>
                         val userName = user?.get("nome") as? String ?: "Usuário"
                         val userLogin = user?.get("login") as? String ?: email
-                        tokenManager.saveUserData(userName, userLogin, "user")
+                        val userLevel = user?.get("nivel") as? String ?: "user"
+                        tokenManager.saveUserData(userName, userLogin, userLevel)
 
                         _loginState.update { it.copy(isLoading = false, isLoggedIn = true, error = null) }
                     } else {

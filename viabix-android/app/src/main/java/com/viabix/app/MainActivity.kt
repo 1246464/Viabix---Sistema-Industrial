@@ -10,7 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import com.viabix.app.presentation.screens.home.HomeScreen
 import com.viabix.app.presentation.screens.login.LoginScreen
 import com.viabix.app.presentation.screens.login.LoginViewModel
@@ -79,6 +84,15 @@ fun AppNavigation() {
                 },
                 onNavigateToFaturamento = {
                     navController.navigate("faturamento")
+                },
+                onOpenUrl = { url ->
+                    val absoluteUrl = when {
+                        url.startsWith("http") -> url
+                        url.startsWith("/") -> "https://viabix.com.br$url"
+                        else -> "https://viabix.com.br/$url"
+                    }
+                    val encodedUrl = URLEncoder.encode(absoluteUrl, StandardCharsets.UTF_8.toString())
+                    navController.navigate("web_action/$encodedUrl")
                 }
             )
         }
@@ -109,6 +123,24 @@ fun AppNavigation() {
             WebViewScreen(
                 title = "Faturamento e SaaS",
                 url = "https://viabix.com.br/billing.html",
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "web_action/{url}",
+            arguments = listOf(navArgument("url") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedUrl = backStackEntry.arguments?.getString("url").orEmpty()
+            val url = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+            val title = when {
+                url.contains("anvi.html", ignoreCase = true) -> "ANVI"
+                url.contains("Controle_de_projetos", ignoreCase = true) -> "Projeto"
+                else -> "Viabix"
+            }
+            WebViewScreen(
+                title = title,
+                url = url,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

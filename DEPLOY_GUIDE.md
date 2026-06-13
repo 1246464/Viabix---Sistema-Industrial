@@ -1,108 +1,84 @@
-# 📦 Guia de Deploy para viabix.com.br
+# Guia de Deploy Viabix
 
-## Arquivo de Deploy
-**Arquivo**: `viabix-deploy-20260508-153305.zip`  
-**Tamanho**: ~98 KB  
-**Versão**: 1dfcf5e (com correções de links)
+O deploy padrao agora e GitHub -> DigitalOcean, com backup automatico antes de atualizar, healthcheck depois do deploy e rollback automatico quando o healthcheck falha.
 
----
+## Fluxo Recomendado
 
-## 🚀 Opção 1: Deploy via SSH + Git (RECOMENDADO)
+1. Fazer merge para `homolog`.
+2. Validar staging.
+3. Fazer merge para `main`.
+4. GitHub Actions executa o deploy em producao.
 
-### Passo 1: Sincronizar no servidor
+Branches:
+
+- `homolog`: ambiente de homologacao.
+- `main`: ambiente de producao.
+
+## Preparar o Servidor
+
+No servidor, a aplicacao deve estar em `/var/www/viabix` ou no caminho definido por `APP_DIR`.
+
+Arquivos importantes:
+
+- `deploy/release.sh`: deploy e rollback.
+- `deploy/backup-viabix.sh`: backup de banco e arquivos.
+- `deploy/monitor-endpoints.sh`: monitoramento simples de endpoints.
+- `deploy/OPERATIONS_RUNBOOK.md`: checklist operacional completo.
+
+## Secrets do GitHub
+
+Configure no ambiente `staging` e `production`:
+
+- `DROPLET_IP`
+- `DROPLET_USER`
+- `DROPLET_SSH_KEY`
+- `DROPLET_SSH_PORT` opcional
+- `APP_DIR` opcional, padrao `/var/www/viabix`
+- `HEALTHCHECK_URL`
+
+Exemplo de `HEALTHCHECK_URL`:
+
+```text
+https://app.viabix.com.br/api/healthcheck.php?scope=ready
+```
+
+## Deploy Manual
+
 ```bash
-ssh root@146.190.244.133
-cd /var/www/viabix.com.br  # Ajuste o caminho conforme necessário
-git pull origin main
+cd /var/www/viabix
+APP_DIR=/var/www/viabix \
+BRANCH=main \
+TARGET_REF=origin/main \
+HEALTHCHECK_URL=https://app.viabix.com.br/api/healthcheck.php?scope=ready \
+bash deploy/release.sh
 ```
 
-Pronto! Os arquivos serão atualizados automaticamente.
+## Rollback
 
----
-
-## 📤 Opção 2: Upload Manual de Arquivos
-
-### Passo 1: Descompactar o ZIP
-O arquivo contém:
-- `index.html` (página inicial - ATUALIZADO)
-- `login.html` (login)
-- `signup.html` (cadastro)
-- `anvi.html` (aplicação)
-- `dashboard.html` (dashboard)
-
-### Passo 2: Fazer upload via SFTP
 ```bash
-sftp root@146.190.244.133
-cd /var/www/viabix.com.br
-put index.html
-put login.html
-put signup.html
-put anvi.html
-put dashboard.html
+cd /var/www/viabix
+bash deploy/release.sh --rollback <commit-ou-tag>
 ```
 
-Ou use um cliente SFTP (WinSCP, FileZilla, etc)
+Para restaurar banco, use um backup de `/var/backups/viabix/database` somente se a falha envolver dados ou migracao.
 
----
+## Pos-Deploy
 
-## ✅ Verificação Pós-Deploy
-
-### No servidor
 ```bash
-curl -I https://viabix.com.br/index.html
-# Deve retornar HTTP/2 200
+curl -fsS https://app.viabix.com.br/api/healthcheck.php?scope=live
+curl -fsS https://app.viabix.com.br/api/healthcheck.php?scope=ready
+curl -I https://app.viabix.com.br/login.html
+curl -I https://app.viabix.com.br/dashboard.html
+tail -n 80 /var/log/viabix/deploy.log
+tail -n 80 /var/www/viabix/logs/error.log
 ```
 
-### No navegador
-1. Acesse https://viabix.com.br
-2. Verifique se a navegação funciona
-3. Clique nos links de CTA:
-   - "Teste Grátis" → signup.html
-   - "Login" → login.html
-   - "Acessar App" → anvi.html
+## Monitoramento
 
----
+Cron sugerido:
 
-## 📋 O que foi alterado
-
-### Correções implementadas:
-- ✅ Removidos ~100 arquivos desnecessários (PHASE_*, test_*, etc)
-- ✅ Corrigidos 4 links quebrados:
-  - app-demo.html → anvi.html
-  - PLANO_COMERCIALIZACAO.html (3x) → #planos
-  - LICENSE.html → removido
-- ✅ Atualizado texto em FAQ
-- ✅ Todos os links agora apontam para arquivos válidos
-
-### Commits no GitHub:
-```
-1dfcf5e - fix: remove broken links to deleted files
-38b6d88 - chore: remove obsolete test files
+```cron
+*/5 * * * * BASE_URL=https://app.viabix.com.br /var/www/viabix/deploy/monitor-endpoints.sh >/dev/null 2>&1
 ```
 
----
-
-## 🆘 Troubleshooting
-
-### Erro 404 em algum arquivo
-- Verifique se o arquivo foi enviado corretamente
-- Confirme permissões (chmod 644)
-
-### Links não funcionam
-- Limpe cache do navegador (Ctrl+Shift+Del)
-- Verifique se os 5 arquivos estão no diretório raiz
-
-### CSS/JS não carrega
-- Verifique a URL base no .htaccess
-- Confirm que os assets estão no caminho correto
-
----
-
-## 📞 Contato para dúvidas
-Qualquer problema, me avisa!
-
----
-
-**Preparado em**: 2026-05-08  
-**Versão**: 1.0  
-**Status**: Pronto para produção ✅
+Veja detalhes no [runbook operacional](deploy/OPERATIONS_RUNBOOK.md).

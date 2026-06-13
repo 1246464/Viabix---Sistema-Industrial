@@ -168,15 +168,18 @@ git clone $REPO_URL .
 chown -R $APP_USER:$APP_GROUP $APP_DIR
 chmod -R 755 $APP_DIR
 chmod -R 775 $APP_DIR/api
-chmod -R 775 $APP_DIR/uploads
 
 # Create necessary directories
 mkdir -p /var/log/viabix
 mkdir -p /var/cache/viabix
 mkdir -p /var/uploads/viabix
+mkdir -p $APP_DIR/logs
+mkdir -p $APP_DIR/uploads
 
-chown -R $APP_USER:$APP_GROUP /var/log/viabix /var/cache/viabix /var/uploads/viabix
-chmod -R 775 /var/log/viabix /var/cache/viabix /var/uploads/viabix
+chown -R $APP_USER:$APP_GROUP /var/log/viabix /var/cache/viabix /var/uploads/viabix $APP_DIR/logs $APP_DIR/uploads
+chmod -R 775 /var/log/viabix /var/cache/viabix /var/uploads/viabix $APP_DIR/logs $APP_DIR/uploads
+chmod +x $APP_DIR/deploy/*.sh
+cp $APP_DIR/deploy/logrotate-viabix.conf /etc/logrotate.d/viabix
 
 echo -e "${GREEN}✅ Aplicação clonada${NC}\n"
 
@@ -350,59 +353,20 @@ echo -e "${GREEN}✅ PHP-FPM otimizado${NC}\n"
 # ============================================================================
 echo -e "${BLUE}[12/12]${NC} ${YELLOW}Configurando backups automáticos...${NC}"
 
-# Create backup script
-cat > /usr/local/bin/viabix-backup.sh << 'BACKUP_SCRIPT'
-#!/bin/bash
-
-BACKUP_DATE=$(date +%Y-%m-%d_%H-%M-%S)
-BACKUP_DIR="/var/backups/viabix/$BACKUP_DATE"
-DB_HOST="localhost"
-DB_USER="viabix_app"
-DB_PASS=$(grep DB_PASS /var/www/viabix/.env | cut -d= -f2)
-DB_NAME="viabix_prod"
-S3_BUCKET="your-bucket-name"
-AWS_REGION="nyc3"  # DigitalOcean Spaces region
-
-mkdir -p $BACKUP_DIR
-
-echo "[$(date)] Starting backup: $BACKUP_DATE"
-
-# Database backup
-mysqldump -h $DB_HOST -u $DB_USER -p"$DB_PASS" $DB_NAME | gzip > $BACKUP_DIR/database.sql.gz
-
-# Application files backup
-tar -czf $BACKUP_DIR/application.tar.gz \
-  --exclude=node_modules \
-  --exclude=vendor \
-  --exclude=.git \
-  --exclude=cache \
-  /var/www/viabix
-
-# Upload to DigitalOcean Spaces (S3-compatible)
-# Requires: apt-get install awscli
-aws s3 cp $BACKUP_DIR s3://$S3_BUCKET/backups/$BACKUP_DATE --recursive \
-  --endpoint-url https://$AWS_REGION.digitaloceanspaces.com
-
-# Cleanup local (keep 3 days)
-find /var/backups/viabix -type d -mtime +3 -exec rm -rf {} \;
-
-echo "[$(date)] Backup completed: $BACKUP_DATE"
-BACKUP_SCRIPT
-
-chmod +x /usr/local/bin/viabix-backup.sh
-
 # Create crontab entry
 cat >> /var/spool/cron/crontabs/root << 'CRONTAB'
 
 # Viabix system backups - Daily at 2 AM UTC
-0 2 * * * /usr/local/bin/viabix-backup.sh >> /var/log/viabix/backup.log 2>&1
+0 2 * * * APP_DIR=/var/www/viabix /var/www/viabix/deploy/backup-viabix.sh >> /var/log/viabix/backup.log 2>&1
 
-# Check healthcheck every 5 minutes
-*/5 * * * * curl -f https://DOMAIN_PLACEHOLDER/api/healthcheck > /dev/null 2>&1 || systemctl restart apache2
+# Monitor endpoints every 5 minutes
+*/5 * * * * BASE_URL=https://DOMAIN_PLACEHOLDER /var/www/viabix/deploy/monitor-endpoints.sh >/dev/null 2>&1
 
 # Cleanup old logs
 0 3 * * * find /var/log/viabix -name "*.log" -mtime +30 -delete
 CRONTAB
+
+sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" /var/spool/cron/crontabs/root
 
 echo -e "${GREEN}✅ Backups configurados${NC}\n"
 

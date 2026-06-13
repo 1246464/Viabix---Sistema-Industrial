@@ -12,11 +12,20 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar autenticação
-if (!isset($_SESSION['user_id'])) {
+// Verificar autenticação via sessão web ou JWT mobile
+$currentUser = viabixGetAuthenticatedUser();
+if (!$currentUser) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Não autenticado']);
     exit;
+}
+
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = $currentUser['id'];
+    $_SESSION['user_login'] = $currentUser['login'] ?? '';
+    $_SESSION['user_nome'] = $currentUser['nome'] ?? '';
+    $_SESSION['user_level'] = viabixNormalizeUserLevel($currentUser['nivel'] ?? 'visitante');
+    $_SESSION['tenant_id'] = $currentUser['tenant_id'] ?? null;
 }
 
 try {
@@ -32,6 +41,32 @@ try {
     $leadersHasActive = viabixHasColumn('lideres', 'ativo');
     $projectsHasStatusColumn = viabixHasColumn('projetos', 'status');
     $anvisHasResponsavel = viabixHasColumn('anvis', 'responsavel');
+    $anvisHasStatus = viabixHasColumn('anvis', 'status');
+    $anvisHasProjetoId = viabixHasColumn('anvis', 'projeto_id');
+    $anvisHasDataAtualizacao = viabixHasColumn('anvis', 'data_atualizacao');
+    $anvisHasDataCriacao = viabixHasColumn('anvis', 'data_criacao');
+    $anvisHasDados = viabixHasColumn('anvis', 'dados');
+    $anvisHasDadosFinanceiros = viabixHasColumn('anvis', 'dados_financeiros');
+    $anvisHasCriadoPor = viabixHasColumn('anvis', 'criado_por');
+    $anvisHasAtualizadoPor = viabixHasColumn('anvis', 'atualizado_por');
+    $anvisHasCliente = viabixHasColumn('anvis', 'cliente');
+    $anvisHasProjeto = viabixHasColumn('anvis', 'projeto');
+    $projectUpdatedColumn = viabixHasColumn('projetos', 'updated_at') ? 'updated_at' : null;
+    $projectCreatedColumn = viabixHasColumn('projetos', 'created_at') ? 'created_at' : null;
+    $anviStatusExpr = $anvisHasStatus
+        ? "COALESCE(status, '')"
+        : ($anvisHasDados ? "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, '$.status')), '')" : "''");
+    $anviProjetoIdExpr = $anvisHasProjetoId ? 'projeto_id' : 'NULL';
+    $anviUpdatedExpr = $anvisHasDataAtualizacao
+        ? 'data_atualizacao'
+        : ($anvisHasDataCriacao ? 'data_criacao' : 'NOW()');
+    $anviCreatedExpr = $anvisHasDataCriacao ? 'data_criacao' : $anviUpdatedExpr;
+    $anviClienteExpr = $anvisHasCliente
+        ? "COALESCE(cliente, '')"
+        : ($anvisHasDados ? "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, '$.cliente')), '')" : "''");
+    $anviProjetoExpr = $anvisHasProjeto
+        ? "COALESCE(projeto, '')"
+        : ($anvisHasDados ? "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, '$.projeto')), '')" : "''");
 
     $period = isset($_GET['period']) && in_array($_GET['period'], ['7', '30', '90'], true)
         ? (int) $_GET['period']
@@ -46,12 +81,12 @@ try {
     $filterParams = [];
 
     if ($statusFilter !== '') {
-        $statusClause = ' AND COALESCE(status, \'\') = ?';
+        $statusClause = ' AND ' . $anviStatusExpr . ' = ?';
         $filterParams[] = $statusFilter;
     }
 
     if ($clienteFilter !== '') {
-        $clienteClause = ' AND (cliente LIKE ? OR projeto LIKE ?)';
+        $clienteClause = ' AND (' . $anviClienteExpr . ' LIKE ? OR ' . $anviProjetoExpr . ' LIKE ?)';
         $filterParams[] = '%' . $clienteFilter . '%';
         $filterParams[] = '%' . $clienteFilter . '%';
     }
@@ -65,18 +100,26 @@ try {
             $filterParams[] = $likeValue;
         }
 
-        $clauses[] = 'COALESCE(criado_por, \'\') LIKE ?';
-        $clauses[] = 'COALESCE(atualizado_por, \'\') LIKE ?';
-        $filterParams[] = $likeValue;
-        $filterParams[] = $likeValue;
+        if ($anvisHasCriadoPor) {
+            $clauses[] = 'COALESCE(criado_por, \'\') LIKE ?';
+            $filterParams[] = $likeValue;
+        }
+        if ($anvisHasAtualizadoPor) {
+            $clauses[] = 'COALESCE(atualizado_por, \'\') LIKE ?';
+            $filterParams[] = $likeValue;
+        }
 
-        $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelTecnica\')), \'\') LIKE ?';
-        $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelComercial\')), \'\') LIKE ?';
-        $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelEconomica\')), \'\') LIKE ?';
-        $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelFiscal\')), \'\') LIKE ?';
-        $filterParams = array_merge($filterParams, array_fill(0, 4, $likeValue));
+        if ($anvisHasDados) {
+            $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelTecnica\')), \'\') LIKE ?';
+            $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelComercial\')), \'\') LIKE ?';
+            $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelEconomica\')), \'\') LIKE ?';
+            $clauses[] = 'COALESCE(JSON_UNQUOTE(JSON_EXTRACT(dados, \'$.responsavelFiscal\')), \'\') LIKE ?';
+            $filterParams = array_merge($filterParams, array_fill(0, 4, $likeValue));
+        }
 
-        $responsavelClause = ' AND (' . implode(' OR ', $clauses) . ')';
+        if ($clauses) {
+            $responsavelClause = ' AND (' . implode(' OR ', $clauses) . ')';
+        }
     }
 
     // Contar ANVIs
@@ -124,26 +167,39 @@ try {
     $stats['lideres'] = $stmt->fetch()['total'] ?? 0;
     
     // Contar vínculos ANVI-Projeto
-    if ($tenantAwareAnvis) {
-        $stmt = $pdo->prepare(
-            "SELECT COUNT(*) as total
-             FROM anvis
-             WHERE projeto_id IS NOT NULL AND tenant_id = ?"
-        );
-        $stmt->execute([$tenantId]);
+    if ($anvisHasProjetoId) {
+        if ($tenantAwareAnvis) {
+            $stmt = $pdo->prepare(
+                "SELECT COUNT(*) as total
+                 FROM anvis
+                 WHERE projeto_id IS NOT NULL AND tenant_id = ?"
+            );
+            $stmt->execute([$tenantId]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT COUNT(*) as total
+                FROM anvis
+                WHERE projeto_id IS NOT NULL
+            ");
+        }
+        $stats['vinculos'] = $stmt->fetch()['total'] ?? 0;
     } else {
-        $stmt = $pdo->query(" 
-            SELECT COUNT(*) as total 
-            FROM anvis 
-            WHERE projeto_id IS NOT NULL
-        ");
+        $sql = "SELECT COUNT(*) as total
+                FROM projetos
+                WHERE JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviId')) IS NOT NULL";
+        if ($tenantAwareProjetos) {
+            $stmt = $pdo->prepare($sql . ' AND tenant_id = ?');
+            $stmt->execute([$tenantId]);
+        } else {
+            $stmt = $pdo->query($sql);
+        }
+        $stats['vinculos'] = $stmt->fetch()['total'] ?? 0;
     }
-    $stats['vinculos'] = $stmt->fetch()['total'] ?? 0;
     
     // ANVIs por status
     if ($tenantAwareAnvis) {
         $stmt = $pdo->prepare(
-            "SELECT status, COUNT(*) as total
+            "SELECT {$anviStatusExpr} as status, COUNT(*) as total
              FROM anvis
              WHERE tenant_id = ?
              GROUP BY status"
@@ -151,8 +207,8 @@ try {
         $stmt->execute([$tenantId]);
     } else {
         $stmt = $pdo->query(" 
-            SELECT status, COUNT(*) as total 
-            FROM anvis 
+            SELECT {$anviStatusExpr} as status, COUNT(*) as total
+            FROM anvis
             GROUP BY status
         ");
     }
@@ -200,60 +256,66 @@ try {
             "SELECT COUNT(*) as total
              FROM anvis
              WHERE tenant_id = ?
-               AND data_criacao >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
+               AND {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
         );
         $stmt->execute([$tenantId]);
     } else {
         $stmt = $pdo->query(" 
             SELECT COUNT(*) as total 
             FROM anvis 
-            WHERE data_criacao >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
+            WHERE {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
         ");
     }
     $stats['anvis_recentes'] = $stmt->fetch()['total'] ?? 0;
     
     // Projetos atualizados nos últimos N dias
-    if ($tenantAwareProjetos) {
-        $stmt = $pdo->prepare(
-            "SELECT COUNT(*) as total
-             FROM projetos
-             WHERE tenant_id = ?
-               AND updated_at >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
-        );
-        $stmt->execute([$tenantId]);
+    $projectActivityColumn = $projectUpdatedColumn ?: $projectCreatedColumn;
+    if ($projectActivityColumn) {
+        if ($tenantAwareProjetos) {
+            $stmt = $pdo->prepare(
+                "SELECT COUNT(*) as total
+                 FROM projetos
+                 WHERE tenant_id = ?
+                   AND {$projectActivityColumn} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
+            );
+            $stmt->execute([$tenantId]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT COUNT(*) as total
+                FROM projetos
+                WHERE {$projectActivityColumn} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
+            ");
+        }
+        $stats['projetos_recentes'] = $stmt->fetch()['total'] ?? 0;
     } else {
-        $stmt = $pdo->query(" 
-            SELECT COUNT(*) as total 
-            FROM projetos 
-            WHERE updated_at >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
-        ");
+        $stats['projetos_recentes'] = 0;
     }
-    $stats['projetos_recentes'] = $stmt->fetch()['total'] ?? 0;
 
     $tenantParam = $tenantId ? [$tenantId] : [];
     $anviScope = $tenantAwareAnvis ? 'tenant_id = ?' : '1 = 1';
     $projetoScope = $tenantAwareProjetos ? 'tenant_id = ?' : '1 = 1';
-    $projectUpdatedColumn = viabixHasColumn('projetos', 'updated_at') ? 'updated_at' : null;
-    $projectCreatedColumn = viabixHasColumn('projetos', 'created_at') ? 'created_at' : null;
 
     $stmt = $pdo->prepare(
         "SELECT COUNT(*) as total
          FROM anvis
          WHERE {$anviScope}
-           AND COALESCE(status, '') NOT IN ('aprovada', 'aprovado', 'concluida', 'concluido')
-           AND data_atualizacao < DATE_SUB(NOW(), INTERVAL 14 DAY)"
+           AND {$anviStatusExpr} NOT IN ('aprovada', 'aprovado', 'concluida', 'concluido')
+           AND {$anviUpdatedExpr} < DATE_SUB(NOW(), INTERVAL 14 DAY)"
     );
     $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
     $anvisParadas = (int) ($stmt->fetch()['total'] ?? 0);
 
-    $stmt = $pdo->prepare(
-        "SELECT COUNT(*) as total
-         FROM anvis
-         WHERE {$anviScope}
-           AND projeto_id IS NULL"
-    );
-    $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
-    $anvisSemProjeto = (int) ($stmt->fetch()['total'] ?? 0);
+    $anvisSemProjeto = 0;
+    if ($anvisHasProjetoId) {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(*) as total
+             FROM anvis
+             WHERE {$anviScope}
+               AND projeto_id IS NULL"
+        );
+        $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
+        $anvisSemProjeto = (int) ($stmt->fetch()['total'] ?? 0);
+    }
 
     $projetosParados = 0;
     if ($projectUpdatedColumn) {
@@ -296,6 +358,125 @@ try {
             'statusLabel' => 'Prazo',
         ];
     }
+
+    $alertasFinanceiros = [];
+    $financeiroResumo = [
+        'anvis_com_indicadores' => 0,
+        'margem_media_pct' => 0,
+        'roi_medio_pct' => 0,
+        'payback_medio_meses' => 0,
+        'alertas_criticos' => 0,
+        'alertas_atencao' => 0,
+    ];
+
+    if ($anvisHasDadosFinanceiros) {
+        $financeWhere = "{$anviScope} AND dados_financeiros IS NOT NULL";
+        $financeParams = $tenantAwareAnvis ? $tenantParam : [];
+
+        $stmt = $pdo->prepare(
+            "SELECT
+                COUNT(*) as total,
+                AVG(CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.margem_esperada_pct')) AS DECIMAL(12,2))) as margem_media,
+                AVG(CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.roi_esperado_pct')) AS DECIMAL(12,2))) as roi_medio,
+                AVG(NULLIF(CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.payback_meses')) AS DECIMAL(12,2)), 0)) as payback_medio
+             FROM anvis
+             WHERE {$financeWhere}"
+        );
+        $stmt->execute($financeParams);
+        $financeiroRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $financeiroResumo['anvis_com_indicadores'] = (int) ($financeiroRow['total'] ?? 0);
+        $financeiroResumo['margem_media_pct'] = round((float) ($financeiroRow['margem_media'] ?? 0), 2);
+        $financeiroResumo['roi_medio_pct'] = round((float) ($financeiroRow['roi_medio'] ?? 0), 2);
+        $financeiroResumo['payback_medio_meses'] = round((float) ($financeiroRow['payback_medio'] ?? 0), 2);
+
+        $stmt = $pdo->prepare(
+            "SELECT id, numero, revisao,
+                {$anviClienteExpr} as cliente,
+                {$anviProjetoExpr} as projeto,
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.margem_esperada_pct')) AS DECIMAL(12,2)) as margem,
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.roi_esperado_pct')) AS DECIMAL(12,2)) as roi,
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.payback_meses')) AS DECIMAL(12,2)) as payback,
+                CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.desvio_estimado_realizado_pct')) AS DECIMAL(12,2)) as desvio
+             FROM anvis
+             WHERE {$financeWhere}
+               {$statusClause}
+               {$clienteClause}
+               {$responsavelClause}
+               AND (
+                    CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.margem_esperada_pct')) AS DECIMAL(12,2)) BETWEEN 0.01 AND 14.99
+                 OR CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.roi_esperado_pct')) AS DECIMAL(12,2)) BETWEEN 0.01 AND 19.99
+                 OR CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.payback_meses')) AS DECIMAL(12,2)) > 24
+                 OR CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.desvio_estimado_realizado_pct')) AS DECIMAL(12,2)) > 10
+               )
+             ORDER BY
+               CASE
+                 WHEN CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.margem_esperada_pct')) AS DECIMAL(12,2)) BETWEEN 0.01 AND 9.99 THEN 0
+                 WHEN CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.desvio_estimado_realizado_pct')) AS DECIMAL(12,2)) > 25 THEN 1
+                 WHEN CAST(JSON_UNQUOTE(JSON_EXTRACT(dados_financeiros, '$.payback_meses')) AS DECIMAL(12,2)) > 24 THEN 2
+                 ELSE 3
+               END,
+               {$anviUpdatedExpr} DESC
+             LIMIT 5"
+        );
+        $params = array_merge($financeParams, $filterParams);
+        $stmt->execute($params);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $item) {
+            $margem = (float) ($item['margem'] ?? 0);
+            $roi = (float) ($item['roi'] ?? 0);
+            $payback = (float) ($item['payback'] ?? 0);
+            $desvio = (float) ($item['desvio'] ?? 0);
+            $problemas = [];
+            $status = 'atencao';
+
+            if ($margem > 0 && $margem < 10) {
+                $problemas[] = 'margem ' . round($margem, 1) . '%';
+                $status = 'critico';
+            } elseif ($margem > 0 && $margem < 15) {
+                $problemas[] = 'margem ' . round($margem, 1) . '%';
+            }
+            if ($roi > 0 && $roi < 20) {
+                $problemas[] = 'ROI ' . round($roi, 1) . '%';
+            }
+            if ($payback > 24) {
+                $problemas[] = 'payback ' . round($payback, 1) . ' meses';
+            }
+            if ($desvio > 10) {
+                $problemas[] = 'desvio +' . round($desvio, 1) . '%';
+                if ($desvio > 25) {
+                    $status = 'critico';
+                }
+            }
+
+            $codigo = trim(($item['numero'] ?? '') . ' Rev. ' . ($item['revisao'] ?? ''));
+            $alertasFinanceiros[] = [
+                'titulo' => 'Risco financeiro em ' . ($codigo !== 'Rev.' ? $codigo : $item['id']),
+                'detalhe' => ($item['cliente'] ?: 'Cliente não informado') . ' • ' . implode(', ', $problemas),
+                'status' => $status,
+                'statusLabel' => $status === 'critico' ? 'Crítico' : 'Atenção',
+                'actionLabel' => 'Abrir análise',
+                'actionUrl' => 'dashboard_viabilidade.html?anvi_id=' . urlencode($item['id']),
+            ];
+        }
+
+        $financeiroResumo['alertas_criticos'] = count(array_filter($alertasFinanceiros, fn($item) => $item['status'] === 'critico'));
+        $financeiroResumo['alertas_atencao'] = count(array_filter($alertasFinanceiros, fn($item) => $item['status'] === 'atencao'));
+    }
+
+    if ($alertasFinanceiros) {
+        $criticosFinanceiros = count(array_filter($alertasFinanceiros, fn($item) => $item['status'] === 'critico'));
+        $atencaoHoje[] = [
+            'titulo' => count($alertasFinanceiros) . ' ANVI(s) com risco financeiro',
+            'detalhe' => $criticosFinanceiros > 0
+                ? $criticosFinanceiros . ' caso(s) crítico(s) de margem ou desvio'
+                : 'Há indicadores abaixo dos parâmetros financeiros',
+            'status' => $criticosFinanceiros > 0 ? 'critico' : 'atencao',
+            'statusLabel' => 'Financeiro',
+            'actionLabel' => 'Ver riscos',
+            'actionUrl' => 'dashboard_viabilidade.html',
+        ];
+    }
+
     if (!$atencaoHoje) {
         $atencaoHoje[] = [
             'titulo' => 'Nenhum alerta operacional crítico',
@@ -305,21 +486,26 @@ try {
         ];
     }
 
-    $sqlPrioridades = "SELECT id, numero, revisao, cliente, projeto, status, projeto_id, data_atualizacao
+    $sqlPrioridades = "SELECT id, numero, revisao,
+             {$anviClienteExpr} as cliente,
+             {$anviProjetoExpr} as projeto,
+             {$anviStatusExpr} as status,
+             {$anviProjetoIdExpr} as projeto_id,
+             {$anviUpdatedExpr} as data_atualizacao
          FROM anvis
          WHERE {$anviScope}
-           AND COALESCE(status, '') NOT IN ('aprovada', 'aprovado', 'concluida', 'concluido')
+           AND {$anviStatusExpr} NOT IN ('aprovada', 'aprovado', 'concluida', 'concluido')
            {$statusClause}
            {$clienteClause}
            {$responsavelClause}
          ORDER BY
            CASE
-             WHEN COALESCE(status, '') IN ('reprovada', 'reprovado', 'aprovada-condicional') THEN 0
-             WHEN projeto_id IS NULL THEN 1
-             WHEN data_atualizacao < DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 2
+             WHEN {$anviStatusExpr} IN ('reprovada', 'reprovado', 'aprovada-condicional') THEN 0
+             WHEN {$anviProjetoIdExpr} IS NULL THEN 1
+             WHEN {$anviUpdatedExpr} < DATE_SUB(NOW(), INTERVAL 14 DAY) THEN 2
              ELSE 3
            END,
-           data_atualizacao ASC
+           {$anviUpdatedExpr} ASC
          LIMIT 5";
 
     $params = $tenantAwareAnvis ? $tenantParam : [];
@@ -341,7 +527,7 @@ try {
             'status' => $critico ? 'critico' : ($semProjeto ? 'atencao' : 'ok'),
             'statusLabel' => $critico ? 'Urgente' : ($semProjeto ? 'Vincular' : 'Revisar'),
             'actionLabel' => 'Abrir ANVI',
-            'actionUrl' => 'anvi.html?id=' . urlencode($anvi['id']),
+            'actionUrl' => 'anvi.html?anvi_id=' . urlencode($anvi['id']),
         ];
     }
     if (!$prioridades) {
@@ -370,10 +556,10 @@ try {
 
     $stmt = $pdo->prepare(
         "SELECT
-            SUM(CASE WHEN data_criacao >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as ultimos_7,
-            SUM(CASE WHEN data_criacao >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as ultimos_30,
-            SUM(CASE WHEN projeto_id IS NOT NULL AND data_criacao >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as vinculos_7,
-            SUM(CASE WHEN projeto_id IS NOT NULL AND data_criacao >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as vinculos_30
+            SUM(CASE WHEN {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as ultimos_7,
+            SUM(CASE WHEN {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as ultimos_30,
+            SUM(CASE WHEN {$anviProjetoIdExpr} IS NOT NULL AND {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as vinculos_7,
+            SUM(CASE WHEN {$anviProjetoIdExpr} IS NOT NULL AND {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as vinculos_30
          FROM anvis
          WHERE {$anviScope}"
     );
@@ -400,6 +586,10 @@ try {
     $stats['dashboard_operacional'] = [
         'atencao_hoje' => $atencaoHoje,
         'prioridades' => $prioridades,
+        'financeiro' => [
+            'resumo' => $financeiroResumo,
+            'alertas' => $alertasFinanceiros,
+        ],
         'health' => $healthSummary,
         'tendencias' => [
             [

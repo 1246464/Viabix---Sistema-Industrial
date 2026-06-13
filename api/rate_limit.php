@@ -30,6 +30,7 @@ $redis = null;
  */
 function viabixInitializeRedis() {
     global $redis;
+    static $redisStatusLogged = false;
     
     if ($redis !== null) {
         return $redis; // Already initialized
@@ -59,17 +60,26 @@ function viabixInitializeRedis() {
             
             // Ping to verify connection
             if ($redis->ping()) {
-                error_log('[RATE_LIMIT] Redis initialized successfully: ' . $redisHost . ':' . $redisPort);
+                if (!$redisStatusLogged && defined('APP_DEBUG') && APP_DEBUG) {
+                    error_log('[RATE_LIMIT] Redis initialized successfully: ' . $redisHost . ':' . $redisPort);
+                    $redisStatusLogged = true;
+                }
                 return $redis;
             }
         } catch (Exception $e) {
-            error_log('[RATE_LIMIT] Redis connection failed: ' . $e->getMessage());
+            if (!$redisStatusLogged) {
+                error_log('[RATE_LIMIT] Redis connection failed: ' . $e->getMessage());
+                $redisStatusLogged = true;
+            }
             $redis = null;
         }
     }
     
     // Fallback to session if Redis not available
-    error_log('[RATE_LIMIT] Using fallback: Session-based rate limiting (NOT PERSISTENT!)');
+    if (!$redisStatusLogged && defined('APP_DEBUG') && APP_DEBUG) {
+        error_log('[RATE_LIMIT] Using fallback: Session-based rate limiting (NOT PERSISTENT!)');
+        $redisStatusLogged = true;
+    }
     return null;
 }
 

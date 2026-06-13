@@ -136,8 +136,42 @@ CREATE TABLE IF NOT EXISTS projeto_historico_custos (
 -- ======================================================
 ALTER TABLE anvis 
 ADD COLUMN IF NOT EXISTS dados_financeiros JSON DEFAULT NULL 
-COMMENT 'Dados financeiros: investimento, ROI, payback, riscos esperados'
+COMMENT 'Resumo financeiro padronizado: margem, custo total, preco sugerido, ROI, payback, desvios e alertas'
 AFTER dados;
+
+-- ======================================================
+-- TABELA 5: Resumo financeiro padronizado por ANVI
+-- ======================================================
+CREATE TABLE IF NOT EXISTS anvi_resumo_financeiro (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id CHAR(36) NOT NULL,
+    anvi_id VARCHAR(50) NOT NULL,
+    anvi_numero VARCHAR(50) NOT NULL,
+    anvi_revisao VARCHAR(10) NOT NULL,
+    moeda CHAR(3) NOT NULL DEFAULT 'BRL',
+    volume_mensal DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    custo_unitario DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    custo_total DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    preco_sugerido DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    receita_mensal DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    lucro_liquido_mensal DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    investimento_total DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    margem_esperada_pct DECIMAL(8, 2) NOT NULL DEFAULT 0,
+    roi_esperado_pct DECIMAL(8, 2) NOT NULL DEFAULT 0,
+    payback_meses DECIMAL(8, 2) NOT NULL DEFAULT 0,
+    desvio_estimado_realizado_valor DECIMAL(14, 2) NOT NULL DEFAULT 0,
+    desvio_estimado_realizado_pct DECIMAL(8, 2) NOT NULL DEFAULT 0,
+    alertas JSON DEFAULT NULL,
+    calculado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_anvi_resumo_financeiro (tenant_id, anvi_id),
+    INDEX idx_anvi_resumo_financeiro_tenant (tenant_id),
+    INDEX idx_anvi_resumo_financeiro_numero (tenant_id, anvi_numero, anvi_revisao),
+    INDEX idx_anvi_resumo_financeiro_risco (tenant_id, margem_esperada_pct, roi_esperado_pct, payback_meses),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ======================================================
 -- ESTENDER TABELA: projetos

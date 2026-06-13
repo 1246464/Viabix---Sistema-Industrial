@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS anvis (
     bloqueado_em DATETIME NULL,
     hash_conteudo VARCHAR(64) NULL,
     dados JSON NOT NULL,
+    dados_financeiros JSON NULL,
     criado_por CHAR(36) NULL,
     atualizado_por CHAR(36) NULL,
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

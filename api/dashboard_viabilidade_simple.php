@@ -43,6 +43,7 @@ try {
     // Decode JSON fields
     $dados = json_decode($anvi['dados'] ?? '{}', true);
     $dados_financeiros = json_decode($anvi['dados_financeiros'] ?? '{}', true);
+    $financeiro_salvo = is_array($dados_financeiros) ? $dados_financeiros : [];
     
     // Calculate compatibility scores
     $financeiro_score = 0;
@@ -51,9 +52,12 @@ try {
     $recursos_score = 0;
     
     // Financeiro
-    $roi = $dados_financeiros['roi_esperado_pct'] ?? 0;
-    $payback = $dados_financeiros['payback_meses'] ?? 0;
+    $roi = (float) ($financeiro_salvo['roi_esperado_pct'] ?? 0);
+    $payback = (float) ($financeiro_salvo['payback_meses'] ?? 0);
     $financeiro_score = min(100, ($roi / 150) * 70 + (12 / max($payback, 1)) * 30);
+    if ($roi <= 0 && $payback <= 0) {
+        $financeiro_score = 0;
+    }
     
     // Planejamento
     $fases = $dados['planejamento']['fases'] ?? 0;
@@ -74,6 +78,74 @@ try {
     $viabilidade_geral = ($financeiro_score + $planejamento_score + $qualidade_score + $recursos_score) / 4;
     $status_viabilidade = $viabilidade_geral >= 75 ? 'VIÁVEL' : ($viabilidade_geral >= 50 ? 'PARCIAL' : 'NÃO VIÁVEL');
     
+    $alertas_financeiros = [];
+    $margem = (float) ($financeiro_salvo['margem_esperada_pct'] ?? 0);
+    $desvio = (float) ($financeiro_salvo['desvio_estimado_realizado_pct'] ?? 0);
+
+    if ($margem > 0 && $margem < 10) {
+        $alertas_financeiros[] = [
+            'tipo' => 'margem_baixa',
+            'severidade' => 'critico',
+            'mensagem' => 'Margem líquida abaixo de 10%'
+        ];
+    } elseif ($margem > 0 && $margem < 15) {
+        $alertas_financeiros[] = [
+            'tipo' => 'margem_atencao',
+            'severidade' => 'atencao',
+            'mensagem' => 'Margem líquida abaixo do recomendado'
+        ];
+    }
+    if ($roi > 0 && $roi < 20) {
+        $alertas_financeiros[] = [
+            'tipo' => 'roi_baixo',
+            'severidade' => 'atencao',
+            'mensagem' => 'ROI anual abaixo de 20%'
+        ];
+    }
+    if ($payback > 24) {
+        $alertas_financeiros[] = [
+            'tipo' => 'payback_longo',
+            'severidade' => 'atencao',
+            'mensagem' => 'Payback acima de 24 meses'
+        ];
+    }
+    if ($desvio > 10) {
+        $alertas_financeiros[] = [
+            'tipo' => 'desvio_custo',
+            'severidade' => $desvio > 25 ? 'critico' : 'atencao',
+            'mensagem' => 'Custo realizado acima do estimado'
+        ];
+    }
+
+    $comparativo_revisoes = [];
+    $stmt = $pdo->prepare("
+        SELECT id, revisao, data_atualizacao, dados_financeiros
+        FROM anvis
+        WHERE numero = ? AND tenant_id = ? AND id <> ?
+        ORDER BY data_atualizacao DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$anvi['numero'], $tenant_id, $anvi['id']]);
+    $revisao_anterior = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($revisao_anterior) {
+        $financeiro_anterior = json_decode($revisao_anterior['dados_financeiros'] ?? '{}', true);
+        if (is_array($financeiro_anterior)) {
+            $comparativo_revisoes = [
+                'revisao_atual' => $anvi['revisao'],
+                'revisao_anterior' => $revisao_anterior['revisao'],
+                'anvi_anterior_id' => $revisao_anterior['id'],
+                'variacoes' => [
+                    'margem_esperada_pct' => round((float) ($financeiro_salvo['margem_esperada_pct'] ?? 0) - (float) ($financeiro_anterior['margem_esperada_pct'] ?? 0), 2),
+                    'custo_total' => round((float) ($financeiro_salvo['custo_total'] ?? 0) - (float) ($financeiro_anterior['custo_total'] ?? 0), 2),
+                    'preco_sugerido' => round((float) ($financeiro_salvo['preco_sugerido'] ?? 0) - (float) ($financeiro_anterior['preco_sugerido'] ?? 0), 2),
+                    'payback_meses' => round((float) ($financeiro_salvo['payback_meses'] ?? 0) - (float) ($financeiro_anterior['payback_meses'] ?? 0), 2),
+                    'roi_esperado_pct' => round((float) ($financeiro_salvo['roi_esperado_pct'] ?? 0) - (float) ($financeiro_anterior['roi_esperado_pct'] ?? 0), 2),
+                ]
+            ];
+        }
+    }
+
     // Build response
     $report = [
         'anvi' => [
@@ -89,13 +161,16 @@ try {
         ],
         'analise' => [
             'financeiro' => [
-                'investimento' => $dados['financeiro']['investimento'] ?? 0,
-                'margem' => $dados['financeiro']['margem'] ?? 0,
-                'investimento_total' => $dados_financeiros['investimento_total'] ?? 0,
-                'roi_esperado' => $dados_financeiros['roi_esperado_pct'] ?? 0,
-                'payback_meses' => $dados_financeiros['payback_meses'] ?? 0,
-                'duracao_meses' => $dados_financeiros['duracao_meses'] ?? 0,
-                'riscos' => $dados_financeiros['riscos_identificados'] ?? [],
+                'investimento' => $financeiro_salvo['investimento_total'] ?? ($dados['financeiro']['investimento'] ?? 0),
+                'margem' => $financeiro_salvo['margem_esperada_pct'] ?? ($dados['financeiro']['margem'] ?? 0),
+                'custo_total' => $financeiro_salvo['custo_total'] ?? 0,
+                'preco_sugerido' => $financeiro_salvo['preco_sugerido'] ?? 0,
+                'investimento_total' => $financeiro_salvo['investimento_total'] ?? 0,
+                'roi_esperado' => $financeiro_salvo['roi_esperado_pct'] ?? 0,
+                'payback_meses' => $financeiro_salvo['payback_meses'] ?? 0,
+                'desvio_estimado_realizado_pct' => $financeiro_salvo['desvio_estimado_realizado_pct'] ?? 0,
+                'riscos' => $financeiro_salvo['riscos_identificados'] ?? [],
+                'alertas' => $alertas_financeiros,
                 'score' => round($financeiro_score, 1)
             ],
             'planejamento' => [
@@ -119,12 +194,22 @@ try {
             'status' => $status_viabilidade,
             'recomendacao' => $viabilidade_geral >= 75 ? 'Projeto recomendado para implementação' : 'Recomenda-se revisar escopo e recursos'
         ],
+        'indicadores_financeiros' => [
+            'margem_esperada_pct' => $financeiro_salvo['margem_esperada_pct'] ?? 0,
+            'custo_total' => $financeiro_salvo['custo_total'] ?? 0,
+            'preco_sugerido' => $financeiro_salvo['preco_sugerido'] ?? 0,
+            'payback_meses' => $financeiro_salvo['payback_meses'] ?? 0,
+            'roi_esperado_pct' => $financeiro_salvo['roi_esperado_pct'] ?? 0,
+            'desvio_estimado_realizado_pct' => $financeiro_salvo['desvio_estimado_realizado_pct'] ?? 0,
+        ],
+        'alertas_financeiros' => $alertas_financeiros,
+        'comparativo_revisoes' => $comparativo_revisoes,
         'compatibilidades' => [
             [
                 'area' => 'Financeiro',
                 'status' => $financeiro_score >= 80 ? 'compativel' : 'incompativel',
                 'score' => round($financeiro_score, 1),
-                'detalhes' => 'ROI de ' . ($dados_financeiros['roi_esperado_pct'] ?? 0) . '% com payback em ' . ($dados_financeiros['payback_meses'] ?? 0) . ' meses'
+                'detalhes' => 'ROI de ' . ($financeiro_salvo['roi_esperado_pct'] ?? 0) . '% com payback em ' . ($financeiro_salvo['payback_meses'] ?? 0) . ' meses'
             ],
             [
                 'area' => 'Planejamento',

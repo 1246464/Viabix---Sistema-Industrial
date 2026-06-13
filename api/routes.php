@@ -498,17 +498,6 @@ viabixRegisterRoute('GET', '/api/healthcheck.php', 'healthcheck', [
     ]
 ]);
 
-viabixRegisterRoute('GET', '/api/diagnostico.php', 'diagnostics', [
-    'summary' => 'System Diagnostics',
-    'description' => 'Detailed system diagnostics - PHP version, extensions, configuration',
-    'tags' => ['System'],
-    'security' => [['sessionCookie' => []]],
-    'responses' => [
-        '200' => ['description' => 'System diagnostics'],
-        '401' => ['description' => 'Not authenticated']
-    ]
-]);
-
 // ============================================================================
 //  VALIDATION HELPER ROUTES
 // ============================================================================

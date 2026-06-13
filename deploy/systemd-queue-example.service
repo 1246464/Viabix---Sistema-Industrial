@@ -3,13 +3,11 @@ Description=Viabix background worker example
 After=network.target mariadb.service
 
 [Service]
-Type=simple
+Type=oneshot
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/viabix
-ExecStart=/usr/bin/php /var/www/viabix/api/diagnostico.php
-Restart=on-failure
-RestartSec=5
+ExecStart=/usr/bin/php /var/www/viabix/api/healthcheck.php
 
 [Install]
 WantedBy=multi-user.target

@@ -480,7 +480,7 @@ ORDER BY c.data_conflito DESC;
 -- visitante: visit
 
 INSERT IGNORE INTO usuarios (id, login, nome, senha, nivel) VALUES
-('admin-001', 'admin', 'Administrador', '$2y$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj2NXW1hLZNS', 'admin'),
+('admin-001', 'admin', 'Administrador', '$2y$12$HIi9Ehd3JKaHJP5hnKNaPuuEYGAoNtUbib.NPOrwJLt.aTEoku4w.', 'admin'),
 ('usuario-001', 'usuario', 'Usuário Padrão', '$2y$12$Y1qXQKZqZzYxqQKZqZzYxqQKZqZzYxqQKZqZzYxqQKZqZzYxqQKZ', 'usuario'),
 ('visitante-001', 'visitante', 'Visitante', '$2y$12$ZzYxqQKZqZzYxqQKZqZzYxqQKZqZzYxqQKZqZzYxqQKZqZzYx', 'visitante');
 

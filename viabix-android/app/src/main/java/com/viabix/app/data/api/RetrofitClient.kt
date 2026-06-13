@@ -1,13 +1,9 @@
 package com.viabix.app.data.api
 
 import android.content.Context
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import com.viabix.app.presentation.screens.home.DashboardStatsResponse
 import com.viabix.app.presentation.screens.viabilidade.DashboardViabilidadeResponse
 import com.viabix.app.utils.TokenManager
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -23,9 +19,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
-
-private val Context.dataStore by preferencesDataStore(name = "settings")
-private val TOKEN_KEY = stringPreferencesKey("jwt_token")
 
 object RetrofitClient {
     private const val BASE_URL = "https://viabix.com.br/"
@@ -60,13 +53,8 @@ object RetrofitClient {
                 return@Interceptor chain.proceed(originalRequest)
             }
 
-            // Obter token de forma síncrona usando runBlocking
             val token = try {
-                runBlocking {
-                    context.dataStore.data.map { preferences ->
-                        preferences[TOKEN_KEY]
-                    }.first()
-                }
+                tokenManager.getTokenSync()
             } catch (e: Exception) {
                 null
             } ?: ""
@@ -114,6 +102,9 @@ interface ViabixApiServiceWithViabilidade {
 
     @GET("api/anvi_list.php")
     suspend fun getAnviList(): Response<Map<String, Any>>
+
+    @GET("api/estatisticas.php")
+    suspend fun getDashboardStats(): Response<DashboardStatsResponse>
 
     @GET("api/dashboard_viabilidade_simple.php")
     suspend fun getDashboardViabilidade(

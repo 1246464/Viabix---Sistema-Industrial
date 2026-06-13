@@ -298,7 +298,6 @@ O projeto usa sessao compartilhada. Os pontos mais sensiveis para diagnostico sa
 
 Arquivos uteis para verificar ambiente e integracao:
 
-- `api/diagnostico.php`
 - `api/testar_conexao.php`
 - `api/test_salvar.php`
 - `api/healthcheck.php`
