@@ -14,9 +14,10 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0a3d2e 0%, #1a5a3a 100%);
+            background: #eef3ef;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1d2b24;
         }
 
         .navbar {
@@ -30,23 +31,177 @@
         }
 
         .container-dashboard {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
         .card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
+            margin-bottom: 18px;
         }
 
         .card-header {
-            background: linear-gradient(135deg, #0a3d2e 0%, #1a5a3a 100%);
+            background: #0a3d2e;
             color: white;
-            border-radius: 10px 10px 0 0 !important;
+            border-radius: 8px 8px 0 0 !important;
             border: none;
+        }
+
+        .card-header h1,
+        .card-header h2 {
+            font-size: 1.15rem;
+            line-height: 1.35;
+            margin: 0;
+        }
+
+        .search-panel {
+            border-top: 4px solid #0a3d2e;
+        }
+
+        .decision-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1.9fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .decision-main {
+            background: #0a3d2e;
+            color: white;
+            border-radius: 8px;
+            padding: 22px;
+            min-height: 100%;
+        }
+
+        .decision-main.warning {
+            background: #7a5a00;
+        }
+
+        .decision-main.danger {
+            background: #7f1d1d;
+        }
+
+        .decision-label {
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            opacity: 0.82;
+            margin-bottom: 10px;
+        }
+
+        .decision-status {
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .decision-summary {
+            color: rgba(255,255,255,0.86);
+            margin-bottom: 18px;
+        }
+
+        .decision-action {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+
+        .score-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .score-caption {
+            color: rgba(255,255,255,0.72);
+            font-size: 0.9rem;
+        }
+
+        .executive-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .executive-metric,
+        .project-meta,
+        .priority-list {
+            background: #f8faf8;
+            border: 1px solid #dfe8e2;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .executive-metric small,
+        .project-meta small {
+            display: block;
+            color: #607168;
+            margin-bottom: 5px;
+        }
+
+        .executive-metric strong,
+        .project-meta strong {
+            color: #0a3d2e;
+            font-size: 1.08rem;
+            overflow-wrap: anywhere;
+        }
+
+        .project-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .priority-list {
+            margin-top: 12px;
+        }
+
+        .priority-item {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid #e5ede8;
+        }
+
+        .priority-item:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .priority-badge {
+            align-self: start;
+            border-radius: 999px;
+            padding: 5px 9px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #0a3d2e;
+            background: #dcefe4;
+        }
+
+        .priority-badge.alta {
+            color: #8a1c1c;
+            background: #fde7e7;
+        }
+
+        .priority-title {
+            font-weight: 700;
+            color: #1d2b24;
+            margin-bottom: 3px;
+        }
+
+        .priority-action {
+            color: #607168;
+            margin: 0;
         }
 
         .btn-primary {
@@ -74,16 +229,24 @@
             margin: 10px;
         }
 
+        .score-badge.compact {
+            width: 72px;
+            height: 72px;
+            margin: 0;
+            font-size: 21px;
+            flex: 0 0 auto;
+        }
+
         .score-high {
             background: linear-gradient(135deg, #0a3d2e 0%, #2a6e3b 100%);
         }
 
         .score-medium {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #b7791f 0%, #d69e2e 100%);
         }
 
         .score-low {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            background: linear-gradient(135deg, #9b1c1c 0%, #c53030 100%);
         }
 
         .status-viavel {
@@ -97,7 +260,7 @@
         }
 
         .status-atencao {
-            color: #fee140;
+            color: #b7791f;
             font-weight: bold;
         }
 
@@ -134,15 +297,15 @@
         }
 
         .analise-item.planejamento {
-            border-left-color: #f093fb;
+            border-left-color: #2b6cb0;
         }
 
         .analise-item.qualidade {
-            border-left-color: #f5576c;
+            border-left-color: #b7791f;
         }
 
         .analise-item.recursos {
-            border-left-color: #fee140;
+            border-left-color: #4a5568;
         }
 
         .financial-grid {
@@ -177,6 +340,18 @@
             margin-top: 10px;
         }
 
+        .trend-up {
+            color: #126b3a;
+        }
+
+        .trend-down {
+            color: #a52626;
+        }
+
+        .trend-neutral {
+            color: #607168;
+        }
+
         .financial-alert.critico {
             border-left-color: #c62828;
             background: #fdecea;
@@ -209,6 +384,20 @@
         }
 
         @media (max-width: 768px) {
+            .container-dashboard {
+                padding: 14px;
+            }
+
+            .decision-layout,
+            .executive-grid,
+            .project-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .priority-item {
+                grid-template-columns: 1fr;
+            }
+
             .score-badge {
                 width: 60px;
                 height: 60px;
@@ -243,7 +432,7 @@
     </nav>
 
     <div class="container-dashboard">
-        <div class="card">
+        <div class="card search-panel">
             <div class="card-header">
                 <h1 class="mb-0"><i class="fas fa-chart-area"></i> Dashboard de Compatibilidade/Viabilidade</h1>
             </div>
@@ -282,36 +471,73 @@
 
         <!-- Results -->
         <div id="resultsContainer" style="display: none;">
-            <!-- ANVI Info -->
             <div class="card">
                 <div class="card-header">
-                    <h2><i class="fas fa-info-circle"></i> Informações do ANVI</h2>
+                    <h2><i class="fas fa-clipboard-check"></i> Leitura Executiva</h2>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>ID:</strong> <span id="anviId"></span></p>
-                            <p><strong>Número:</strong> <span id="anviNumero"></span></p>
-                            <p><strong>Cliente:</strong> <span id="anviCliente"></span></p>
+                    <div class="decision-layout">
+                        <div id="decisionMain" class="decision-main">
+                            <div class="decision-label">Decisão sugerida</div>
+                            <div id="decisaoStatus" class="decision-status">-</div>
+                            <p id="decisaoResumo" class="decision-summary"></p>
+                            <div class="score-row">
+                                <div id="scoreBadge" class="score-badge compact"></div>
+                                <div>
+                                    <div id="viabilidadeStatus"></div>
+                                    <div class="score-caption">Score geral de viabilidade</div>
+                                </div>
+                            </div>
+                            <div class="decision-action mt-3">
+                                <strong>Próxima ação:</strong>
+                                <div id="decisaoProximaAcao"></div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Projeto:</strong> <span id="anviProjeto"></span></p>
-                            <p><strong>Status:</strong> <span id="anviStatus"></span></p>
-                            <p><strong>Data ANVI:</strong> <span id="anviData"></span></p>
+
+                        <div>
+                            <div class="executive-grid">
+                                <div class="executive-metric">
+                                    <small>Margem</small>
+                                    <strong id="metricMargem">-</strong>
+                                </div>
+                                <div class="executive-metric">
+                                    <small>ROI</small>
+                                    <strong id="metricRoi">-</strong>
+                                </div>
+                                <div class="executive-metric">
+                                    <small>Payback</small>
+                                    <strong id="metricPayback">-</strong>
+                                </div>
+                            </div>
+
+                            <div class="project-meta-grid">
+                                <div class="project-meta">
+                                    <small>ANVI</small>
+                                    <strong id="anviNumero"></strong>
+                                </div>
+                                <div class="project-meta">
+                                    <small>Cliente</small>
+                                    <strong id="anviCliente"></strong>
+                                </div>
+                                <div class="project-meta">
+                                    <small>Projeto</small>
+                                    <strong id="anviProjeto"></strong>
+                                </div>
+                                <div class="project-meta">
+                                    <small>Status</small>
+                                    <strong id="anviStatus"></strong>
+                                </div>
+                            </div>
+
+                            <div class="priority-list">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>Pontos de atenção</strong>
+                                    <small id="anviData" class="text-muted"></small>
+                                </div>
+                                <div id="prioridadesContainer"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Viabilidade Geral -->
-            <div class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-thumbs-up"></i> Viabilidade Geral</h2>
-                </div>
-                <div class="card-body text-center">
-                    <div id="scoreBadge" class="score-badge"></div>
-                    <h3 id="viabilidadeStatus"></h3>
-                    <p id="viabilidadeRecomendacao" class="lead text-muted"></p>
                 </div>
             </div>
 
@@ -383,6 +609,79 @@
             return `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
         }
 
+        function escapeHtml(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function formatarPayback(valor) {
+            return `${Number(valor || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`;
+        }
+
+        function renderizarPrioridades(decisao) {
+            const container = document.getElementById('prioridadesContainer');
+            const prioridades = Array.isArray(decisao?.prioridades) ? decisao.prioridades : [];
+            const incompletos = Array.isArray(decisao?.dados_incompletos) ? decisao.dados_incompletos : [];
+
+            if (!prioridades.length && !incompletos.length) {
+                container.innerHTML = '<p class="text-muted mb-0">Nenhum ponto crítico identificado nos critérios atuais.</p>';
+                return;
+            }
+
+            const itens = prioridades.map(item => `
+                <div class="priority-item">
+                    <span class="priority-badge ${item.prioridade === 'Alta' ? 'alta' : ''}">${escapeHtml(item.prioridade || 'Média')}</span>
+                    <div>
+                        <div class="priority-title">${escapeHtml(item.area)} · ${escapeHtml(item.titulo)}</div>
+                        <p class="priority-action">${escapeHtml(item.acao)}</p>
+                    </div>
+                </div>
+            `);
+
+            if (incompletos.length) {
+                itens.push(`
+                    <div class="priority-item">
+                        <span class="priority-badge">Dados</span>
+                        <div>
+                            <div class="priority-title">Informações incompletas</div>
+                            <p class="priority-action">Completar: ${escapeHtml(incompletos.join(', '))}.</p>
+                        </div>
+                    </div>
+                `);
+            }
+
+            container.innerHTML = itens.join('');
+        }
+
+        function renderizarDecisao(data) {
+            const decisao = data.decisao || {};
+            const viab = data.viabilidade || {};
+            const indicadores = data.indicadores_financeiros || {};
+            const scoreClass = obterClasseScore(viab.score_geral);
+            const decisionMain = document.getElementById('decisionMain');
+            const tom = decisao.tom || 'success';
+            const statusClass = viab.status === 'VIÁVEL'
+                ? 'status-viavel'
+                : (viab.status === 'PARCIAL' || viab.status === 'VIÁVEL COM RESSALVAS' ? 'status-atencao' : 'status-inviavel');
+
+            decisionMain.className = `decision-main ${tom === 'danger' ? 'danger' : (tom === 'warning' ? 'warning' : '')}`;
+            document.getElementById('decisaoStatus').textContent = decisao.status || viab.status || '-';
+            document.getElementById('decisaoResumo').textContent = decisao.resumo || viab.recomendacao || '';
+            document.getElementById('decisaoProximaAcao').textContent = decisao.proxima_acao || viab.recomendacao || '';
+            document.getElementById('scoreBadge').className = `score-badge compact ${scoreClass}`;
+            document.getElementById('scoreBadge').textContent = viab.score_geral ?? '-';
+            document.getElementById('viabilidadeStatus').innerHTML = `<strong class="${statusClass}">${escapeHtml(viab.status || '-')}</strong>`;
+            document.getElementById('metricMargem').textContent = formatarPercentual(indicadores.margem_esperada_pct);
+            document.getElementById('metricRoi').textContent = formatarPercentual(indicadores.roi_esperado_pct);
+            document.getElementById('metricPayback').textContent = formatarPayback(indicadores.payback_meses);
+            renderizarPrioridades(decisao);
+        }
+
         function renderizarIndicadoresFinanceiros(indicadores, alertas) {
             const container = document.getElementById('indicadoresFinanceiros');
             const alertasContainer = document.getElementById('alertasFinanceiros');
@@ -390,7 +689,7 @@
                 ['Margem esperada', formatarPercentual(indicadores?.margem_esperada_pct)],
                 ['Custo total', formatarMoeda(indicadores?.custo_total)],
                 ['Preço sugerido', formatarMoeda(indicadores?.preco_sugerido)],
-                ['Payback', `${Number(indicadores?.payback_meses || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`],
+                ['Payback', formatarPayback(indicadores?.payback_meses)],
                 ['ROI', formatarPercentual(indicadores?.roi_esperado_pct)],
                 ['Desvio estimado x realizado', formatarPercentual(indicadores?.desvio_estimado_realizado_pct)]
             ];
@@ -407,7 +706,7 @@
                 ? listaAlertas.map(alerta => `
                     <div class="financial-alert ${alerta.severidade === 'critico' ? 'critico' : ''}">
                         <strong>${alerta.severidade === 'critico' ? 'Crítico' : 'Atenção'}:</strong>
-                        ${alerta.mensagem}
+                        ${escapeHtml(alerta.mensagem)}
                     </div>
                 `).join('')
                 : '<div class="financial-alert"><strong>OK:</strong> sem alertas financeiros relevantes para os critérios atuais.</div>';
@@ -423,20 +722,29 @@
 
             const variacoes = comparativo.variacoes;
             const linhas = [
-                ['Margem', formatarPercentual(variacoes.margem_esperada_pct)],
-                ['Custo total', formatarMoeda(variacoes.custo_total)],
-                ['Preço sugerido', formatarMoeda(variacoes.preco_sugerido)],
-                ['Payback', `${Number(variacoes.payback_meses || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`],
-                ['ROI', formatarPercentual(variacoes.roi_esperado_pct)]
+                ['Margem', formatarPercentual(variacoes.margem_esperada_pct), variacoes.margem_esperada_pct],
+                ['Custo total', formatarMoeda(variacoes.custo_total), variacoes.custo_total],
+                ['Preço sugerido', formatarMoeda(variacoes.preco_sugerido), variacoes.preco_sugerido],
+                ['Payback', formatarPayback(variacoes.payback_meses), variacoes.payback_meses],
+                ['ROI', formatarPercentual(variacoes.roi_esperado_pct), variacoes.roi_esperado_pct]
             ];
 
+            const classeTendencia = (label, valor) => {
+                const numero = Number(valor || 0);
+                if (numero === 0) return 'trend-neutral';
+                if (label === 'Custo total' || label === 'Payback') {
+                    return numero < 0 ? 'trend-up' : 'trend-down';
+                }
+                return numero > 0 ? 'trend-up' : 'trend-down';
+            };
+
             container.innerHTML = `
-                <p class="text-muted">Comparando Rev. ${comparativo.revisao_atual} com Rev. ${comparativo.revisao_anterior}</p>
+                <p class="text-muted">Comparando Rev. ${escapeHtml(comparativo.revisao_atual)} com Rev. ${escapeHtml(comparativo.revisao_anterior)}</p>
                 <div class="financial-grid">
-                    ${linhas.map(([label, valor]) => `
+                    ${linhas.map(([label, valor, bruto]) => `
                         <div class="financial-metric">
-                            <small>${label}</small>
-                            <strong>${valor}</strong>
+                            <small>${escapeHtml(label)}</small>
+                            <strong class="${classeTendencia(label, bruto)}">${valor}</strong>
                         </div>
                     `).join('')}
                 </div>
@@ -453,14 +761,14 @@
                     <div class="analise-item financeiro">
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
-                                <div class="score-badge score-high">${fin.score}</div>
+                                <div class="score-badge ${obterClasseScore(fin.score)}">${fin.score}</div>
                             </div>
                             <div class="col-md-9">
                                 <h4>Financeiro</h4>
-                                <p><strong>Investimento:</strong> R$ ${(fin.investimento || 0).toLocaleString('pt-BR')}</p>
-                                <p><strong>ROI Esperado:</strong> ${fin.roi_esperado}%</p>
-                                <p><strong>Payback:</strong> ${fin.payback_meses} meses</p>
-                                <p><strong>Margem:</strong> ${fin.margem}%</p>
+                                <p><strong>Investimento:</strong> ${formatarMoeda(fin.investimento)}</p>
+                                <p><strong>ROI Esperado:</strong> ${formatarPercentual(fin.roi_esperado)}</p>
+                                <p><strong>Payback:</strong> ${formatarPayback(fin.payback_meses)}</p>
+                                <p><strong>Margem:</strong> ${formatarPercentual(fin.margem)}</p>
                             </div>
                         </div>
                     </div>
@@ -473,12 +781,12 @@
                     <div class="analise-item planejamento">
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
-                                <div class="score-badge score-high">${plan.score}</div>
+                                <div class="score-badge ${obterClasseScore(plan.score)}">${plan.score}</div>
                             </div>
                             <div class="col-md-9">
                                 <h4>Planejamento</h4>
-                                <p><strong>Fases:</strong> ${plan.fases}</p>
-                                <p><strong>Duração:</strong> ${plan.duracao_meses} meses</p>
+                                <p><strong>Fases:</strong> ${Number(plan.fases || 0).toLocaleString('pt-BR')}</p>
+                                <p><strong>Duração:</strong> ${formatarPayback(plan.duracao_meses)}</p>
                             </div>
                         </div>
                     </div>
@@ -495,8 +803,8 @@
                             </div>
                             <div class="col-md-9">
                                 <h4>Qualidade</h4>
-                                <p><strong>Cobertura de Testes:</strong> ${qual.cobertura_testes}%</p>
-                                <p><strong>Score de Código:</strong> ${qual.score_codigo}</p>
+                                <p><strong>Cobertura de Testes:</strong> ${formatarPercentual(qual.cobertura_testes)}</p>
+                                <p><strong>Score de Código:</strong> ${Number(qual.score_codigo || 0).toLocaleString('pt-BR')}</p>
                             </div>
                         </div>
                     </div>
@@ -513,8 +821,8 @@
                             </div>
                             <div class="col-md-9">
                                 <h4>Recursos</h4>
-                                <p><strong>Equipe:</strong> ${rec.equipe} pessoas</p>
-                                <p><strong>Especialistas:</strong> ${rec.especialistas}</p>
+                                <p><strong>Equipe:</strong> ${Number(rec.equipe || 0).toLocaleString('pt-BR')} pessoas</p>
+                                <p><strong>Especialistas:</strong> ${Number(rec.especialistas || 0).toLocaleString('pt-BR')}</p>
                             </div>
                         </div>
                     </div>
@@ -542,11 +850,11 @@
                                 <i class="fas fa-2x fa-${icone}"></i>
                             </div>
                             <div class="col-md-4">
-                                <h5>${comp.area}</h5>
-                                <p class="mb-0"><strong>Score:</strong> ${comp.score}</p>
+                                <h5>${escapeHtml(comp.area)}</h5>
+                                <p class="mb-0"><strong>Score:</strong> ${Number(comp.score || 0).toLocaleString('pt-BR')}</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-0">${comp.detalhes}</p>
+                                <p class="mb-0">${escapeHtml(comp.detalhes)}</p>
                             </div>
                         </div>
                     </div>
@@ -583,12 +891,13 @@
             document.getElementById('errorContainer').classList.remove('show');
 
             // Fetch data
-            fetch(`/api/dashboard_viabilidade_simple.php?anvi_id=${anviId}&t=${Date.now()}`)
-                .then(response => {
+            fetch(`api/dashboard_viabilidade_simple.php?anvi_id=${encodeURIComponent(anviId)}&t=${Date.now()}`)
+                .then(async response => {
+                    const data = await response.json().catch(() => null);
                     if (!response.ok) {
-                        throw new Error('Erro ao buscar dados');
+                        throw new Error(data?.erro || 'Erro ao buscar dados');
                     }
-                    return response.json();
+                    return data;
                 })
                 .then(data => {
                     console.log('Dados recebidos:', data);
@@ -603,25 +912,13 @@
                     document.getElementById('errorContainer').classList.remove('show');
                     document.getElementById('resultsContainer').style.display = 'block';
 
-                    // Populate ANVI info
-                    document.getElementById('anviId').textContent = data.anvi.id || 'N/A';
-                    document.getElementById('anviNumero').textContent = data.anvi.numero || 'N/A';
+                    // Populate executive summary
+                    document.getElementById('anviNumero').textContent = data.anvi.numero || data.anvi.id || 'N/A';
                     document.getElementById('anviCliente').textContent = data.anvi.cliente || 'N/A';
                     document.getElementById('anviProjeto').textContent = data.anvi.projeto || 'N/A';
                     document.getElementById('anviStatus').textContent = data.anvi.status || 'N/A';
-                    document.getElementById('anviData').textContent = formatarData(data.anvi.data_anvi);
-
-                    // Populate viability
-                    if (data.viabilidade) {
-                        const viab = data.viabilidade;
-                        const scoreClass = obterClasseScore(viab.score_geral);
-                        const statusClass = viab.status === 'VIÁVEL' ? 'status-viavel' : 'status-inviavel';
-                        
-                        document.getElementById('scoreBadge').className = `score-badge ${scoreClass}`;
-                        document.getElementById('scoreBadge').textContent = viab.score_geral;
-                        document.getElementById('viabilidadeStatus').innerHTML = `<span class="${statusClass}">${viab.status}</span>`;
-                        document.getElementById('viabilidadeRecomendacao').textContent = viab.recomendacao || '';
-                    }
+                    document.getElementById('anviData').textContent = `Data ANVI: ${formatarData(data.anvi.data_anvi)}`;
+                    renderizarDecisao(data);
 
                     renderizarIndicadoresFinanceiros(data.indicadores_financeiros || {}, data.alertas_financeiros || []);
                     renderizarComparativoRevisoes(data.comparativo_revisoes || {});

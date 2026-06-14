@@ -51,11 +51,14 @@ jobs:
             cd "$APP_DIR"
             git fetch origin "$GITHUB_SHA"
             git show "$GITHUB_SHA:deploy/release.sh" > /tmp/viabix-release.sh
+            git show "$GITHUB_SHA:deploy/backup-viabix.sh" > /tmp/viabix-backup.sh
             chmod +x /tmp/viabix-release.sh
+            chmod +x /tmp/viabix-backup.sh
             export APP_DIR="$APP_DIR"
             export BRANCH="$GITHUB_REF_NAME"
             export TARGET_REF="$GITHUB_SHA"
             export HEALTHCHECK_URL="${{ secrets.HEALTHCHECK_URL }}"
+            export BACKUP_SCRIPT="/tmp/viabix-backup.sh"
             if [ -x "$APP_DIR/deploy/digitalocean-preflight-check.sh" ]; then
               bash "$APP_DIR/deploy/digitalocean-preflight-check.sh"
             fi

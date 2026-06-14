@@ -12,7 +12,11 @@ try {
     }
     
     // Get ANVI data (tenant filtered from session)
-    $tenant_id = $_SESSION['tenant_id'] ?? 'admin';
+    $tenant_id = function_exists('viabixCurrentTenantId') ? viabixCurrentTenantId() : ($_SESSION['tenant_id'] ?? null);
+    if (!$tenant_id) {
+        http_response_code(401);
+        exit(json_encode(['erro' => 'Sessão expirada ou tenant não identificado']));
+    }
     
     $stmt = $pdo->prepare("
         SELECT 
@@ -117,6 +121,103 @@ try {
         ];
     }
 
+    $prioridades = [];
+    foreach ($alertas_financeiros as $alerta) {
+        $acaoAlerta = 'Revisar o indicador antes da decisão final.';
+        switch ($alerta['tipo']) {
+            case 'margem_baixa':
+            case 'margem_atencao':
+                $acaoAlerta = 'Revisar custos, preço sugerido ou margem alvo antes da aprovação.';
+                break;
+            case 'roi_baixo':
+                $acaoAlerta = 'Validar retorno esperado e comparar com o mínimo industrial.';
+                break;
+            case 'payback_longo':
+                $acaoAlerta = 'Reavaliar investimento inicial ou fasear o projeto para reduzir prazo de retorno.';
+                break;
+            case 'desvio_custo':
+                $acaoAlerta = 'Conferir custos realizados e atualizar a base financeira do ANVI.';
+                break;
+        }
+        $prioridades[] = [
+            'area' => 'Financeiro',
+            'prioridade' => $alerta['severidade'] === 'critico' ? 'Alta' : 'Média',
+            'titulo' => $alerta['mensagem'],
+            'acao' => $acaoAlerta
+        ];
+    }
+
+    if ($financeiro_score < 60) {
+        $prioridades[] = [
+            'area' => 'Financeiro',
+            'prioridade' => 'Alta',
+            'titulo' => 'Score financeiro abaixo do aceitável',
+            'acao' => 'Ajustar margem, ROI ou payback antes de liberar o projeto.'
+        ];
+    }
+    if ($planejamento_score > 0 && $planejamento_score < 60) {
+        $prioridades[] = [
+            'area' => 'Planejamento',
+            'prioridade' => 'Média',
+            'titulo' => 'Planejamento com baixa maturidade',
+            'acao' => 'Detalhar fases e duração para reduzir incerteza de execução.'
+        ];
+    }
+    if ($qualidade_score > 0 && $qualidade_score < 60) {
+        $prioridades[] = [
+            'area' => 'Qualidade',
+            'prioridade' => 'Média',
+            'titulo' => 'Indicadores de qualidade baixos',
+            'acao' => 'Revisar cobertura de testes e critérios de qualidade antes da aprovação.'
+        ];
+    }
+    if ($recursos_score > 0 && $recursos_score < 60) {
+        $prioridades[] = [
+            'area' => 'Recursos',
+            'prioridade' => 'Média',
+            'titulo' => 'Recursos insuficientes',
+            'acao' => 'Confirmar equipe e especialistas necessários para execução.'
+        ];
+    }
+
+    $dados_incompletos = [];
+    if (empty($financeiro_salvo)) {
+        $dados_incompletos[] = 'financeiro';
+    }
+    if (!$fases && !$duracao) {
+        $dados_incompletos[] = 'planejamento';
+    }
+    if (!$cobertura && !$score_code) {
+        $dados_incompletos[] = 'qualidade';
+    }
+    if (!$equipe && !$especialistas) {
+        $dados_incompletos[] = 'recursos';
+    }
+
+    $temCritico = count(array_filter($alertas_financeiros, fn($alerta) => ($alerta['severidade'] ?? '') === 'critico')) > 0;
+    if ($temCritico || $financeiro_score < 50 || $viabilidade_geral < 50) {
+        $decisao_status = 'REVISAR ANTES DE APROVAR';
+        $decisao_tom = 'danger';
+        $decisao_resumo = 'Há pontos críticos ou score baixo que podem comprometer a viabilidade.';
+    } elseif ($viabilidade_geral < 75 || !empty($alertas_financeiros) || !empty($dados_incompletos)) {
+        $decisao_status = 'APROVAR COM RESSALVAS';
+        $decisao_tom = 'warning';
+        $decisao_resumo = 'O projeto pode seguir, mas exige validações antes da decisão final.';
+    } else {
+        $decisao_status = 'APROVAR';
+        $decisao_tom = 'success';
+        $decisao_resumo = 'Os indicadores principais estão dentro dos critérios atuais.';
+    }
+
+    $decisao = [
+        'status' => $decisao_status,
+        'tom' => $decisao_tom,
+        'resumo' => $decisao_resumo,
+        'proxima_acao' => $prioridades[0]['acao'] ?? 'Registrar a decisão e seguir para a próxima etapa do fluxo.',
+        'dados_incompletos' => $dados_incompletos,
+        'prioridades' => array_slice($prioridades, 0, 5),
+    ];
+
     $comparativo_revisoes = [];
     $stmt = $pdo->prepare("
         SELECT id, revisao, data_atualizacao, dados_financeiros
@@ -142,6 +243,13 @@ try {
                     'payback_meses' => round((float) ($financeiro_salvo['payback_meses'] ?? 0) - (float) ($financeiro_anterior['payback_meses'] ?? 0), 2),
                     'roi_esperado_pct' => round((float) ($financeiro_salvo['roi_esperado_pct'] ?? 0) - (float) ($financeiro_anterior['roi_esperado_pct'] ?? 0), 2),
                 ]
+            ];
+            $comparativo_revisoes['leituras'] = [
+                'margem_esperada_pct' => ($comparativo_revisoes['variacoes']['margem_esperada_pct'] ?? 0) >= 0 ? 'melhorou' : 'piorou',
+                'custo_total' => ($comparativo_revisoes['variacoes']['custo_total'] ?? 0) <= 0 ? 'melhorou' : 'piorou',
+                'preco_sugerido' => ($comparativo_revisoes['variacoes']['preco_sugerido'] ?? 0) >= 0 ? 'subiu' : 'caiu',
+                'payback_meses' => ($comparativo_revisoes['variacoes']['payback_meses'] ?? 0) <= 0 ? 'melhorou' : 'piorou',
+                'roi_esperado_pct' => ($comparativo_revisoes['variacoes']['roi_esperado_pct'] ?? 0) >= 0 ? 'melhorou' : 'piorou',
             ];
         }
     }
@@ -192,8 +300,15 @@ try {
         'viabilidade' => [
             'score_geral' => round($viabilidade_geral, 1),
             'status' => $status_viabilidade,
-            'recomendacao' => $viabilidade_geral >= 75 ? 'Projeto recomendado para implementação' : 'Recomenda-se revisar escopo e recursos'
+            'recomendacao' => $viabilidade_geral >= 75 ? 'Projeto recomendado para implementação' : 'Recomenda-se revisar escopo e recursos',
+            'scores_por_area' => [
+                'financeiro' => round($financeiro_score, 1),
+                'planejamento' => round($planejamento_score, 1),
+                'qualidade' => round($qualidade_score, 1),
+                'recursos' => round($recursos_score, 1),
+            ]
         ],
+        'decisao' => $decisao,
         'indicadores_financeiros' => [
             'margem_esperada_pct' => $financeiro_salvo['margem_esperada_pct'] ?? 0,
             'custo_total' => $financeiro_salvo['custo_total'] ?? 0,

@@ -36,5 +36,7 @@ ANALISE_ERROS_LOGIN.md
 ca-certificado.crt
 quick_test.sh
 test_quick.sh
+deploy/test_*.sh
+check_mysql_users.sh
 diagnostico_ssh.sh
 diagnostico_remoto.sh
