@@ -32,11 +32,12 @@ try {
             a.dados,
             a.dados_financeiros
         FROM anvis a
-        WHERE a.id = ? AND a.tenant_id = ?
+        WHERE (a.id = ? OR a.numero = ? OR CONCAT(a.numero, '_', a.revisao) = ?) AND a.tenant_id = ?
+        ORDER BY a.data_criacao DESC
         LIMIT 1
     ");
     
-    $stmt->execute([$anvi_id, $tenant_id]);
+    $stmt->execute([$anvi_id, $anvi_id, $anvi_id, $tenant_id]);
     $anvi = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$anvi) {

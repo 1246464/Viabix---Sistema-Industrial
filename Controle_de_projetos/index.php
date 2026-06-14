@@ -2422,7 +2422,10 @@ echo $nivel_texto[$usuario['nivel']] ?? $usuario['nivel'];
 <div class="form-group"><label>Código</label><input id="codigo"/></div>
 <div class="form-group">
     <label>N° ANVI (Análise de Viabilidade)</label>
-    <input id="anviNumber" placeholder="Número da ANVI"/>
+    <input id="anviNumber" list="projectAnviSuggestions" placeholder="Digite para buscar ANVIs disponíveis"/>
+    <input id="anviId" type="hidden"/>
+    <datalist id="projectAnviSuggestions"></datalist>
+    <small style="display:block; margin-top:4px; color:#666; font-size:0.8rem">Escolha uma ANVI existente ou digite um número novo para uso apenas neste projeto.</small>
 </div>
 <div class="form-group"><label>Modelo</label>
 <select id="modelo">
@@ -4836,6 +4839,57 @@ function getDefaultDuration(taskKey) {
 // ==============================================
 // FUNÇÕES DE FORMULÁRIO DE PROJETO (modificadas para salvar no MySQL)
 // ==============================================
+let projectAnviSuggestionTimer = null;
+let projectAnviSuggestionMap = new Map();
+
+function renderProjectAnviSuggestions(lista) {
+    const datalist = document.getElementById('projectAnviSuggestions');
+    if (!datalist) return;
+
+    projectAnviSuggestionMap = new Map();
+    datalist.innerHTML = '';
+
+    (Array.isArray(lista) ? lista : []).forEach(item => {
+        const value = item.numero || item.id;
+        if (!value) return;
+
+        const option = document.createElement('option');
+        const detalhes = [item.revisao ? `Rev. ${item.revisao}` : '', item.cliente, item.projeto]
+            .filter(Boolean)
+            .join(' · ');
+        option.value = value;
+        option.label = detalhes ? `${item.nome} · ${detalhes}` : item.nome;
+        datalist.appendChild(option);
+        projectAnviSuggestionMap.set(value, item);
+    });
+}
+
+function buscarProjectAnviSuggestions(termo = '') {
+    const projectId = currentEditingProjectId || '';
+    fetch(`../api/anvis_sugestoes.php?q=${encodeURIComponent(termo)}&limit=20&available_for_project=1&project_id=${encodeURIComponent(projectId)}`)
+        .then(response => response.ok ? response.json() : null)
+        .then(data => {
+            if (data?.success) {
+                renderProjectAnviSuggestions(data.data || []);
+                syncSelectedProjectAnvi();
+            }
+        })
+        .catch(() => {});
+}
+
+function syncSelectedProjectAnvi() {
+    const numberInput = document.getElementById('anviNumber');
+    const idInput = document.getElementById('anviId');
+    if (!numberInput || !idInput) return;
+
+    const selected = projectAnviSuggestionMap.get(numberInput.value.trim());
+    if (selected) {
+        idInput.value = selected.id || '';
+    } else if (numberInput.dataset.lockedValue !== numberInput.value.trim()) {
+        idInput.value = '';
+    }
+}
+
 function showProjectForm(editId = null) {
     closeAllModals();
     document.getElementById('projectForm').style.display = 'block';
@@ -4854,6 +4908,8 @@ function showProjectForm(editId = null) {
             document.getElementById('projectLeader').value = p.leaderId || '';
             document.getElementById('codigo').value = p.codigo || '';
             document.getElementById('anviNumber').value = p.anviNumber || '';
+            document.getElementById('anviNumber').dataset.lockedValue = p.anviNumber || '';
+            document.getElementById('anviId').value = p.anviId || p.sourceContext?.anviId || '';
             document.getElementById('modelo').value = p.modelo || '';
             document.getElementById('processo').value = p.processo || '';
             document.getElementById('fase').value = p.fase || '';
@@ -4928,13 +4984,15 @@ function clearProjectForm() {
     // Limpar todos os campos do formulário de projeto
     const fields = [
         'cliente', 'projectName', 'segmento', 'projectLeader', 'codigo', 
-        'anviNumber', 'modelo', 'processo', 'fase', 'observacoes',
+        'anviNumber', 'anviId', 'modelo', 'processo', 'fase', 'observacoes',
         'projectStatusSelect'
     ];
     fields.forEach(field => {
         const el = document.getElementById(field);
         if (el) el.value = '';
     });
+    const anviInput = document.getElementById('anviNumber');
+    if (anviInput) anviInput.dataset.lockedValue = '';
     
     // Limpar datas das tarefas
     const taskKeys = ['kom', 'ferramental', 'cadBomFt', 'tryout', 'entrega', 'psw', 'handover'];
@@ -5023,6 +5081,9 @@ function saveProject() {
     const leaderId = document.getElementById('projectLeader').value;
     const codigo = document.getElementById('codigo').value.trim();
     const anviNumber = document.getElementById('anviNumber').value.trim();
+    syncSelectedProjectAnvi();
+    const selectedAnviId = document.getElementById('anviId').value.trim();
+    const selectedAnvi = selectedAnviId ? projectAnviSuggestionMap.get(anviNumber) : null;
     const modelo = document.getElementById('modelo').value;
     const processo = document.getElementById('processo').value;
     const fase = document.getElementById('fase').value;
@@ -5111,7 +5172,18 @@ function saveProject() {
         segmento, 
         leaderId, 
         codigo, 
-        anviNumber, 
+        anviNumber,
+        anviId: selectedAnviId || null,
+        anviRevision: selectedAnvi?.revisao || null,
+        sourceContext: selectedAnviId ? {
+            source: 'anvi',
+            anviId: selectedAnviId,
+            anviNumber,
+            anviRevision: selectedAnvi?.revisao || ''
+        } : {
+            source: 'manual',
+            anviNumber
+        },
         modelo, 
         processo, 
         fase, 
@@ -10720,6 +10792,20 @@ function setupEventListeners() {
         });
     } else {
         console.log('AVISO: Botão saveProjectBtn não encontrado! Usuário pode ser visualizador.');
+    }
+
+    const anviNumberInput = document.getElementById('anviNumber');
+    if (anviNumberInput) {
+        anviNumberInput.addEventListener('input', (e) => {
+            anviNumberInput.dataset.lockedValue = '';
+            clearTimeout(projectAnviSuggestionTimer);
+            projectAnviSuggestionTimer = setTimeout(() => {
+                buscarProjectAnviSuggestions(e.target.value.trim());
+                syncSelectedProjectAnvi();
+            }, 250);
+        });
+        anviNumberInput.addEventListener('change', syncSelectedProjectAnvi);
+        buscarProjectAnviSuggestions('');
     }
     
     document.getElementById('cancelProjectBtn').addEventListener('click', () => {

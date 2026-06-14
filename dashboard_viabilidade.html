@@ -440,8 +440,11 @@
                 <p class="text-muted">Análise completa de um projeto ANVI mostrando incompatibilidades e incoerências</p>
                 <div class="form-group">
                     <input type="text" class="form-control" id="anviInput" 
+                           list="anviSuggestions"
                            placeholder="Digite o ID do ANVI (ex: ANVI-20260509232203-001)..."
                            value="">
+                    <datalist id="anviSuggestions"></datalist>
+                    <small class="form-text text-muted">Digite o número, cliente ou projeto para localizar uma ANVI disponível.</small>
                 </div>
                 <button class="btn btn-primary btn-lg" onclick="carregarAnalise()">
                     <i class="fas fa-search"></i> Carregar Análise
@@ -586,6 +589,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        let anviSuggestionTimer = null;
+        let anviSuggestionMap = new Map();
+
         function formatarData(dataStr) {
             if (!dataStr) return 'N/A';
             const data = new Date(dataStr + 'T00:00:00');
@@ -680,6 +686,37 @@
             document.getElementById('metricRoi').textContent = formatarPercentual(indicadores.roi_esperado_pct);
             document.getElementById('metricPayback').textContent = formatarPayback(indicadores.payback_meses);
             renderizarPrioridades(decisao);
+        }
+
+        function renderizarSugestoesANVI(lista) {
+            const datalist = document.getElementById('anviSuggestions');
+            anviSuggestionMap = new Map();
+            datalist.innerHTML = '';
+
+            (Array.isArray(lista) ? lista : []).forEach(item => {
+                const value = item.numero || item.id;
+                if (!value) return;
+
+                const option = document.createElement('option');
+                const detalhes = [item.revisao ? `Rev. ${item.revisao}` : '', item.cliente, item.projeto]
+                    .filter(Boolean)
+                    .join(' · ');
+                option.value = value;
+                option.label = detalhes ? `${item.nome} · ${detalhes}` : item.nome;
+                datalist.appendChild(option);
+                anviSuggestionMap.set(value, item);
+            });
+        }
+
+        function buscarSugestoesANVI(termo = '') {
+            fetch(`api/anvis_sugestoes.php?q=${encodeURIComponent(termo)}&limit=15`)
+                .then(response => response.ok ? response.json() : null)
+                .then(data => {
+                    if (data?.success) {
+                        renderizarSugestoesANVI(data.data || []);
+                    }
+                })
+                .catch(() => {});
         }
 
         function renderizarIndicadoresFinanceiros(indicadores, alertas) {
@@ -946,7 +983,15 @@
             }
         });
 
+        document.getElementById('anviInput').addEventListener('input', function(e) {
+            clearTimeout(anviSuggestionTimer);
+            anviSuggestionTimer = setTimeout(() => {
+                buscarSugestoesANVI(e.target.value.trim());
+            }, 250);
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
+            buscarSugestoesANVI('');
             const params = new URLSearchParams(window.location.search);
             const anviId = params.get('anvi_id');
             if (anviId) {

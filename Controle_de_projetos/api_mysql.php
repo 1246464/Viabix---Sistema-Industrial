@@ -63,6 +63,31 @@ try {
         $pdo->exec("DELETE FROM mudancas WHERE id < (SELECT MAX(id) - 1000 FROM (SELECT id FROM mudancas) AS m)");
     }
 
+    function vincularAnviSelecionadaAoProjeto($pdo, $projectData, $projectId, $tenantId = null) {
+        $anviId = trim((string)($projectData['anviId'] ?? ($projectData['sourceContext']['anviId'] ?? '')));
+        if ($anviId === '' || $projectId <= 0 || !schemaHasColumn($pdo, 'anvis', 'projeto_id')) {
+            return;
+        }
+
+        $sql = "UPDATE anvis SET projeto_id = ?";
+        $params = [$projectId];
+
+        if (schemaHasColumn($pdo, 'anvis', 'atualizado_por') && !empty($_SESSION['user_id'])) {
+            $sql .= ", atualizado_por = ?";
+            $params[] = $_SESSION['user_id'];
+        }
+
+        $sql .= " WHERE id = ?";
+        $params[] = $anviId;
+
+        if ($tenantId && schemaHasColumn($pdo, 'anvis', 'tenant_id')) {
+            $sql .= " AND tenant_id = ?";
+            $params[] = $tenantId;
+        }
+
+        $pdo->prepare($sql)->execute($params);
+    }
+
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
@@ -164,6 +189,7 @@ try {
                     $stmt->execute([$json, $id]);
                 }
                 registrarMudanca($pdo, 'projeto_atualizado', $id, $tenantId);
+                vincularAnviSelecionadaAoProjeto($pdo, $data, $id, $tenantId);
                 echo json_encode([
                     'success' => true,
                     'message' => 'Projeto atualizado'
@@ -178,6 +204,7 @@ try {
                 }
                 $insertId = (int)$pdo->lastInsertId();
                 registrarMudanca($pdo, 'projeto_criado', $insertId, $tenantId);
+                vincularAnviSelecionadaAoProjeto($pdo, $data, $insertId, $tenantId);
                 echo json_encode([
                     'success' => true,
                     'insertId' => $insertId
