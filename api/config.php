@@ -854,9 +854,10 @@ function viabixGetAuthenticatedUser() {
         // Retorna dados da sessão
         return [
             'id' => $_SESSION['user_id'],
-            'login' => $_SESSION['login'] ?? null,
-            'nome' => $_SESSION['nome'] ?? null,
-            'nivel' => $_SESSION['nivel'] ?? null,
+            'login' => $_SESSION['user_login'] ?? $_SESSION['login'] ?? null,
+            'nome' => $_SESSION['user_nome'] ?? $_SESSION['nome'] ?? null,
+            'nivel' => $_SESSION['user_level'] ?? $_SESSION['nivel'] ?? $_SESSION['user_role'] ?? null,
+            'nivel_original' => $_SESSION['user_role_raw'] ?? $_SESSION['nivel'] ?? $_SESSION['user_level'] ?? null,
             'tenant_id' => $_SESSION['tenant_id'] ?? null,
             'source' => 'session'
         ];
@@ -922,14 +923,16 @@ function viabixRequireAuthenticatedSession() {
  */
 function viabixRequireAdminSession() {
     $user = viabixRequireAuthenticatedSession();
+    $nivel = viabixNormalizeUserLevel($user['nivel'] ?? null);
 
-    if (($user['nivel'] ?? null) !== 'admin') {
+    if ($nivel !== 'admin') {
         header('Content-Type: application/json; charset=utf-8');
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Acesso restrito à administração.']);
         exit;
     }
 
+    $user['nivel'] = $nivel;
     return $user;
 }
 
