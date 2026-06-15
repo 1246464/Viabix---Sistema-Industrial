@@ -14,7 +14,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #eef3ef;
+            background: #f0f8f0;
             color: #333;
             min-height: 100vh;
             display: flex;
@@ -22,13 +22,14 @@
         }
 
         .top-bar {
-            background: rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
             backdrop-filter: blur(10px);
             padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.18);
         }
 
         .system-title {
@@ -128,7 +129,7 @@
         }
 
         .welcome-section {
-            background: #0a3d2e;
+            background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
             color: white;
             border-radius: 8px;
             padding: 24px;
@@ -138,6 +139,7 @@
             grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
             gap: 20px;
             align-items: center;
+            box-shadow: 0 14px 30px rgba(46, 125, 50, 0.18);
         }
 
         .welcome-section h1 {
@@ -160,8 +162,8 @@
         }
 
         .quick-action {
-            border: 1px solid rgba(255,255,255,0.22);
-            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.28);
+            background: rgba(255,255,255,0.18);
             color: white;
             border-radius: 8px;
             padding: 10px 12px;
@@ -200,7 +202,7 @@
             grid-template-columns: auto 1fr;
             gap: 14px;
             align-items: center;
-            border: 1px solid #dfe8e2;
+            border: 1px solid #c8e6c9;
         }
 
         .module-card:hover {
@@ -240,7 +242,7 @@
             width: 50px;
             height: 50px;
             margin: 0;
-            background: #0a3d2e;
+            background: #2e7d32;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -251,7 +253,7 @@
         }
 
         .module-card:nth-child(2) .module-icon {
-            background: #1f5f8b;
+            background: #2196f3;
             box-shadow: none;
         }
 
@@ -299,8 +301,8 @@
         }
 
         .btn-access {
-            background: #f4f8f5;
-            color: #0a3d2e;
+            background: #e8f5e9;
+            color: #2e7d32;
             padding: 8px 10px;
             border-radius: 8px;
             border: none;
@@ -341,7 +343,7 @@
             text-align: left;
             color: #1d2b24;
             background: white;
-            border: 1px solid #dfe8e2;
+            border: 1px solid #c8e6c9;
             border-radius: 8px;
             padding: 16px;
             box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
@@ -351,7 +353,7 @@
             font-size: 1.9rem;
             font-weight: bold;
             margin-bottom: 5px;
-            color: #0a3d2e;
+            color: #2e7d32;
         }
 
         .stat-label {
@@ -365,7 +367,7 @@
             align-items: center;
             gap: 12px;
             margin: 22px 0 12px;
-            color: #163d2d;
+            color: #2e7d32;
         }
 
         .section-title h2 {
@@ -390,7 +392,7 @@
             border-radius: 8px;
             padding: 22px;
             box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
-            border: 1px solid #dfe8e2;
+            border: 1px solid #c8e6c9;
         }
 
         .insight-header {
@@ -482,7 +484,7 @@
             gap: 14px;
             align-items: end;
             background: white;
-            border: 1px solid #dfe8e2;
+            border: 1px solid #c8e6c9;
             border-radius: 8px;
             padding: 16px;
             box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
@@ -515,8 +517,8 @@
         }
 
         .dashboard-action-button {
-            border: 1px solid #0a3d2e;
-            background: #0a3d2e;
+            border: 1px solid #2e7d32;
+            background: #2e7d32;
             color: white;
             border-radius: 8px;
             padding: 10px 16px;
@@ -526,7 +528,7 @@
         }
 
         .dashboard-action-button:hover {
-            background: #145642;
+            background: #1b5e20;
         }
 
         .health-body {

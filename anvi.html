@@ -1847,32 +1847,6 @@
 <!-- VERSÃO FINAL: 7.1 - CORREÇÕES APLICADAS + DESENHOS + MULTIUSUÁRIO + MYSQL              -->
 <!-- ======================================================================================= -->
 
-<!-- TELA DE LOGIN -->
-<div id="loginScreen" class="login-container">
-    <div class="login-card">
-        <div class="login-logo">
-            <i class="fas fa-cubes"></i>
-            <h1>Viabix</h1>
-            <p style="color: var(--text-secondary);">Sistema de Análise de Viabilidade</p>
-        </div>
-        <div>
-            <input type="text" id="loginUsername" class="login-input" placeholder="Usuário">
-            <input type="password" id="loginPassword" class="login-input" placeholder="Senha">
-            <button class="login-btn" onclick="fazerLogin()">
-                <i class="fas fa-sign-in-alt me-2"></i>Entrar no Sistema
-            </button>
-            <div id="loginError" class="login-error">
-                <i class="fas fa-exclamation-circle me-2"></i>Usuário ou senha inválidos
-            </div>
-        </div>
-        <div class="login-footer">
-            <p class="small text-muted">
-                <i class="fas fa-cubes me-1"></i> Viabix - Sistema de Análise de Viabilidade
-            </p>
-        </div>
-    </div>
-</div>
-
 <!-- SISTEMA PRINCIPAL (INICIALMENTE OCULTO) -->
 <div id="mainSystem" style="display: none;">
     <!-- MENU DE NAVEGAÇÃO INTEGRADO -->
@@ -5002,15 +4976,19 @@
     // =========================================
     let usuarioAtual = null;
 
+    function redirecionarParaLoginCentral() {
+        const retorno = `${window.location.pathname.split('/').pop()}${window.location.search || ''}`;
+        window.location.href = `login.html?redirect=${encodeURIComponent(retorno)}`;
+    }
+
     // Verificar sessão ao carregar a página
     async function verificarSessao() {
         try {
-            const data = await ViabixApiCore.checkSession();
+            const data = await ViabixApiCore.checkSession({ force: true, ttlMs: 0 });
             const autenticado = ViabixApiCore.isAuthenticatedSession(data);
 
             if (autenticado) {
                 usuarioAtual = data.user;
-                document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainSystem').style.display = 'block';
                 atualizarInterfaceUsuario();
                 setTimeout(() => {
@@ -5020,56 +4998,14 @@
                     updateDateTime();
                 }, 500);
             } else {
-                document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('mainSystem').style.display = 'none';
+                redirecionarParaLoginCentral();
             }
         } catch (e) {
             console.error('Erro ao verificar sessao:', e);
-            document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainSystem').style.display = 'none';
+            redirecionarParaLoginCentral();
         }
-    }
-
-    // Fazer login
-    async function fazerLogin() {
-        const login = document.getElementById('loginUsername').value.trim();
-        const senha = document.getElementById('loginPassword').value.trim();
-
-        if (!login || !senha) {
-            mostrarErroLogin('Preencha usuário e senha');
-            return;
-        }
-
-        try {
-            const data = await ViabixApiCore.login(login, senha);
-
-            if (data.success) {
-                usuarioAtual = data.user;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainSystem').style.display = 'block';
-                atualizarInterfaceUsuario();
-                setTimeout(() => {
-                    calculateArea();
-                    updateAllCalculations();
-                    carregarANVIs();
-                    updateDateTime();
-                }, 500);
-            } else {
-                mostrarErroLogin(data.message || 'Usuário ou senha inválidos');
-            }
-        } catch (e) {
-            console.error('Erro no login:', e);
-            mostrarErroLogin('Erro de conexão com o servidor');
-        }
-    }
-
-    function mostrarErroLogin(mensagem) {
-        const errorDiv = document.getElementById('loginError');
-        errorDiv.style.display = 'block';
-        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${mensagem}`;
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 3000);
     }
 
     async function fazerLogout() {
@@ -5079,10 +5015,8 @@
             console.error('Erro no logout:', e);
         }
         usuarioAtual = null;
-        document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('mainSystem').style.display = 'none';
-        document.getElementById('loginUsername').value = '';
-        document.getElementById('loginPassword').value = '';
+        window.location.href = 'login.html';
     }
 
     function atualizarInterfaceUsuario() {
@@ -11416,7 +11350,6 @@
     window.adicionarSelecionadosParaCustosIndiretos = adicionarSelecionadosParaCustosIndiretos;
     window.adicionarSelecionadosParaEmbalagem = adicionarSelecionadosParaEmbalagem;
     window.adicionarSelecionadosParaMaoObra = adicionarSelecionadosParaMaoObra;
-    window.fazerLogin = fazerLogin;
     window.fazerLogout = fazerLogout;
     window.abrirModalUsuarios = abrirModalUsuarios;
     window.abrirModalNovoUsuario = abrirModalNovoUsuario;

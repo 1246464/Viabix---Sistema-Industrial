@@ -141,7 +141,12 @@
     }
 
     function isAuthenticatedSession(payload) {
-        return Boolean(payload && (payload.logado === true || payload.logged === true));
+        return Boolean(payload && (
+            payload.logado === true ||
+            payload.logged === true ||
+            payload.authenticated === true ||
+            (payload.success === true && payload.user)
+        ));
     }
 
     const api = {

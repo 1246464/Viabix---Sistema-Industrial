@@ -374,6 +374,24 @@
         
         // Chamar ao carregar a página
         window.addEventListener('DOMContentLoaded', carregarCsrfToken);
+
+        function obterDestinoSeguro() {
+            const destinoPadrao = 'dashboard.html';
+            const params = new URLSearchParams(window.location.search);
+            const destino = params.get('redirect');
+
+            if (!destino) return destinoPadrao;
+
+            const destinoLimpo = destino.trim();
+            const temProtocolo = /^[a-z][a-z0-9+.-]*:/i.test(destinoLimpo);
+            const caminhoExterno = destinoLimpo.startsWith('//') || destinoLimpo.includes('\\');
+
+            if (!destinoLimpo || temProtocolo || caminhoExterno || destinoLimpo.startsWith('/')) {
+                return destinoPadrao;
+            }
+
+            return destinoLimpo;
+        }
         
         function mostrarAlerta(mensagem, tipo = 'error') {
             const alert = document.getElementById('alert');
@@ -448,9 +466,9 @@
                 if (data.success) {
                     mostrarAlerta('Login realizado com sucesso! Redirecionando...', 'success');
                     
-                    // Redirecionar para o dashboard após 1 segundo
+                    // Redirecionar para o módulo solicitado ou para o dashboard
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = obterDestinoSeguro();
                     }, 1000);
                 } else {
                     mostrarAlerta(data.message || 'Erro ao fazer login', 'error');
@@ -478,7 +496,7 @@
                         const data = await response.json();
                         if (data.logado) {
                             // Já está logado, redirecionar
-                            window.location.href = 'dashboard.html';
+                            window.location.href = obterDestinoSeguro();
                         }
                     }
                 }
