@@ -160,6 +160,62 @@
             margin-top: 14px;
         }
 
+        .linked-project-panel {
+            background: #f1f8e9;
+            border: 1px solid #c8e6c9;
+            border-left: 4px solid #2e7d32;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .linked-project-panel.visible {
+            display: block;
+        }
+
+        .linked-project-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .linked-project-head strong {
+            color: #0a3d2e;
+            font-size: 1.05rem;
+        }
+
+        .linked-project-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: #607168;
+            font-size: 0.88rem;
+        }
+
+        .linked-project-meta span {
+            background: #fff;
+            border: 1px solid #dfe8e2;
+            border-radius: 999px;
+            padding: 5px 9px;
+        }
+
+        .progress-thin {
+            height: 10px;
+            border-radius: 999px;
+            background: #dfe8e2;
+            overflow: hidden;
+        }
+
+        .progress-thin-fill {
+            height: 100%;
+            background: #2e7d32;
+            width: 0%;
+        }
+
         .priority-list {
             margin-top: 12px;
         }
@@ -532,6 +588,28 @@
                                 </div>
                             </div>
 
+                            <div id="linkedProjectPanel" class="linked-project-panel">
+                                <div class="linked-project-head">
+                                    <div>
+                                        <small class="text-muted">Projeto vinculado</small>
+                                        <strong id="linkedProjectName" class="d-block">-</strong>
+                                    </div>
+                                    <a id="linkedProjectUrl" class="btn btn-sm btn-outline-success" href="#" style="display:none;">
+                                        <i class="fas fa-external-link-alt"></i> Abrir projeto
+                                    </a>
+                                </div>
+                                <div class="linked-project-meta mb-2">
+                                    <span id="linkedProjectStatus">Status: -</span>
+                                    <span id="linkedProjectLeader">Líder: -</span>
+                                    <span id="linkedProjectTasks">Tarefas: -</span>
+                                    <span id="linkedProjectLate">Atrasos: -</span>
+                                </div>
+                                <div class="progress-thin">
+                                    <div id="linkedProjectProgressBar" class="progress-thin-fill"></div>
+                                </div>
+                                <small id="linkedProjectProgressText" class="text-muted"></small>
+                            </div>
+
                             <div class="priority-list">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <strong>Pontos de atenção</strong>
@@ -685,7 +763,36 @@
             document.getElementById('metricMargem').textContent = formatarPercentual(indicadores.margem_esperada_pct);
             document.getElementById('metricRoi').textContent = formatarPercentual(indicadores.roi_esperado_pct);
             document.getElementById('metricPayback').textContent = formatarPayback(indicadores.payback_meses);
+            renderizarProjetoVinculado(data.projeto_vinculado);
             renderizarPrioridades(decisao);
+        }
+
+        function renderizarProjetoVinculado(projeto) {
+            const panel = document.getElementById('linkedProjectPanel');
+            if (!panel) return;
+
+            if (!projeto) {
+                panel.classList.remove('visible');
+                return;
+            }
+
+            const progresso = Math.max(0, Math.min(100, Number(projeto.progresso || 0)));
+            panel.classList.add('visible');
+            document.getElementById('linkedProjectName').textContent = projeto.nome || `Projeto #${projeto.id}`;
+            document.getElementById('linkedProjectStatus').textContent = `Status: ${projeto.status || '-'}`;
+            document.getElementById('linkedProjectLeader').textContent = `Líder: ${projeto.lider || '-'}`;
+            document.getElementById('linkedProjectTasks').textContent = `Tarefas: ${Number(projeto.tarefas_concluidas || 0)}/${Number(projeto.tarefas_total || 0)}`;
+            document.getElementById('linkedProjectLate').textContent = `Atrasos: ${Number(projeto.tarefas_atrasadas || 0)}`;
+            document.getElementById('linkedProjectProgressBar').style.width = `${progresso}%`;
+            document.getElementById('linkedProjectProgressText').textContent = `${progresso.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% concluído · ${formatarPercentual(projeto.pontualidade_pct)} de pontualidade`;
+
+            const link = document.getElementById('linkedProjectUrl');
+            if (projeto.url) {
+                link.href = projeto.url;
+                link.style.display = 'inline-flex';
+            } else {
+                link.style.display = 'none';
+            }
         }
 
         function renderizarSugestoesANVI(lista) {
@@ -814,6 +921,15 @@
 
             if (analise.planejamento) {
                 const plan = analise.planejamento;
+                const detalhesProjeto = plan.origem === 'projeto_vinculado'
+                    ? `
+                        <p><strong>Origem:</strong> Projeto vinculado</p>
+                        <p><strong>Progresso:</strong> ${formatarPercentual(plan.progresso_projeto)}</p>
+                        <p><strong>Tarefas concluídas:</strong> ${Number(plan.tarefas_concluidas || 0).toLocaleString('pt-BR')}</p>
+                        <p><strong>Tarefas atrasadas:</strong> ${Number(plan.tarefas_atrasadas || 0).toLocaleString('pt-BR')}</p>
+                        <p><strong>Pontualidade:</strong> ${formatarPercentual(plan.pontualidade_pct)}</p>
+                    `
+                    : '';
                 container.innerHTML += `
                     <div class="analise-item planejamento">
                         <div class="row align-items-center">
@@ -824,6 +940,7 @@
                                 <h4>Planejamento</h4>
                                 <p><strong>Fases:</strong> ${Number(plan.fases || 0).toLocaleString('pt-BR')}</p>
                                 <p><strong>Duração:</strong> ${formatarPayback(plan.duracao_meses)}</p>
+                                ${detalhesProjeto}
                             </div>
                         </div>
                     </div>

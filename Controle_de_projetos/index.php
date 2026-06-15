@@ -2141,9 +2141,69 @@ $usuario = getUsuario();
         background: #ff9800;
         color: white;
     }
+    .project-loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 18, 0.38);
+        backdrop-filter: blur(2px);
+        padding: 20px;
+    }
+    .project-loading-overlay.visible {
+        display: flex;
+    }
+    .project-loading-card {
+        width: min(360px, 92vw);
+        background: #fff;
+        border: 1px solid #c8e6c9;
+        border-radius: 8px;
+        box-shadow: 0 18px 50px rgba(13, 40, 28, 0.24);
+        padding: 22px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: #1d2b24;
+    }
+    .project-loading-spinner {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 4px solid #c8e6c9;
+        border-top-color: #2e7d32;
+        animation: spin 0.8s linear infinite;
+        flex: 0 0 auto;
+    }
+    .project-loading-title {
+        font-weight: 800;
+        color: #2e7d32;
+        margin-bottom: 2px;
+    }
+    .project-loading-message {
+        color: #607168;
+        font-size: 0.9rem;
+    }
+    body.project-busy .btn,
+    body.project-busy button {
+        pointer-events: none;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 </head>
 <body>
+<div id="projectLoadingOverlay" class="project-loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+    <div class="project-loading-card">
+        <div class="project-loading-spinner" aria-hidden="true"></div>
+        <div>
+            <div class="project-loading-title">Processando</div>
+            <div id="projectLoadingMessage" class="project-loading-message">Aguarde um instante...</div>
+        </div>
+    </div>
+</div>
 <!-- MENU DE NAVEGAÇÃO INTEGRADO -->
 <nav style="background: linear-gradient(135deg, #0a3d2e 0%, #1b5e20 100%); padding: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
     <div style="max-width: 100%; padding: 0 20px;">
@@ -3802,6 +3862,72 @@ function handleApiSessionError(xhr) {
     }
     return false;
 }
+
+let projectLoadingCount = 0;
+let projectLoadingTimer = null;
+
+function getProjectLoadingMessage(action) {
+    const messages = {
+        testConnection: 'Verificando conexão com o servidor...',
+        getLeaders: 'Carregando líderes...',
+        getProjects: 'Carregando projetos...',
+        saveProject: 'Salvando projeto...',
+        deleteProject: 'Excluindo projeto...',
+        saveLeader: 'Salvando líder...',
+        deleteLeader: 'Excluindo líder...'
+    };
+
+    return messages[action] || 'Atualizando informações...';
+}
+
+function setProjectLoading(message) {
+    const overlay = document.getElementById('projectLoadingOverlay');
+    const messageElement = document.getElementById('projectLoadingMessage');
+    if (!overlay || !messageElement) return;
+
+    messageElement.textContent = message || 'Aguarde um instante...';
+    document.body.classList.add('project-busy');
+    clearTimeout(projectLoadingTimer);
+    projectLoadingTimer = setTimeout(() => {
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+    }, 180);
+}
+
+function clearProjectLoading() {
+    const overlay = document.getElementById('projectLoadingOverlay');
+    if (!overlay) return;
+
+    clearTimeout(projectLoadingTimer);
+    if (projectLoadingCount <= 0) {
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('project-busy');
+    }
+}
+
+function extractAjaxAction(settings) {
+    const data = settings && settings.data;
+    if (!data) return '';
+
+    if (typeof data === 'string') {
+        return new URLSearchParams(data).get('action') || '';
+    }
+
+    return data.action || '';
+}
+
+$(document)
+    .ajaxSend(function(_event, _xhr, settings) {
+        if (!settings.url || !settings.url.includes('api_mysql.php')) return;
+        projectLoadingCount++;
+        setProjectLoading(getProjectLoadingMessage(extractAjaxAction(settings)));
+    })
+    .ajaxComplete(function(_event, _xhr, settings) {
+        if (!settings.url || !settings.url.includes('api_mysql.php')) return;
+        projectLoadingCount = Math.max(0, projectLoadingCount - 1);
+        clearProjectLoading();
+    });
 
 function carregarDadosIniciaisDoMySQL() {
     updateMysqlStatus('checking', 'Carregando dados...');
@@ -11019,8 +11145,7 @@ function autoUpdateTaskStatuses() {
             hasChanges = true;
             updatedCount++;
             
-            // Salvar no MySQL
-            saveSingleProjectToMySQL(project);
+            // Atualização automática é apenas visual; o banco é salvo nas ações do usuário.
         }
     });
     
@@ -11092,9 +11217,8 @@ function init() {
     // Executar verificação imediatamente após 2 segundos (tempo para carregar os dados)
     setTimeout(autoUpdateTaskStatuses, 2000);
     
-    // Verificar status automaticamente a cada 30 segundos (30000ms)
-    // Isso garante que tarefas vencidas sejam marcadas como atrasadas automaticamente
-    setInterval(autoUpdateTaskStatuses, 30000);
+    // Verificar status periodicamente sem gerar salvamentos em segundo plano.
+    setInterval(autoUpdateTaskStatuses, 300000);
     
     // Verificar quando o usuário retorna à página/aba
     document.addEventListener('visibilitychange', function() {

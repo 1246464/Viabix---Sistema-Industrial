@@ -3,6 +3,107 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/config.php';
 
+function viabixDvHasColumn(string $table, string $column): bool {
+    return function_exists('viabixHasColumn') ? viabixHasColumn($table, $column) : false;
+}
+
+function viabixDvDecodeJson($value): array {
+    $data = json_decode($value ?? '{}', true);
+    return is_array($data) ? $data : [];
+}
+
+function viabixDvDateOnly($value): ?DateTime {
+    if (!$value) return null;
+    try {
+        return new DateTime((string) $value);
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+function viabixDvProjectProgress(array $projectData): array {
+    $tasks = is_array($projectData['tasks'] ?? null) ? $projectData['tasks'] : [];
+    $total = 0;
+    $done = 0;
+    $late = 0;
+    $planned = 0;
+    $today = new DateTime('today');
+
+    foreach ($tasks as $task) {
+        if (!is_array($task)) continue;
+        $total++;
+        $executed = !empty($task['executed']);
+        $plannedDate = viabixDvDateOnly($task['planned'] ?? null);
+
+        if ($plannedDate) {
+            $planned++;
+        }
+        if ($executed) {
+            $done++;
+        } elseif ($plannedDate && $plannedDate < $today) {
+            $late++;
+        }
+    }
+
+    $progress = isset($projectData['progresso']) && is_numeric($projectData['progresso'])
+        ? (float) $projectData['progresso']
+        : ($total > 0 ? round(($done / $total) * 100, 1) : 0);
+
+    $onTimePct = $planned > 0 ? round((($planned - $late) / $planned) * 100, 1) : ($total > 0 ? 100 : 0);
+
+    return [
+        'total_tarefas' => $total,
+        'tarefas_concluidas' => $done,
+        'tarefas_atrasadas' => $late,
+        'progresso' => max(0, min(100, $progress)),
+        'pontualidade_pct' => max(0, min(100, $onTimePct)),
+    ];
+}
+
+function viabixDvFindLinkedProject(PDO $pdo, array $anvi, ?string $tenantId): ?array {
+    if (!function_exists('viabixHasTable') || !viabixHasTable('projetos')) {
+        return null;
+    }
+
+    $tenantWhere = '';
+    $tenantParams = [];
+    if ($tenantId && viabixDvHasColumn('projetos', 'tenant_id')) {
+        $tenantWhere = ' AND tenant_id = ?';
+        $tenantParams[] = $tenantId;
+    }
+
+    if (!empty($anvi['projeto_id'])) {
+        $stmt = $pdo->prepare("SELECT id, dados, created_at, updated_at FROM projetos WHERE id = ?{$tenantWhere} LIMIT 1");
+        $stmt->execute(array_merge([(int) $anvi['projeto_id']], $tenantParams));
+        $project = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($project) return $project;
+    }
+
+    $params = [(string) $anvi['id'], (string) $anvi['id']];
+    $sql = "SELECT id, dados, created_at, updated_at
+            FROM projetos
+            WHERE (
+                JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviId')) = ?
+                OR JSON_UNQUOTE(JSON_EXTRACT(dados, '$.sourceContext.anviId')) = ?";
+
+    if (!empty($anvi['numero'])) {
+        $sql .= " OR JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviNumber')) = ?";
+        $params[] = (string) $anvi['numero'];
+    }
+
+    $sql .= ')';
+    if ($tenantWhere) {
+        $sql .= $tenantWhere;
+        $params = array_merge($params, $tenantParams);
+    }
+
+    $stmt = $pdo->prepare($sql . ' ORDER BY id DESC LIMIT 1');
+    $stmt->execute($params);
+    $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $project ?: null;
+}
+
 try {
     $anvi_id = $_GET['anvi_id'] ?? null;
     
@@ -18,22 +119,27 @@ try {
         exit(json_encode(['erro' => 'Sessão expirada ou tenant não identificado']));
     }
     
+    $select = [
+        'a.id',
+        viabixDvHasColumn('anvis', 'numero') ? 'a.numero' : "'' AS numero",
+        viabixDvHasColumn('anvis', 'revisao') ? 'a.revisao' : "'' AS revisao",
+        viabixDvHasColumn('anvis', 'cliente') ? 'a.cliente' : "'' AS cliente",
+        viabixDvHasColumn('anvis', 'projeto') ? 'a.projeto' : "'' AS projeto",
+        viabixDvHasColumn('anvis', 'produto') ? 'a.produto' : "'' AS produto",
+        viabixDvHasColumn('anvis', 'status') ? 'a.status' : "'' AS status",
+        viabixDvHasColumn('anvis', 'data_anvi') ? 'a.data_anvi' : 'NULL AS data_anvi',
+        viabixDvHasColumn('anvis', 'data_criacao') ? 'a.data_criacao' : 'NULL AS data_criacao',
+        viabixDvHasColumn('anvis', 'dados') ? 'a.dados' : "'{}' AS dados",
+        viabixDvHasColumn('anvis', 'dados_financeiros') ? 'a.dados_financeiros' : "'{}' AS dados_financeiros",
+        viabixDvHasColumn('anvis', 'projeto_id') ? 'a.projeto_id' : 'NULL AS projeto_id',
+    ];
+
+    $orderColumn = viabixDvHasColumn('anvis', 'data_criacao') ? 'a.data_criacao' : 'a.id';
     $stmt = $pdo->prepare("
-        SELECT 
-            a.id,
-            a.numero,
-            a.revisao,
-            a.cliente,
-            a.projeto,
-            a.produto,
-            a.status,
-            a.data_anvi,
-            a.data_criacao,
-            a.dados,
-            a.dados_financeiros
+        SELECT " . implode(', ', $select) . "
         FROM anvis a
         WHERE (a.id = ? OR a.numero = ? OR CONCAT(a.numero, '_', a.revisao) = ?) AND a.tenant_id = ?
-        ORDER BY a.data_criacao DESC
+        ORDER BY {$orderColumn} DESC
         LIMIT 1
     ");
     
@@ -46,9 +152,12 @@ try {
     }
     
     // Decode JSON fields
-    $dados = json_decode($anvi['dados'] ?? '{}', true);
-    $dados_financeiros = json_decode($anvi['dados_financeiros'] ?? '{}', true);
+    $dados = viabixDvDecodeJson($anvi['dados'] ?? '{}');
+    $dados_financeiros = viabixDvDecodeJson($anvi['dados_financeiros'] ?? '{}');
     $financeiro_salvo = is_array($dados_financeiros) ? $dados_financeiros : [];
+    $projectRow = viabixDvFindLinkedProject($pdo, $anvi, $tenant_id);
+    $projectData = $projectRow ? viabixDvDecodeJson($projectRow['dados'] ?? '{}') : [];
+    $projectProgress = $projectRow ? viabixDvProjectProgress($projectData) : null;
     
     // Calculate compatibility scores
     $financeiro_score = 0;
@@ -68,6 +177,10 @@ try {
     $fases = $dados['planejamento']['fases'] ?? 0;
     $duracao = $dados['planejamento']['duracao_meses'] ?? 0;
     $planejamento_score = min(100, $fases * 20 + min($duracao, 5) * 10);
+    if ($projectProgress) {
+        $planejamento_score = round(($projectProgress['progresso'] * 0.55) + ($projectProgress['pontualidade_pct'] * 0.45), 1);
+        $fases = $projectProgress['total_tarefas'];
+    }
     
     // Qualidade
     $cobertura = $dados['qualidade']['cobertura_testes'] ?? 0;
@@ -160,8 +273,24 @@ try {
         $prioridades[] = [
             'area' => 'Planejamento',
             'prioridade' => 'Média',
-            'titulo' => 'Planejamento com baixa maturidade',
-            'acao' => 'Detalhar fases e duração para reduzir incerteza de execução.'
+            'titulo' => $projectRow ? 'Projeto vinculado com baixo avanço ou atraso' : 'Planejamento com baixa maturidade',
+            'acao' => $projectRow ? 'Revisar tarefas atrasadas e atualizar o cronograma do projeto vinculado.' : 'Detalhar fases e duração para reduzir incerteza de execução.'
+        ];
+    }
+    if ($projectProgress && $projectProgress['tarefas_atrasadas'] > 0) {
+        $prioridades[] = [
+            'area' => 'Projeto',
+            'prioridade' => $projectProgress['tarefas_atrasadas'] >= 3 ? 'Alta' : 'Média',
+            'titulo' => $projectProgress['tarefas_atrasadas'] . ' tarefa(s) atrasada(s) no projeto vinculado',
+            'acao' => 'Atualizar responsáveis, datas planejadas e ações de recuperação no Controle de Projetos.'
+        ];
+    }
+    if (!$projectRow) {
+        $prioridades[] = [
+            'area' => 'Projeto',
+            'prioridade' => 'Média',
+            'titulo' => 'ANVI sem projeto vinculado',
+            'acao' => 'Vincular a ANVI a um projeto para completar a análise de execução.'
         ];
     }
     if ($qualidade_score > 0 && $qualidade_score < 60) {
@@ -185,7 +314,7 @@ try {
     if (empty($financeiro_salvo)) {
         $dados_incompletos[] = 'financeiro';
     }
-    if (!$fases && !$duracao) {
+    if (!$projectRow && !$fases && !$duracao) {
         $dados_incompletos[] = 'planejamento';
     }
     if (!$cobertura && !$score_code) {
@@ -196,7 +325,7 @@ try {
     }
 
     $temCritico = count(array_filter($alertas_financeiros, fn($alerta) => ($alerta['severidade'] ?? '') === 'critico')) > 0;
-    if ($temCritico || $financeiro_score < 50 || $viabilidade_geral < 50) {
+    if ($temCritico || $financeiro_score < 50 || $viabilidade_geral < 50 || ($projectProgress && $projectProgress['tarefas_atrasadas'] >= 3)) {
         $decisao_status = 'REVISAR ANTES DE APROVAR';
         $decisao_tom = 'danger';
         $decisao_resumo = 'Há pontos críticos ou score baixo que podem comprometer a viabilidade.';
@@ -220,18 +349,31 @@ try {
     ];
 
     $comparativo_revisoes = [];
-    $stmt = $pdo->prepare("
-        SELECT id, revisao, data_atualizacao, dados_financeiros
-        FROM anvis
-        WHERE numero = ? AND tenant_id = ? AND id <> ?
-        ORDER BY data_atualizacao DESC
-        LIMIT 1
-    ");
-    $stmt->execute([$anvi['numero'], $tenant_id, $anvi['id']]);
-    $revisao_anterior = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (viabixDvHasColumn('anvis', 'numero') && viabixDvHasColumn('anvis', 'revisao')) {
+        $comparativoSelect = [
+            'id',
+            'revisao',
+            viabixDvHasColumn('anvis', 'dados_financeiros') ? 'dados_financeiros' : "'{}' AS dados_financeiros",
+        ];
+        $comparativoOrder = viabixDvHasColumn('anvis', 'data_atualizacao')
+            ? 'data_atualizacao'
+            : (viabixDvHasColumn('anvis', 'data_criacao') ? 'data_criacao' : 'id');
+
+        $stmt = $pdo->prepare("
+            SELECT " . implode(', ', $comparativoSelect) . "
+            FROM anvis
+            WHERE numero = ? AND tenant_id = ? AND id <> ?
+            ORDER BY {$comparativoOrder} DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$anvi['numero'], $tenant_id, $anvi['id']]);
+        $revisao_anterior = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        $revisao_anterior = null;
+    }
 
     if ($revisao_anterior) {
-        $financeiro_anterior = json_decode($revisao_anterior['dados_financeiros'] ?? '{}', true);
+        $financeiro_anterior = viabixDvDecodeJson($revisao_anterior['dados_financeiros'] ?? '{}');
         if (is_array($financeiro_anterior)) {
             $comparativo_revisoes = [
                 'revisao_atual' => $anvi['revisao'],
@@ -284,8 +426,13 @@ try {
             ],
             'planejamento' => [
                 'duracao_meses' => $dados['planejamento']['duracao_meses'] ?? 0,
-                'fases' => $dados['planejamento']['fases'] ?? 0,
-                'score' => round($planejamento_score, 1)
+                'fases' => $projectProgress['total_tarefas'] ?? ($dados['planejamento']['fases'] ?? 0),
+                'score' => round($planejamento_score, 1),
+                'origem' => $projectRow ? 'projeto_vinculado' : 'anvi',
+                'progresso_projeto' => $projectProgress['progresso'] ?? null,
+                'tarefas_concluidas' => $projectProgress['tarefas_concluidas'] ?? null,
+                'tarefas_atrasadas' => $projectProgress['tarefas_atrasadas'] ?? null,
+                'pontualidade_pct' => $projectProgress['pontualidade_pct'] ?? null,
             ],
             'qualidade' => [
                 'cobertura_testes' => $dados['qualidade']['cobertura_testes'] ?? 0,
@@ -309,6 +456,22 @@ try {
                 'recursos' => round($recursos_score, 1),
             ]
         ],
+        'projeto_vinculado' => $projectRow ? [
+            'id' => (int) $projectRow['id'],
+            'nome' => (string) ($projectData['projectName'] ?? $projectData['name'] ?? ('Projeto #' . $projectRow['id'])),
+            'cliente' => (string) ($projectData['cliente'] ?? ''),
+            'status' => (string) ($projectData['manualStatus'] ?? $projectData['status'] ?? 'Pendente'),
+            'fase' => (string) ($projectData['fase'] ?? ''),
+            'lider' => (string) ($projectData['projectLeader'] ?? ''),
+            'codigo' => (string) ($projectData['codigo'] ?? ''),
+            'progresso' => $projectProgress['progresso'],
+            'tarefas_total' => $projectProgress['total_tarefas'],
+            'tarefas_concluidas' => $projectProgress['tarefas_concluidas'],
+            'tarefas_atrasadas' => $projectProgress['tarefas_atrasadas'],
+            'pontualidade_pct' => $projectProgress['pontualidade_pct'],
+            'updated_at' => $projectRow['updated_at'] ?? null,
+            'url' => 'Controle_de_projetos/index.php?projeto_id=' . (int) $projectRow['id'],
+        ] : null,
         'decisao' => $decisao,
         'indicadores_financeiros' => [
             'margem_esperada_pct' => $financeiro_salvo['margem_esperada_pct'] ?? 0,
@@ -331,7 +494,9 @@ try {
                 'area' => 'Planejamento',
                 'status' => $planejamento_score >= 80 ? 'compativel' : 'incompativel',
                 'score' => round($planejamento_score, 1),
-                'detalhes' => 'Duração de ' . ($dados['planejamento']['duracao_meses'] ?? 0) . ' meses em ' . ($dados['planejamento']['fases'] ?? 0) . ' fases'
+                'detalhes' => $projectRow
+                    ? 'Projeto vinculado com ' . $projectProgress['progresso'] . '% de avanço, ' . $projectProgress['tarefas_concluidas'] . '/' . $projectProgress['total_tarefas'] . ' tarefas concluídas e ' . $projectProgress['tarefas_atrasadas'] . ' atrasada(s)'
+                    : 'Duração de ' . ($dados['planejamento']['duracao_meses'] ?? 0) . ' meses em ' . ($dados['planejamento']['fases'] ?? 0) . ' fases'
             ],
             [
                 'area' => 'Qualidade',

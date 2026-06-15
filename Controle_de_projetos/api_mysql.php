@@ -49,7 +49,6 @@ try {
     require_once __DIR__ . '/config.php';
 
     $pdo = getConnection();
-    createTables($pdo);
     $tenantId = getCurrentTenantId();
     $tenantAwareProjects = tenantFilterEnabled($pdo, 'projetos');
     $tenantAwareLeaders = tenantFilterEnabled($pdo, 'lideres');
@@ -65,8 +64,11 @@ try {
             $stmt->execute([$tipo, $itemId]);
         }
 
-        // Limpar mudanças antigas (mantém últimas 1000)
-        $pdo->exec("DELETE FROM mudancas WHERE id < (SELECT MAX(id) - 1000 FROM (SELECT id FROM mudancas) AS m)");
+        // Limpar mudanças antigas periodicamente para não pesar em todo salvamento.
+        $lastChangeId = (int)$pdo->lastInsertId();
+        if ($lastChangeId > 0 && $lastChangeId % 50 === 0) {
+            $pdo->exec("DELETE FROM mudancas WHERE id < (SELECT MAX(id) - 1000 FROM (SELECT id FROM mudancas) AS m)");
+        }
     }
 
     function vincularAnviSelecionadaAoProjeto($pdo, $projectData, $projectId, $tenantId = null) {
@@ -99,6 +101,7 @@ try {
     switch ($action) {
 
         case 'testConnection':
+            createTables($pdo);
             echo json_encode([
                 'success' => true,
                 'message' => 'Conectado ao MySQL'
