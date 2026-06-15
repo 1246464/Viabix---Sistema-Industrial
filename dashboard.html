@@ -14,7 +14,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a3d2e 0%, #2e7d32 100%);
+            background: #eef3ef;
             color: #333;
             min-height: 100vh;
             display: flex;
@@ -121,56 +121,91 @@
 
         .container {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 24px 20px 44px;
         }
 
         .welcome-section {
-            text-align: center;
-            margin-bottom: 50px;
+            background: #0a3d2e;
+            color: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 18px;
             animation: fadeInDown 0.6s ease-out;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+            gap: 20px;
+            align-items: center;
         }
 
         .welcome-section h1 {
             color: white;
-            font-size: 3rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            font-size: 1.9rem;
+            margin-bottom: 8px;
+            text-shadow: none;
         }
 
         .welcome-section p {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
+            font-size: 1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .quick-action {
+            border: 1px solid rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .quick-action:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
         }
 
         .modules-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
             width: 100%;
             animation: fadeInUp 0.8s ease-out;
         }
 
         .module-card {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
+            text-align: left;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
-            display: block;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 14px;
+            align-items: center;
+            border: 1px solid #dfe8e2;
         }
 
         .module-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(13, 40, 28, 0.12);
         }
 
         .module-card.is-disabled {
@@ -178,6 +213,11 @@
             cursor: not-allowed;
             pointer-events: none;
             filter: grayscale(0.15);
+        }
+
+        .quick-action.is-disabled {
+            opacity: 0.48;
+            pointer-events: none;
         }
 
         .module-lock {
@@ -193,31 +233,32 @@
 
         .module-card.is-disabled .module-lock {
             display: block;
+            grid-column: 1 / -1;
         }
 
         .module-icon {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin: 0;
+            background: #0a3d2e;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 3rem;
-            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+            font-size: 1.35rem;
+            box-shadow: none;
         }
 
         .module-card:nth-child(2) .module-icon {
-            background: linear-gradient(135deg, #2196f3, #1565c0);
-            box-shadow: 0 10px 30px rgba(33, 150, 243, 0.4);
+            background: #1f5f8b;
+            box-shadow: none;
         }
 
         .module-card h2 {
             color: #2e7d32;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
+            font-size: 1.05rem;
+            margin-bottom: 4px;
         }
 
         .module-card:nth-child(2) h2 {
@@ -227,15 +268,12 @@
         .module-card p {
             color: #666;
             line-height: 1.6;
-            margin-bottom: 20px;
+            margin-bottom: 0;
+            font-size: 0.9rem;
         }
 
         .module-features {
-            text-align: left;
-            margin: 20px 0;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 10px;
+            display: none;
         }
 
         .module-features ul {
@@ -261,22 +299,25 @@
         }
 
         .btn-access {
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
+            background: #f4f8f5;
+            color: #0a3d2e;
+            padding: 8px 10px;
+            border-radius: 8px;
             border: none;
-            font-size: 1rem;
+            font-size: 0.86rem;
             font-weight: 600;
             cursor: pointer;
             transition: 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            justify-self: start;
+            margin-top: 8px;
         }
 
         .module-card:nth-child(2) .btn-access {
-            background: linear-gradient(135deg, #2196f3, #1565c0);
+            background: #eef6fb;
+            color: #1f5f8b;
         }
 
         .btn-access:hover {
@@ -285,38 +326,60 @@
         }
 
         .stats-bar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            max-width: 1200px;
+            background: transparent;
+            backdrop-filter: none;
+            padding: 0;
+            border-radius: 0;
             width: 100%;
-            margin-top: 40px;
+            margin: 0 0 18px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
         }
 
         .stat-item {
-            text-align: center;
-            color: white;
+            text-align: left;
+            color: #1d2b24;
+            background: white;
+            border: 1px solid #dfe8e2;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
         }
 
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 1.9rem;
             font-weight: bold;
             margin-bottom: 5px;
+            color: #0a3d2e;
         }
 
         .stat-label {
             font-size: 0.9rem;
-            opacity: 0.9;
+            color: #607168;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0 12px;
+            color: #163d2d;
+        }
+
+        .section-title h2 {
+            font-size: 1.15rem;
+        }
+
+        .section-title small {
+            color: #607168;
         }
 
         .insights-grid {
-            max-width: 1200px;
+            max-width: none;
             width: 100%;
-            margin-top: 28px;
+            margin-top: 0;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
@@ -324,9 +387,10 @@
 
         .insight-card {
             background: rgba(255, 255, 255, 0.96);
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 22px;
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
+            border: 1px solid #dfe8e2;
         }
 
         .insight-header {
@@ -412,44 +476,49 @@
         }
 
         .dashboard-filters {
-            margin: 24px 0;
+            margin: 12px 0 18px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 14px;
             align-items: end;
+            background: white;
+            border: 1px solid #dfe8e2;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
         }
 
         .dashboard-filters .filter-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            color: #fff;
+            color: #1d2b24;
         }
 
         .dashboard-filters label {
             font-size: 0.87rem;
-            color: rgba(255,255,255,0.85);
+            color: #607168;
         }
 
         .dashboard-filters input,
         .dashboard-filters select {
             border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(255,255,255,0.12);
-            color: white;
+            border: 1px solid #d9e4dd;
+            background: white;
+            color: #1d2b24;
             padding: 11px 14px;
             outline: none;
         }
 
         .dashboard-filters input::placeholder {
-            color: rgba(255,255,255,0.7);
+            color: #8a9a91;
         }
 
         .dashboard-action-button {
-            border: 1px solid rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.14);
+            border: 1px solid #0a3d2e;
+            background: #0a3d2e;
             color: white;
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 10px 16px;
             font-weight: 700;
             cursor: pointer;
@@ -457,7 +526,7 @@
         }
 
         .dashboard-action-button:hover {
-            background: rgba(255,255,255,0.24);
+            background: #145642;
         }
 
         .health-body {
@@ -646,12 +715,37 @@
         }
 
         @media (max-width: 768px) {
+            .top-bar {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .user-info {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .welcome-section {
+                grid-template-columns: 1fr;
+                padding: 18px;
+            }
+
+            .quick-actions {
+                justify-content: flex-start;
+            }
+
             .welcome-section h1 {
-                font-size: 2rem;
+                font-size: 1.45rem;
             }
             
             .modules-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .module-card {
+                grid-template-columns: auto 1fr;
             }
             
             .stats-bar {
@@ -691,8 +785,52 @@
 
     <div class="container">
         <div class="welcome-section">
-            <h1>Bem-vindo ao Sistema Viabix</h1>
-            <p>Escolha o módulo que deseja acessar</p>
+            <div>
+                <h1>Central de Trabalho Viabix</h1>
+                <p>Priorize ANVIs, projetos e riscos antes de entrar nos módulos.</p>
+            </div>
+            <div class="quick-actions">
+                <a href="anvi.html" class="quick-action" id="quickNewAnvi">
+                    <i class="fas fa-plus"></i>
+                    Nova ANVI
+                </a>
+                <a href="Controle_de_projetos/index.php" class="quick-action" id="quickProjects">
+                    <i class="fas fa-diagram-project"></i>
+                    Projetos
+                </a>
+                <a href="dashboard_viabilidade.html" class="quick-action" id="quickViability">
+                    <i class="fas fa-chart-line"></i>
+                    Viabilidade
+                </a>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalAnvis">-</div>
+                <div class="stat-label">ANVIs cadastradas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalProjetos">-</div>
+                <div class="stat-label">Projetos ativos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalVinculos">-</div>
+                <div class="stat-label"><i class="fas fa-link"></i> ANVIs vinculadas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalUsuarios">-</div>
+                <div class="stat-label">Usuários</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalLideres">-</div>
+                <div class="stat-label">Líderes</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <h2>Módulos</h2>
+            <small>Acesso rápido às rotinas principais</small>
         </div>
 
         <div class="modules-grid">
@@ -701,23 +839,14 @@
                 <div class="module-icon">
                     <i class="fas fa-calculator"></i>
                 </div>
-                <h2>ANVI</h2>
-                <p>Análise de Viabilidade Industrial e Orçamentação</p>
-                
-                <div class="module-features">
-                    <ul>
-                        <li><i class="fas fa-check-circle"></i> Cálculo de custos industriais</li>
-                        <li><i class="fas fa-check-circle"></i> Análise de matéria-prima</li>
-                        <li><i class="fas fa-check-circle"></i> Custos de ferramental</li>
-                        <li><i class="fas fa-check-circle"></i> Estrutura de custos completa</li>
-                        <li><i class="fas fa-check-circle"></i> Exportação de relatórios</li>
-                    </ul>
+                <div>
+                    <h2>ANVI</h2>
+                    <p>Custos, viabilidade e orçamento industrial.</p>
+                    <button class="btn-access">
+                        <i class="fas fa-arrow-right"></i>
+                        Abrir
+                    </button>
                 </div>
-
-                <button class="btn-access">
-                    <i class="fas fa-arrow-right"></i>
-                    Acessar ANVI
-                </button>
 
                 <div class="module-lock" id="moduleAnviLock">
                     Módulo indisponível no plano atual
@@ -729,23 +858,14 @@
                 <div class="module-icon">
                     <i class="fas fa-project-diagram"></i>
                 </div>
-                <h2>Controle de Projetos</h2>
-                <p>Gestão Completa de Projetos e Cronogramas</p>
-                
-                <div class="module-features">
-                    <ul>
-                        <li><i class="fas fa-check-circle"></i> Gestão de tarefas e milestones</li>
-                        <li><i class="fas fa-check-circle"></i> Gráfico de Gantt interativo</li>
-                        <li><i class="fas fa-check-circle"></i> Múltiplos líderes de projeto</li>
-                        <li><i class="fas fa-check-circle"></i> Controle de prazos e status</li>
-                        <li><i class="fas fa-check-circle"></i> Relatórios de eficiência</li>
-                    </ul>
+                <div>
+                    <h2>Controle de Projetos</h2>
+                    <p>Cronograma, execução, APQP e responsáveis.</p>
+                    <button class="btn-access">
+                        <i class="fas fa-arrow-right"></i>
+                        Abrir
+                    </button>
                 </div>
-
-                <button class="btn-access">
-                    <i class="fas fa-arrow-right"></i>
-                    Acessar Projetos
-                </button>
 
                 <div class="module-lock" id="moduleProjetosLock">
                     Módulo indisponível no plano atual
@@ -757,23 +877,14 @@
                 <div class="module-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h2>Dashboard de Viabilidade</h2>
-                <p>Análise de Compatibilidade e Viabilidade</p>
-                
-                <div class="module-features">
-                    <ul>
-                        <li><i class="fas fa-check-circle"></i> Análise de compatibilidade técnica</li>
-                        <li><i class="fas fa-check-circle"></i> Simulação de cenários</li>
-                        <li><i class="fas fa-check-circle"></i> Relatórios de viabilidade</li>
-                        <li><i class="fas fa-check-circle"></i> Gráficos e visualizações</li>
-                        <li><i class="fas fa-check-circle"></i> Exportação de dados</li>
-                    </ul>
+                <div>
+                    <h2>Dashboard de Viabilidade</h2>
+                    <p>Decisão, riscos financeiros e revisões.</p>
+                    <button class="btn-access">
+                        <i class="fas fa-arrow-right"></i>
+                        Abrir
+                    </button>
                 </div>
-
-                <button class="btn-access">
-                    <i class="fas fa-arrow-right"></i>
-                    Acessar Dashboard
-                </button>
 
                 <div class="module-lock" id="moduleViabilidadeLock">
                     Módulo indisponível no plano atual
@@ -781,29 +892,9 @@
             </a>
         </div>
 
-        <div class="stats-bar" id="statsBar">
-            <div class="stat-item">
-                <div class="stat-value" id="totalAnvis">-</div>
-                <div class="stat-label">ANVIs Cadastradas</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalProjetos">-</div>
-                <div class="stat-label">Projetos Ativos</div>
-            </div>
-            <div class="stat-item" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
-                <div class="stat-value" id="totalVinculos" style="color: white;">-</div>
-                <div class="stat-label" style="color: rgba(255,255,255,0.95);">
-                    <i class="fas fa-link"></i> ANVIs Vinculadas
-                </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalUsuarios">-</div>
-                <div class="stat-label">Usuários</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalLideres">-</div>
-                <div class="stat-label">Líderes</div>
-            </div>
+        <div class="section-title">
+            <h2>Filtros Operacionais</h2>
+            <small>Refina alertas e prioridades</small>
         </div>
 
         <div class="dashboard-filters">
@@ -836,6 +927,11 @@
             <div class="filter-group" style="align-self: center;">
                 <button class="dashboard-action-button" id="dashboardApplyFilters">Aplicar filtros</button>
             </div>
+        </div>
+
+        <div class="section-title">
+            <h2>Ações Recomendadas</h2>
+            <small>Atualizadas conforme os dados do tenant</small>
         </div>
 
         <div class="insights-grid" id="insightsGrid">
@@ -912,6 +1008,8 @@
 
             document.getElementById('moduleAnvi').classList.toggle('is-disabled', !anviEnabled);
             document.getElementById('moduleProjetos').classList.toggle('is-disabled', !projetosEnabled);
+            document.getElementById('quickNewAnvi').classList.toggle('is-disabled', !anviEnabled);
+            document.getElementById('quickProjects').classList.toggle('is-disabled', !projetosEnabled);
         }
 
         // Verificar sessão e carregar dados do usuário

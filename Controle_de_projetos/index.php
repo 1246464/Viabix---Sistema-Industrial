@@ -3785,9 +3785,27 @@ function testMysqlConnection() {
         },
         error: function(xhr, status, error) {
             updateMysqlStatus('disconnected', error);
+            if (xhr.status === 401) {
+                window.location.href = '../login.html';
+                return;
+            }
             alert('Erro ao conectar ao servidor: ' + error);
         }
     });
+}
+
+function handleApiSessionError(xhr) {
+    if (xhr && xhr.status === 401) {
+        updateMysqlStatus('disconnected', 'Sessão expirada');
+        window.location.href = '../login.html';
+        return true;
+    }
+    return false;
+}
+
+function carregarDadosIniciaisDoMySQL() {
+    updateMysqlStatus('checking', 'Carregando dados...');
+    loadLeadersFromMySQL();
 }
 
 // ==============================================
@@ -3820,6 +3838,7 @@ function loadLeadersFromMySQL() {
             }
         },
         error: function(xhr, status, error) {
+            if (handleApiSessionError(xhr)) return;
             console.error('Erro AJAX ao carregar líderes:', error);
             loadProjectsFromMySQL();
         }
@@ -3883,6 +3902,7 @@ function loadProjectsFromMySQL() {
             }
         },
         error: function(xhr, status, error) {
+            if (handleApiSessionError(xhr)) return;
             console.error('Erro AJAX ao carregar projetos:', error);
             updateMysqlStatus('disconnected', error);
             
@@ -11045,29 +11065,29 @@ function saveSingleProjectToMySQL(project) {
 // ==============================================
 function init() {
     initLogo();
-    
-    // Tentar conectar ao MySQL
-    testMysqlConnection();
-    
-    // Iniciar sincronização em tempo real
-    initRealtimeSync();
+
+    // Inicializar com dados vazios até carregar do MySQL
+    projects = [];
     
     updateLeaderFilter();
     updateTaskLeaderFilter();
     updateProjectLeaderSelect();
     updateLeadersList();
+    updateProjectsTable();
+    updateSummary();
     setupEventListeners();
     setupModalCloseHandlers();
+    
+    // Carregar dados automaticamente; o botão "Testar conexão" fica como diagnóstico manual.
+    carregarDadosIniciaisDoMySQL();
+    
+    // Iniciar sincronização em tempo real após a tela estar pronta.
+    initRealtimeSync();
     
     const dateInput = document.getElementById('capabilityStudyDate');
     if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
-    
-    // Inicializar com dados vazios até carregar do MySQL
-    projects = [];
-    updateProjectsTable();
-    updateSummary();
     
     // Executar verificação imediatamente após 2 segundos (tempo para carregar os dados)
     setTimeout(autoUpdateTaskStatuses, 2000);

@@ -26,12 +26,10 @@ error_reporting(E_ALL);
 ini_set('error_log', __DIR__ . '/../logs/error_api_mysql.log');
 
 try {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_name('viabix_session');
-        session_start();
-    }
+    require_once __DIR__ . '/../api/config.php';
 
-    if (!isset($_SESSION['user_id'])) {
+    $authenticatedUser = function_exists('viabixGetAuthenticatedUser') ? viabixGetAuthenticatedUser() : null;
+    if (!$authenticatedUser) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -40,7 +38,15 @@ try {
         exit;
     }
 
-    require_once 'config.php';
+    if (empty($_SESSION['user_id'])) {
+        $_SESSION['user_id'] = $authenticatedUser['id'];
+        $_SESSION['user_login'] = $authenticatedUser['login'] ?? '';
+        $_SESSION['user_nome'] = $authenticatedUser['nome'] ?? '';
+        $_SESSION['user_level'] = $authenticatedUser['nivel'] ?? '';
+        $_SESSION['tenant_id'] = $authenticatedUser['tenant_id'] ?? null;
+    }
+
+    require_once __DIR__ . '/config.php';
 
     $pdo = getConnection();
     createTables($pdo);

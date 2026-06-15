@@ -756,6 +756,10 @@ function viabixPopulateSession($user, $tenantContext = []) {
     $_SESSION['user_nome'] = $user['nome'];
     $_SESSION['user_level'] = viabixNormalizeUserLevel($user['nivel']);
     $_SESSION['user_role_raw'] = $user['nivel'];
+    $_SESSION['login'] = $user['login'];
+    $_SESSION['nome'] = $user['nome'];
+    $_SESSION['nivel'] = $_SESSION['user_level'];
+    $_SESSION['user_role'] = $_SESSION['user_level'];
     $_SESSION['login_time'] = time();
 
     $_SESSION['tenant_id'] = $tenantContext['tenant_id'] ?? ($user['tenant_id'] ?? null);
