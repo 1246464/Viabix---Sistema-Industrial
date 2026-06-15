@@ -97,6 +97,7 @@ if ($user && isset($_SESSION['user_id'])) {
                 'success' => true,
                 'message' => 'Sessão ativa',
                 'logado' => true,
+                'csrf_token' => viabixGetCsrfToken(),
                 'user' => [
                     'id' => $user['id'],
                     'login' => $user['login'],

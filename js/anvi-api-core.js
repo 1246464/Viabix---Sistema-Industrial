@@ -14,6 +14,10 @@
             data.success = response.ok;
         }
 
+        if (!('message' in data) && data.error) {
+            data.message = data.error;
+        }
+
         if (!('message' in data)) {
             data.message = response.ok ? 'OK' : (response.statusText || 'Erro na requisição');
         }
@@ -86,6 +90,10 @@
 
         const method = String(config.method).toUpperCase();
         const isMutating = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+        if (isMutating && !csrfToken) {
+            await request('api/check_session.php', { force: true, ttlMs: 0, dedupe: false });
+        }
+
         if (isMutating && csrfToken) {
             config.headers = { ...config.headers, 'X-CSRF-Token': csrfToken };
         }
