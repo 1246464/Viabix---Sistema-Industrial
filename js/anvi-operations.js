@@ -116,7 +116,8 @@
                     }
                     return true;
                 } else {
-                    alert(result.message || 'Erro ao salvar ANVI');
+                    const detalheErro = result.error_id ? `\nCódigo do erro: ${result.error_id}` : '';
+                    alert((result.message || 'Erro ao salvar ANVI') + detalheErro);
                     return false;
                 }
             } catch (e) {
@@ -136,7 +137,8 @@
                     notify(`ANVI ${anviData.numero} Rev. ${anviData.revisao} salva com sucesso!`, 'success');
                     return true;
                 } else {
-                    alert('Erro ao salvar: ' + (result.message || 'Desconhecido'));
+                    const detalheErro = result.error_id ? `\nCódigo do erro: ${result.error_id}` : '';
+                    alert('Erro ao salvar: ' + (result.message || 'Desconhecido') + detalheErro);
                     return false;
                 }
             } catch (e) {

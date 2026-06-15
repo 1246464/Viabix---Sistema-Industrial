@@ -41,8 +41,17 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $user_level = $_SESSION['user_level'] ?? 'usuario';
-$tenant_id = viabixCurrentTenantId();
-$tenantAwareAnvis = viabixHasColumn('anvis', 'tenant_id') && $tenant_id;
+$tenant_id = viabixCurrentTenantId() ?: ($user['tenant_id'] ?? null);
+if (!$tenant_id && viabixHasColumn('usuarios', 'tenant_id')) {
+    $tenantStmt = $pdo->prepare("SELECT tenant_id FROM usuarios WHERE id = ? LIMIT 1");
+    $tenantStmt->execute([$user_id]);
+    $tenant_id = $tenantStmt->fetchColumn() ?: null;
+    if ($tenant_id) {
+        $_SESSION['tenant_id'] = $tenant_id;
+    }
+}
+$anvisHasTenantId = viabixHasColumn('anvis', 'tenant_id');
+$tenantAwareAnvis = $anvisHasTenantId && $tenant_id;
 $anvisHasDadosFinanceiros = viabixHasColumn('anvis', 'dados_financeiros');
 
 function viabixFloatValue($value): float
@@ -208,8 +217,68 @@ function viabixSaveFinancialSummary(PDO $pdo, string $tenantId, string $anviId, 
     ]);
 }
 
+function viabixBuildAnviInsert(PDO $pdo, array $values): array
+{
+    $columns = [];
+    $placeholders = [];
+    $params = [];
+
+    foreach ($values as $column => $value) {
+        if (!viabixHasColumn('anvis', $column)) {
+            continue;
+        }
+
+        $columns[] = $column;
+        $placeholders[] = '?';
+        $params[] = $value;
+    }
+
+    return [
+        'sql' => 'INSERT INTO anvis (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')',
+        'params' => $params,
+    ];
+}
+
+function viabixBuildAnviUpdate(PDO $pdo, array $values, string $id, ?string $tenantId): array
+{
+    $sets = [];
+    $params = [];
+
+    foreach ($values as $column => $value) {
+        if (!viabixHasColumn('anvis', $column)) {
+            continue;
+        }
+
+        $sets[] = "{$column} = ?";
+        $params[] = $value;
+    }
+
+    if (viabixHasColumn('anvis', 'data_atualizacao')) {
+        $sets[] = 'data_atualizacao = NOW()';
+    }
+
+    $sql = 'UPDATE anvis SET ' . implode(', ', $sets) . ' WHERE id = ?';
+    $params[] = $id;
+
+    if (viabixHasColumn('anvis', 'tenant_id') && $tenantId) {
+        $sql .= ' AND tenant_id = ?';
+        $params[] = $tenantId;
+    }
+
+    return ['sql' => $sql, 'params' => $params];
+}
+
 // Verificar método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
+
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && $anvisHasTenantId && !$tenant_id) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Não foi possível identificar a empresa da sessão. Saia e entre novamente para salvar.'
+    ]);
+    exit;
+}
 
 // Proteção CSRF para operações de escrita — pular se autenticado via JWT (app mobile/Android)
 if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && ($user['source'] ?? '') !== 'jwt') {
@@ -339,7 +408,7 @@ try {
             $duplicata = $stmt->fetch();
             
             // Se existe duplicata e não foi forçado, perguntar ao usuário
-            if ($duplicata && !$force) {
+            if ($duplicata && $duplicata['id'] !== $id && !$force) {
                 http_response_code(409); // Conflict
                 echo json_encode([
                     'success' => false,
@@ -368,39 +437,28 @@ try {
             if ($existente) {
                 // Atualizar existente
                 $nova_versao = $existente['versao'] + 1;
-                
-                $dadosFinanceirosSet = $anvisHasDadosFinanceiros ? "dados_financeiros = ?," : "";
-                $stmt = $pdo->prepare("
-                    UPDATE anvis SET 
-                        numero = ?, 
-                        revisao = ?, 
-                        cliente = ?, 
-                        projeto = ?, 
-                        produto = ?, 
-                        volume_mensal = ?, 
-                        data_anvi = ?, 
-                        status = ?, 
-                        dados = ?, 
-                        {$dadosFinanceirosSet}
-                        versao = ?, 
-                        hash_conteudo = ?,
-                        atualizado_por = ?,
-                        data_atualizacao = NOW()
-                    WHERE id = ?" . ($tenantAwareAnvis ? " AND tenant_id = ?" : "") . "
-                ");
 
-                $params = [
-                    $numero, $revisao, $cliente, $projeto, $produto, 
-                    $volume_mensal, $data_anvi, $status, $dados_json
+                $updateValues = [
+                    'numero' => $numero,
+                    'revisao' => $revisao,
+                    'cliente' => $cliente,
+                    'projeto' => $projeto,
+                    'produto' => $produto,
+                    'volume_mensal' => $volume_mensal,
+                    'data_anvi' => $data_anvi,
+                    'status' => $status,
+                    'dados' => $dados_json,
+                    'versao' => $nova_versao,
+                    'hash_conteudo' => $hash,
+                    'atualizado_por' => $user_id,
                 ];
                 if ($anvisHasDadosFinanceiros) {
-                    $params[] = $dados_financeiros_json;
+                    $updateValues['dados_financeiros'] = $dados_financeiros_json;
                 }
-                $params = array_merge($params, [$nova_versao, $hash, $user_id, $id]);
-                if ($tenantAwareAnvis) {
-                    $params[] = $tenant_id;
-                }
-                $stmt->execute($params);
+
+                $query = viabixBuildAnviUpdate($pdo, $updateValues, $id, $tenantAwareAnvis ? (string) $tenant_id : null);
+                $stmt = $pdo->prepare($query['sql']);
+                $stmt->execute($query['params']);
                 
                 $mensagem = 'ANVI atualizada com sucesso';
                 $versao_retorno = $nova_versao;
@@ -409,45 +467,34 @@ try {
                 // Inserir nova
                 $nova_versao = 1;
                 
+                $insertValues = [
+                    'id' => $id,
+                    'numero' => $numero,
+                    'revisao' => $revisao,
+                    'cliente' => $cliente,
+                    'projeto' => $projeto,
+                    'produto' => $produto,
+                    'volume_mensal' => $volume_mensal,
+                    'data_anvi' => $data_anvi,
+                    'status' => $status,
+                    'dados' => $dados_json,
+                    'versao' => $nova_versao,
+                    'hash_conteudo' => $hash,
+                    'criado_por' => $user_id,
+                    'atualizado_por' => $user_id,
+                ];
+
                 if ($tenantAwareAnvis) {
-                    $financeiroColumn = $anvisHasDadosFinanceiros ? ', dados_financeiros' : '';
-                    $financeiroPlaceholder = $anvisHasDadosFinanceiros ? ', ?' : '';
-                    $stmt = $pdo->prepare("
-                        INSERT INTO anvis (
-                            id, tenant_id, numero, revisao, cliente, projeto, produto,
-                            volume_mensal, data_anvi, status, dados, versao,
-                            hash_conteudo, criado_por, atualizado_por{$financeiroColumn}
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?{$financeiroPlaceholder})
-                    ");
-                    $params = [
-                        $id, $tenant_id, $numero, $revisao, $cliente, $projeto, $produto,
-                        $volume_mensal, $data_anvi, $status, $dados_json,
-                        $nova_versao, $hash, $user_id, $user_id
-                    ];
-                    if ($anvisHasDadosFinanceiros) {
-                        $params[] = $dados_financeiros_json;
-                    }
-                    $stmt->execute($params);
-                } else {
-                    $financeiroColumn = $anvisHasDadosFinanceiros ? ', dados_financeiros' : '';
-                    $financeiroPlaceholder = $anvisHasDadosFinanceiros ? ', ?' : '';
-                    $stmt = $pdo->prepare("
-                        INSERT INTO anvis (
-                            id, numero, revisao, cliente, projeto, produto, 
-                            volume_mensal, data_anvi, status, dados, versao, 
-                            hash_conteudo, criado_por, atualizado_por{$financeiroColumn}
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?{$financeiroPlaceholder})
-                    ");
-                    $params = [
-                        $id, $numero, $revisao, $cliente, $projeto, $produto,
-                        $volume_mensal, $data_anvi, $status, $dados_json, 
-                        $nova_versao, $hash, $user_id, $user_id
-                    ];
-                    if ($anvisHasDadosFinanceiros) {
-                        $params[] = $dados_financeiros_json;
-                    }
-                    $stmt->execute($params);
+                    $insertValues = ['tenant_id' => $tenant_id] + $insertValues;
                 }
+
+                if ($anvisHasDadosFinanceiros) {
+                    $insertValues['dados_financeiros'] = $dados_financeiros_json;
+                }
+
+                $query = viabixBuildAnviInsert($pdo, $insertValues);
+                $stmt = $pdo->prepare($query['sql']);
+                $stmt->execute($query['params']);
                 
                 $mensagem = 'ANVI criada com sucesso';
                 $versao_retorno = $nova_versao;
@@ -660,9 +707,22 @@ try {
             break;
     }
     
-} catch (PDOException $e) {
-    logError("Erro em anvi.php", ['error' => $e->getMessage(), 'method' => $method]);
+} catch (Throwable $e) {
+    $errorId = 'anvi_' . date('Ymd_His') . '_' . substr(hash('sha256', $e->getMessage() . microtime(true)), 0, 8);
+    logError("Erro em anvi.php", [
+        'error_id' => $errorId,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'method' => $method,
+        'tenant_id' => $tenant_id ?? null,
+        'user_id' => $user_id ?? null,
+    ]);
     http_response_code(500);
-    echo json_encode(['error' => APP_DEBUG ? ('Erro interno: ' . $e->getMessage()) : 'Erro interno do servidor']);
+    echo json_encode([
+        'success' => false,
+        'error' => APP_DEBUG ? ('Erro interno: ' . $e->getMessage()) : 'Erro interno do servidor',
+        'error_id' => $errorId
+    ]);
 }
 ?>
