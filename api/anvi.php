@@ -77,6 +77,17 @@ function viabixRoundMoney(float $value): float
     return round($value, 2);
 }
 
+function viabixEncodeJson($value, string $label): string
+{
+    $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+
+    if ($json === false) {
+        throw new RuntimeException("Falha ao preparar {$label}: " . json_last_error_msg());
+    }
+
+    return $json;
+}
+
 function viabixBuildFinancialSummary(array $input): array
 {
     $financeiro = is_array($input['financeiro'] ?? null) ? $input['financeiro'] : [];
@@ -213,7 +224,7 @@ function viabixSaveFinancialSummary(PDO $pdo, string $tenantId, string $anviId, 
         $summary['payback_meses'] ?? 0,
         $summary['desvio_estimado_realizado_valor'] ?? 0,
         $summary['desvio_estimado_realizado_pct'] ?? 0,
-        json_encode($summary['alertas'] ?? [], JSON_UNESCAPED_UNICODE),
+        viabixEncodeJson($summary['alertas'] ?? [], 'alertas financeiros'),
     ]);
 }
 
@@ -390,9 +401,9 @@ try {
             $force = $input['force'] ?? false; // Flag para forçar substituição
             
             // Converter todos os dados para JSON
-            $dados_json = json_encode($input, JSON_UNESCAPED_UNICODE);
+            $dados_json = viabixEncodeJson($input, 'dados da ANVI');
             $dados_financeiros = viabixBuildFinancialSummary($input);
-            $dados_financeiros_json = json_encode($dados_financeiros, JSON_UNESCAPED_UNICODE);
+            $dados_financeiros_json = viabixEncodeJson($dados_financeiros, 'resumo financeiro da ANVI');
             
             // Calcular hash
             $hash = hash('sha256', $dados_json);
@@ -709,6 +720,25 @@ try {
     
 } catch (Throwable $e) {
     $errorId = 'anvi_' . date('Ymd_His') . '_' . substr(hash('sha256', $e->getMessage() . microtime(true)), 0, 8);
+    $publicHint = 'Erro interno do servidor';
+
+    if ($e instanceof PDOException) {
+        $message = $e->getMessage();
+        if (stripos($message, 'foreign key') !== false) {
+            $publicHint = 'Erro ao vincular usuário ou empresa ao registro.';
+        } elseif (stripos($message, 'json') !== false) {
+            $publicHint = 'Erro ao preparar os dados da ANVI para salvar.';
+        } elseif (stripos($message, 'packet') !== false || stripos($message, 'server has gone away') !== false) {
+            $publicHint = 'A ANVI está muito grande para salvar de uma vez. Remova anexos grandes e tente novamente.';
+        } elseif (stripos($message, 'unknown column') !== false) {
+            $publicHint = 'Estrutura da tabela ANVI diferente da esperada.';
+        } elseif (stripos($message, 'duplicate') !== false) {
+            $publicHint = 'Já existe uma ANVI com este número e revisão.';
+        }
+    } elseif ($e instanceof RuntimeException) {
+        $publicHint = $e->getMessage();
+    }
+
     logError("Erro em anvi.php", [
         'error_id' => $errorId,
         'error' => $e->getMessage(),
@@ -721,7 +751,8 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => APP_DEBUG ? ('Erro interno: ' . $e->getMessage()) : 'Erro interno do servidor',
+        'error' => APP_DEBUG ? ('Erro interno: ' . $e->getMessage()) : $publicHint,
+        'message' => APP_DEBUG ? ('Erro interno: ' . $e->getMessage()) : $publicHint,
         'error_id' => $errorId
     ]);
 }
