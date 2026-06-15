@@ -453,21 +453,41 @@ try {
                 $versao_retorno = $nova_versao;
             }
 
-            viabixSaveFinancialSummary($pdo, (string) $tenant_id, $id, $numero, $revisao, $dados_financeiros);
+            $avisos_salvamento = [];
+            try {
+                viabixSaveFinancialSummary($pdo, (string) $tenant_id, $id, $numero, $revisao, $dados_financeiros);
+            } catch (Throwable $e) {
+                $avisos_salvamento[] = 'Resumo financeiro não foi atualizado, mas a ANVI foi salva.';
+                logError('Falha ao salvar resumo financeiro da ANVI', [
+                    'error' => $e->getMessage(),
+                    'anvi_id' => $id,
+                    'tenant_id' => $tenant_id,
+                ]);
+            }
             
             // Registrar log
-            viabixLogActivity(
-                $user_id,
-                'salvar_anvi',
-                "Salvou ANVI: {$numero} Rev. {$revisao} (versão {$versao_retorno})",
-                'anvi',
-                $id
-            );
+            try {
+                viabixLogActivity(
+                    $user_id,
+                    'salvar_anvi',
+                    "Salvou ANVI: {$numero} Rev. {$revisao} (versão {$versao_retorno})",
+                    'anvi',
+                    $id
+                );
+            } catch (Throwable $e) {
+                $avisos_salvamento[] = 'Log de atividade não foi registrado, mas a ANVI foi salva.';
+                logError('Falha ao registrar log de salvamento da ANVI', [
+                    'error' => $e->getMessage(),
+                    'anvi_id' => $id,
+                    'tenant_id' => $tenant_id,
+                ]);
+            }
             
             echo json_encode([
                 'success' => true,
                 'message' => $mensagem,
-                'versao' => $versao_retorno
+                'versao' => $versao_retorno,
+                'warnings' => $avisos_salvamento
             ]);
             
             break;
