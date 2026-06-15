@@ -409,11 +409,13 @@ try {
             $hash = hash('sha256', $dados_json);
             
             // Verificar se já existe uma ANVI com o mesmo número e revisão
+            $duplicateSelect = 'id, numero, revisao';
+            $duplicateSelect .= viabixHasColumn('anvis', 'cliente') ? ', cliente' : ", '' AS cliente";
             if ($tenantAwareAnvis) {
-                $stmt = $pdo->prepare("SELECT id, numero, revisao, cliente FROM anvis WHERE numero = ? AND revisao = ? AND tenant_id = ?");
+                $stmt = $pdo->prepare("SELECT {$duplicateSelect} FROM anvis WHERE numero = ? AND revisao = ? AND tenant_id = ?");
                 $stmt->execute([$numero, $revisao, $tenant_id]);
             } else {
-                $stmt = $pdo->prepare("SELECT id, numero, revisao, cliente FROM anvis WHERE numero = ? AND revisao = ?");
+                $stmt = $pdo->prepare("SELECT {$duplicateSelect} FROM anvis WHERE numero = ? AND revisao = ?");
                 $stmt->execute([$numero, $revisao]);
             }
             $duplicata = $stmt->fetch();
@@ -436,11 +438,12 @@ try {
             }
             
             // Verificar se a ANVI já existe pelo ID
+            $existenteSelect = viabixHasColumn('anvis', 'versao') ? 'id, versao' : 'id, 1 AS versao';
             if ($tenantAwareAnvis) {
-                $stmt = $pdo->prepare("SELECT id, versao FROM anvis WHERE id = ? AND tenant_id = ?");
+                $stmt = $pdo->prepare("SELECT {$existenteSelect} FROM anvis WHERE id = ? AND tenant_id = ?");
                 $stmt->execute([$id, $tenant_id]);
             } else {
-                $stmt = $pdo->prepare("SELECT id, versao FROM anvis WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT {$existenteSelect} FROM anvis WHERE id = ?");
                 $stmt->execute([$id]);
             }
             $existente = $stmt->fetch();
