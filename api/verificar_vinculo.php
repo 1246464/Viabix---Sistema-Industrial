@@ -36,6 +36,38 @@ function viabixDecodeProjectData($row) {
     return is_array($data) ? $data : [];
 }
 
+function viabixSelectColumn($tableName, $columnName, $fallbackSql = 'NULL') {
+    return viabixHasColumn($tableName, $columnName)
+        ? $columnName
+        : $fallbackSql . ' AS ' . $columnName;
+}
+
+function viabixAnviSelectList() {
+    $columns = [
+        'id',
+        viabixSelectColumn('anvis', 'numero', "''"),
+        viabixSelectColumn('anvis', 'revisao', "''"),
+        viabixSelectColumn('anvis', 'cliente', "''"),
+        viabixSelectColumn('anvis', 'projeto', "''"),
+        viabixSelectColumn('anvis', 'produto', "''"),
+        viabixSelectColumn('anvis', 'status', "''"),
+        viabixSelectColumn('anvis', 'projeto_id', 'NULL'),
+    ];
+
+    return implode(', ', $columns);
+}
+
+function viabixProjectSelectList() {
+    $columns = [
+        'id',
+        viabixSelectColumn('projetos', 'dados', "'{}'"),
+        viabixSelectColumn('projetos', 'created_at', 'NULL'),
+        viabixSelectColumn('projetos', 'updated_at', 'NULL'),
+    ];
+
+    return implode(', ', $columns);
+}
+
 function viabixEstimateProjectProgress($data) {
     if (isset($data['progresso']) && is_numeric($data['progresso'])) {
         return max(0, min(100, (int) $data['progresso']));
@@ -105,14 +137,6 @@ function viabixAnviPayload($row) {
 function viabixFindAnviById($anviId, $tenantId) {
     global $pdo;
 
-    $select = 'id, numero, revisao, cliente, projeto, produto';
-    if (viabixHasColumn('anvis', 'status')) {
-        $select .= ', status';
-    }
-    if (viabixHasColumn('anvis', 'projeto_id')) {
-        $select .= ', projeto_id';
-    }
-
     $params = [$anviId];
     $where = 'id = ?';
 
@@ -121,7 +145,7 @@ function viabixFindAnviById($anviId, $tenantId) {
         $params[] = $anviId;
     }
 
-    $sql = 'SELECT ' . $select . ' FROM anvis WHERE ' . $where;
+    $sql = 'SELECT ' . viabixAnviSelectList() . ' FROM anvis WHERE ' . $where;
     $sql .= viabixTenantWhere('anvis', $params, $tenantId);
 
     $stmt = $pdo->prepare($sql . ' LIMIT 1');
@@ -134,7 +158,7 @@ function viabixFindProjectById($projectId, $tenantId) {
     global $pdo;
 
     $params = [(int) $projectId];
-    $sql = 'SELECT id, dados, created_at, updated_at FROM projetos WHERE id = ?';
+    $sql = 'SELECT ' . viabixProjectSelectList() . ' FROM projetos WHERE id = ?';
     $sql .= viabixTenantWhere('projetos', $params, $tenantId);
 
     $stmt = $pdo->prepare($sql . ' LIMIT 1');
@@ -154,7 +178,7 @@ function viabixFindProjectForAnvi($anvi, $tenantId) {
     }
 
     $params = [(string) $anvi['id'], (string) $anvi['id']];
-    $sql = "SELECT id, dados, created_at, updated_at
+    $sql = "SELECT " . viabixProjectSelectList() . "
             FROM projetos
             WHERE (
                 JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviId')) = ?
@@ -180,11 +204,7 @@ function viabixFindAnviForProject($project, $tenantId) {
 
     if (viabixHasColumn('anvis', 'projeto_id')) {
         $params = [(int) $project['id']];
-        $select = 'id, numero, revisao, cliente, projeto, produto';
-        if (viabixHasColumn('anvis', 'status')) {
-            $select .= ', status';
-        }
-        $sql = 'SELECT ' . $select . ' FROM anvis WHERE projeto_id = ?';
+        $sql = 'SELECT ' . viabixAnviSelectList() . ' FROM anvis WHERE projeto_id = ?';
         $sql .= viabixTenantWhere('anvis', $params, $tenantId);
 
         $stmt = $pdo->prepare($sql . ' LIMIT 1');

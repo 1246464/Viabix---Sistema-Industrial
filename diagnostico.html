@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viabix - Diagnóstico do Sistema</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f8f4;
+            color: #1f2d24;
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, #2e7d32 0%, #58ad60 100%);
+            color: white;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 8px 24px rgba(33, 97, 48, 0.18);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-link,
+        .refresh-button {
+            border: 1px solid rgba(255, 255, 255, 0.32);
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.9rem;
+        }
+
+        .refresh-button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 42px;
+        }
+
+        .summary-band {
+            background: white;
+            border: 1px solid #cfe8d2;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(29, 54, 36, 0.08);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) repeat(3, minmax(120px, 150px));
+            gap: 16px;
+            align-items: center;
+        }
+
+        .summary-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .summary-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+        }
+
+        .summary-title h1 {
+            font-size: 1.45rem;
+            color: #1b5e20;
+            margin-bottom: 3px;
+        }
+
+        .summary-title p,
+        .meta-line {
+            color: #607168;
+            font-size: 0.92rem;
+        }
+
+        .summary-count {
+            border-left: 1px solid #e0eee2;
+            padding-left: 16px;
+        }
+
+        .summary-count strong {
+            display: block;
+            font-size: 1.7rem;
+            color: #1b5e20;
+        }
+
+        .summary-count span {
+            color: #607168;
+            font-size: 0.86rem;
+        }
+
+        .status-banner {
+            margin-top: 16px;
+            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid #cfe8d2;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .status-banner.ok {
+            color: #1b5e20;
+            border-color: #a5d6a7;
+            background: #edf8ee;
+        }
+
+        .status-banner.warning {
+            color: #725200;
+            border-color: #ffe082;
+            background: #fff8e1;
+        }
+
+        .status-banner.error {
+            color: #8a1c1c;
+            border-color: #ef9a9a;
+            background: #ffebee;
+        }
+
+        .checks-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .check-card {
+            background: white;
+            border: 1px solid #d8eadd;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(29, 54, 36, 0.07);
+            display: grid;
+            gap: 12px;
+        }
+
+        .check-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .check-head h2 {
+            font-size: 1rem;
+            color: #22362a;
+        }
+
+        .pill {
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .pill.ok {
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #a5d6a7;
+        }
+
+        .pill.warning {
+            background: #fff8e1;
+            color: #735500;
+            border: 1px solid #ffe082;
+        }
+
+        .pill.error {
+            background: #ffebee;
+            color: #8a1c1c;
+            border: 1px solid #ef9a9a;
+        }
+
+        .check-message {
+            color: #53665b;
+            line-height: 1.45;
+            font-size: 0.92rem;
+        }
+
+        .details-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .detail-chip {
+            background: #f6faf7;
+            color: #52665a;
+            border: 1px solid #e0eee2;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 0.78rem;
+        }
+
+        .recommendations {
+            margin-top: 18px;
+            background: white;
+            border: 1px solid #d8eadd;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(29, 54, 36, 0.07);
+        }
+
+        .recommendations h2 {
+            color: #1b5e20;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+        }
+
+        .recommendations ul {
+            display: grid;
+            gap: 9px;
+            list-style: none;
+        }
+
+        .recommendations li {
+            color: #45584c;
+            padding: 10px 12px;
+            background: #f7fbf8;
+            border: 1px solid #e0eee2;
+            border-radius: 8px;
+            line-height: 1.45;
+        }
+
+        .maintenance-actions,
+        .recent-errors {
+            margin-top: 18px;
+            background: white;
+            border: 1px solid #d8eadd;
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(29, 54, 36, 0.07);
+        }
+
+        .maintenance-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .maintenance-head h2,
+        .recent-errors h2 {
+            color: #1b5e20;
+            font-size: 1.05rem;
+        }
+
+        .maintenance-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-button,
+        .danger-button {
+            border: 1px solid #a5d6a7;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .danger-button {
+            border-color: #ffcdd2;
+            background: #ffebee;
+            color: #8a1c1c;
+        }
+
+        .secondary-button:disabled,
+        .danger-button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        .report-box {
+            display: grid;
+            gap: 9px;
+        }
+
+        .report-line,
+        .error-line {
+            background: #f7fbf8;
+            border: 1px solid #e0eee2;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #45584c;
+            line-height: 1.4;
+        }
+
+        .error-line strong {
+            color: #1f2d24;
+        }
+
+        .loading-state {
+            margin-top: 18px;
+            background: white;
+            border: 1px solid #d8eadd;
+            border-radius: 8px;
+            padding: 28px;
+            color: #607168;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading-state i {
+            color: #2e7d32;
+        }
+
+        @media (max-width: 780px) {
+            .top-bar,
+            .summary-band {
+                grid-template-columns: 1fr;
+            }
+
+            .top-bar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .top-actions {
+                justify-content: flex-start;
+            }
+
+            .summary-count {
+                border-left: 0;
+                border-top: 1px solid #e0eee2;
+                padding-left: 0;
+                padding-top: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <div class="brand">
+            <i class="fas fa-stethoscope"></i>
+            <span>Diagnóstico do Sistema</span>
+        </div>
+        <div class="top-actions">
+            <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-arrow-left"></i>
+                Dashboard
+            </a>
+            <button class="refresh-button" id="refreshButton" type="button">
+                <i class="fas fa-rotate"></i>
+                Atualizar
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="summary-band">
+            <div class="summary-title">
+                <div class="summary-icon" id="summaryIcon">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                </div>
+                <div>
+                    <h1 id="summaryTitle">Verificando sistema</h1>
+                    <p id="summaryText">Aguarde enquanto os principais módulos são conferidos.</p>
+                    <div class="meta-line" id="metaLine"></div>
+                </div>
+            </div>
+            <div class="summary-count">
+                <strong id="okCount">-</strong>
+                <span>OK</span>
+            </div>
+            <div class="summary-count">
+                <strong id="warningCount">-</strong>
+                <span>Atenção</span>
+            </div>
+            <div class="summary-count">
+                <strong id="errorCount">-</strong>
+                <span>Erro</span>
+            </div>
+        </section>
+
+        <div class="status-banner warning" id="statusBanner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Executando diagnóstico...</span>
+        </div>
+
+        <div class="loading-state" id="loadingState">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            Conferindo banco, sessão, ANVI, projetos e dashboard.
+        </div>
+
+        <section class="checks-grid" id="checksGrid" hidden></section>
+
+        <section class="recommendations" id="recommendationsPanel" hidden>
+            <h2>Pontos Que Merecem Atenção</h2>
+            <ul id="recommendationsList"></ul>
+        </section>
+
+        <section class="maintenance-actions" id="maintenancePanel">
+            <div class="maintenance-head">
+                <h2>Padronização do Banco</h2>
+                <div class="maintenance-buttons">
+                    <button class="secondary-button" id="checkSchemaButton" type="button">
+                        <i class="fas fa-list-check"></i>
+                        Verificar
+                    </button>
+                    <button class="danger-button" id="fixSchemaButton" type="button">
+                        <i class="fas fa-screwdriver-wrench"></i>
+                        Corrigir
+                    </button>
+                </div>
+            </div>
+            <div class="report-box" id="schemaReport">
+                <div class="report-line">Use verificar para ver pendências sem alterar o banco.</div>
+            </div>
+        </section>
+
+        <section class="recent-errors" id="recentErrorsPanel" hidden>
+            <h2>Erros Recentes</h2>
+            <div class="report-box" id="recentErrorsList"></div>
+        </section>
+    </main>
+
+    <script>
+        const statusLabels = {
+            ok: 'OK',
+            warning: 'Atenção',
+            error: 'Erro'
+        };
+
+        const statusIcons = {
+            ok: 'fa-circle-check',
+            warning: 'fa-triangle-exclamation',
+            error: 'fa-circle-xmark'
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function formatDetailValue(value) {
+            if (Array.isArray(value)) {
+                return value.length ? value.join(', ') : 'nenhum';
+            }
+            if (value && typeof value === 'object') {
+                const entries = Object.entries(value);
+                if (!entries.length) return 'nenhum';
+                return entries.map(([key, item]) => `${key}: ${Array.isArray(item) ? item.join(', ') : item}`).join(' | ');
+            }
+            if (value === true) return 'sim';
+            if (value === false) return 'não';
+            if (value === null || value === undefined || value === '') return 'vazio';
+            return String(value);
+        }
+
+        function renderDetails(details = {}) {
+            const entries = Object.entries(details).filter(([, value]) => value !== null && value !== undefined);
+            if (!entries.length) return '';
+
+            return `
+                <div class="details-list">
+                    ${entries.map(([key, value]) => `
+                        <span class="detail-chip">${escapeHtml(key)}: ${escapeHtml(formatDetailValue(value))}</span>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function setSummary(data) {
+            const status = data.status || 'warning';
+            const title = status === 'ok'
+                ? 'Sistema pronto'
+                : (status === 'warning' ? 'Sistema com pontos de atenção' : 'Sistema com erro crítico');
+            const text = status === 'ok'
+                ? 'Os módulos principais responderam corretamente.'
+                : (status === 'warning' ? 'O sistema funciona, mas há itens para revisar.' : 'Existe pelo menos um item crítico impedindo funcionamento completo.');
+
+            document.getElementById('summaryIcon').innerHTML = `<i class="fas ${statusIcons[status] || statusIcons.warning}"></i>`;
+            document.getElementById('summaryTitle').textContent = title;
+            document.getElementById('summaryText').textContent = text;
+            document.getElementById('okCount').textContent = data.summary?.ok ?? 0;
+            document.getElementById('warningCount').textContent = data.summary?.warning ?? 0;
+            document.getElementById('errorCount').textContent = data.summary?.error ?? 0;
+            document.getElementById('metaLine').textContent = `Atualizado em ${new Date(data.generated_at).toLocaleString('pt-BR')} • ${data.duration_ms} ms`;
+
+            const banner = document.getElementById('statusBanner');
+            banner.className = `status-banner ${status}`;
+            banner.innerHTML = `<i class="fas ${statusIcons[status] || statusIcons.warning}"></i><span>${escapeHtml(text)}</span>`;
+        }
+
+        function renderChecks(checks = []) {
+            const grid = document.getElementById('checksGrid');
+            grid.innerHTML = checks.map((check) => `
+                <article class="check-card">
+                    <div class="check-head">
+                        <h2>${escapeHtml(check.label)}</h2>
+                        <span class="pill ${escapeHtml(check.status)}">${escapeHtml(statusLabels[check.status] || check.status)}</span>
+                    </div>
+                    <p class="check-message">${escapeHtml(check.message)}</p>
+                    ${renderDetails(check.details)}
+                </article>
+            `).join('');
+            grid.hidden = false;
+        }
+
+        function renderRecommendations(items = []) {
+            const panel = document.getElementById('recommendationsPanel');
+            const list = document.getElementById('recommendationsList');
+
+            if (!items.length) {
+                list.innerHTML = '<li>Nenhuma ação necessária agora.</li>';
+            } else {
+                list.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+            }
+
+            panel.hidden = false;
+        }
+
+        function renderRecentErrors(items = []) {
+            const panel = document.getElementById('recentErrorsPanel');
+            const list = document.getElementById('recentErrorsList');
+
+            if (!items.length) {
+                list.innerHTML = '<div class="error-line">Nenhum erro recente registrado.</div>';
+            } else {
+                list.innerHTML = items.map((item) => `
+                    <div class="error-line">
+                        <strong>${escapeHtml(item.codigo || '-')}</strong>
+                        ${escapeHtml(item.mensagem || 'Erro registrado')}
+                        <div class="meta-line">${escapeHtml(item.quando ? new Date(item.quando).toLocaleString('pt-BR') : 'sem data')} ${item.url ? '• ' + escapeHtml(item.url) : ''}</div>
+                    </div>
+                `).join('');
+            }
+
+            panel.hidden = false;
+        }
+
+        function renderSchemaReport(report) {
+            const container = document.getElementById('schemaReport');
+            const rows = [];
+            const corrigidos = report?.corrigidos || [];
+            const pendencias = report?.pendencias || [];
+            const avisos = report?.avisos || [];
+            const semAlteracao = report?.sem_alteracao || [];
+
+            corrigidos.forEach((item) => rows.push(`<div class="report-line"><strong>Corrigido:</strong> ${escapeHtml(item)}</div>`));
+            pendencias.forEach((item) => rows.push(`<div class="report-line"><strong>Pendente:</strong> ${escapeHtml(item)}</div>`));
+            avisos.forEach((item) => rows.push(`<div class="report-line"><strong>Atenção:</strong> ${escapeHtml(item)}</div>`));
+            semAlteracao.forEach((item) => rows.push(`<div class="report-line">${escapeHtml(item)}</div>`));
+
+            container.innerHTML = rows.length ? rows.join('') : '<div class="report-line">Nenhuma pendência encontrada.</div>';
+        }
+
+        async function executarSchema(apply = false) {
+            const checkButton = document.getElementById('checkSchemaButton');
+            const fixButton = document.getElementById('fixSchemaButton');
+            checkButton.disabled = true;
+            fixButton.disabled = true;
+
+            try {
+                const options = apply
+                    ? { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'apply=1' }
+                    : { credentials: 'include', cache: 'no-store' };
+                const response = await fetch(`api/schema_maintenance.php${apply ? '' : '?t=' + Date.now()}`, options);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(`${data.message || 'Não foi possível executar.'}${data.error_id ? ' Código: ' + data.error_id : ''}`);
+                }
+
+                renderSchemaReport(data.report);
+                if (apply) {
+                    carregarDiagnostico();
+                }
+            } catch (error) {
+                document.getElementById('schemaReport').innerHTML = `<div class="report-line"><strong>Erro:</strong> ${escapeHtml(error.message)}</div>`;
+            } finally {
+                checkButton.disabled = false;
+                fixButton.disabled = false;
+            }
+        }
+
+        async function carregarDiagnostico() {
+            const button = document.getElementById('refreshButton');
+            const loading = document.getElementById('loadingState');
+            const grid = document.getElementById('checksGrid');
+            const panel = document.getElementById('recommendationsPanel');
+
+            button.disabled = true;
+            loading.hidden = false;
+            grid.hidden = true;
+            panel.hidden = true;
+
+            try {
+                const response = await fetch('api/system_status.php', {
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+
+                if (response.status === 401) {
+                    window.location.href = 'login.html?redirect=diagnostico.html';
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Falha ao executar diagnóstico.');
+                }
+
+                setSummary(data);
+                renderChecks(data.checks || []);
+                renderRecommendations(data.recommendations || []);
+                renderRecentErrors(data.recent_errors || []);
+            } catch (error) {
+                const fallback = {
+                    status: 'error',
+                    summary: { ok: 0, warning: 0, error: 1 },
+                    generated_at: new Date().toISOString(),
+                    duration_ms: 0
+                };
+                setSummary(fallback);
+                renderChecks([{
+                    label: 'Diagnóstico',
+                    status: 'error',
+                    message: error.message || 'Não foi possível consultar o diagnóstico.',
+                    details: {}
+                }]);
+                renderRecommendations(['Verifique se o login está ativo e se o servidor consegue responder a API de diagnóstico.']);
+            } finally {
+                loading.hidden = true;
+                button.disabled = false;
+            }
+        }
+
+        document.getElementById('refreshButton').addEventListener('click', carregarDiagnostico);
+        document.getElementById('checkSchemaButton').addEventListener('click', () => executarSchema(false));
+        document.getElementById('fixSchemaButton').addEventListener('click', () => {
+            if (confirm('Corrigir campos ausentes agora? O processo é seguro, mas recomenda-se backup antes de alterações no banco.')) {
+                executarSchema(true);
+            }
+        });
+        carregarDiagnostico();
+    </script>
+</body>
+</html>

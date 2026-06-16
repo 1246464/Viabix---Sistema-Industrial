@@ -12,6 +12,22 @@ function viabixDvDecodeJson($value): array {
     return is_array($data) ? $data : [];
 }
 
+function viabixDvSelectColumn(string $table, string $column, string $fallbackSql, string $alias = ''): string {
+    $prefix = $alias !== '' ? $alias . '.' : '';
+    return viabixDvHasColumn($table, $column)
+        ? $prefix . $column
+        : $fallbackSql . ' AS ' . $column;
+}
+
+function viabixDvProjectSelectList(): string {
+    return implode(', ', [
+        'id',
+        viabixDvSelectColumn('projetos', 'dados', "'{}'"),
+        viabixDvSelectColumn('projetos', 'created_at', 'NULL'),
+        viabixDvSelectColumn('projetos', 'updated_at', 'NULL'),
+    ]);
+}
+
 function viabixDvDateOnly($value): ?DateTime {
     if (!$value) return null;
     try {
@@ -73,14 +89,14 @@ function viabixDvFindLinkedProject(PDO $pdo, array $anvi, ?string $tenantId): ?a
     }
 
     if (!empty($anvi['projeto_id'])) {
-        $stmt = $pdo->prepare("SELECT id, dados, created_at, updated_at FROM projetos WHERE id = ?{$tenantWhere} LIMIT 1");
+        $stmt = $pdo->prepare("SELECT " . viabixDvProjectSelectList() . " FROM projetos WHERE id = ?{$tenantWhere} LIMIT 1");
         $stmt->execute(array_merge([(int) $anvi['projeto_id']], $tenantParams));
         $project = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($project) return $project;
     }
 
     $params = [(string) $anvi['id'], (string) $anvi['id']];
-    $sql = "SELECT id, dados, created_at, updated_at
+    $sql = "SELECT " . viabixDvProjectSelectList() . "
             FROM projetos
             WHERE (
                 JSON_UNQUOTE(JSON_EXTRACT(dados, '$.anviId')) = ?
@@ -121,29 +137,48 @@ try {
     
     $select = [
         'a.id',
-        viabixDvHasColumn('anvis', 'numero') ? 'a.numero' : "'' AS numero",
-        viabixDvHasColumn('anvis', 'revisao') ? 'a.revisao' : "'' AS revisao",
-        viabixDvHasColumn('anvis', 'cliente') ? 'a.cliente' : "'' AS cliente",
-        viabixDvHasColumn('anvis', 'projeto') ? 'a.projeto' : "'' AS projeto",
-        viabixDvHasColumn('anvis', 'produto') ? 'a.produto' : "'' AS produto",
-        viabixDvHasColumn('anvis', 'status') ? 'a.status' : "'' AS status",
-        viabixDvHasColumn('anvis', 'data_anvi') ? 'a.data_anvi' : 'NULL AS data_anvi',
-        viabixDvHasColumn('anvis', 'data_criacao') ? 'a.data_criacao' : 'NULL AS data_criacao',
-        viabixDvHasColumn('anvis', 'dados') ? 'a.dados' : "'{}' AS dados",
-        viabixDvHasColumn('anvis', 'dados_financeiros') ? 'a.dados_financeiros' : "'{}' AS dados_financeiros",
-        viabixDvHasColumn('anvis', 'projeto_id') ? 'a.projeto_id' : 'NULL AS projeto_id',
+        viabixDvSelectColumn('anvis', 'numero', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'revisao', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'cliente', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'projeto', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'produto', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'status', "''", 'a'),
+        viabixDvSelectColumn('anvis', 'data_anvi', 'NULL', 'a'),
+        viabixDvSelectColumn('anvis', 'data_criacao', 'NULL', 'a'),
+        viabixDvSelectColumn('anvis', 'dados', "'{}'", 'a'),
+        viabixDvSelectColumn('anvis', 'dados_financeiros', "'{}'", 'a'),
+        viabixDvSelectColumn('anvis', 'projeto_id', 'NULL', 'a'),
     ];
 
     $orderColumn = viabixDvHasColumn('anvis', 'data_criacao') ? 'a.data_criacao' : 'a.id';
+    $whereParts = ['a.id = ?'];
+    $whereParams = [$anvi_id];
+
+    if (viabixDvHasColumn('anvis', 'numero')) {
+        $whereParts[] = 'a.numero = ?';
+        $whereParams[] = $anvi_id;
+    }
+
+    if (viabixDvHasColumn('anvis', 'numero') && viabixDvHasColumn('anvis', 'revisao')) {
+        $whereParts[] = "CONCAT(a.numero, '_', a.revisao) = ?";
+        $whereParams[] = $anvi_id;
+    }
+
+    $whereSql = '(' . implode(' OR ', $whereParts) . ')';
+    if (viabixDvHasColumn('anvis', 'tenant_id')) {
+        $whereSql .= ' AND a.tenant_id = ?';
+        $whereParams[] = $tenant_id;
+    }
+
     $stmt = $pdo->prepare("
         SELECT " . implode(', ', $select) . "
         FROM anvis a
-        WHERE (a.id = ? OR a.numero = ? OR CONCAT(a.numero, '_', a.revisao) = ?) AND a.tenant_id = ?
+        WHERE {$whereSql}
         ORDER BY {$orderColumn} DESC
         LIMIT 1
     ");
     
-    $stmt->execute([$anvi_id, $anvi_id, $anvi_id, $tenant_id]);
+    $stmt->execute($whereParams);
     $anvi = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$anvi) {
@@ -181,6 +216,15 @@ try {
         $planejamento_score = round(($projectProgress['progresso'] * 0.55) + ($projectProgress['pontualidade_pct'] * 0.45), 1);
         $fases = $projectProgress['total_tarefas'];
     }
+    $tarefasPendentes = $projectProgress
+        ? max(0, (int) $projectProgress['total_tarefas'] - (int) $projectProgress['tarefas_concluidas'])
+        : 0;
+    $execucao_score = $projectProgress
+        ? round(((float) $projectProgress['progresso'] * 0.7) + ((float) $projectProgress['pontualidade_pct'] * 0.3), 1)
+        : $planejamento_score;
+    $prazo_score = $projectProgress
+        ? max(0, round((float) $projectProgress['pontualidade_pct'] - ((int) $projectProgress['tarefas_atrasadas'] * 8), 1))
+        : min(100, $planejamento_score + 10);
     
     // Qualidade
     $cobertura = $dados['qualidade']['cobertura_testes'] ?? 0;
@@ -191,10 +235,6 @@ try {
     $equipe = $dados['recursos']['equipe'] ?? 0;
     $especialistas = $dados['recursos']['especialistas'] ?? 0;
     $recursos_score = min(100, $equipe * 10 + $especialistas * 15);
-    
-    // Overall viability
-    $viabilidade_geral = ($financeiro_score + $planejamento_score + $qualidade_score + $recursos_score) / 4;
-    $status_viabilidade = $viabilidade_geral >= 75 ? 'VIÁVEL' : ($viabilidade_geral >= 50 ? 'PARCIAL' : 'NÃO VIÁVEL');
     
     $alertas_financeiros = [];
     $margem = (float) ($financeiro_salvo['margem_esperada_pct'] ?? 0);
@@ -324,8 +364,23 @@ try {
         $dados_incompletos[] = 'recursos';
     }
 
+    $risco_score = 100;
+    $risco_score -= count(array_filter($alertas_financeiros, fn($alerta) => ($alerta['severidade'] ?? '') === 'critico')) * 28;
+    $risco_score -= count(array_filter($alertas_financeiros, fn($alerta) => ($alerta['severidade'] ?? '') !== 'critico')) * 14;
+    if ($projectProgress) {
+        $risco_score -= ((int) $projectProgress['tarefas_atrasadas']) * 10;
+        if ($tarefasPendentes > 5) {
+            $risco_score -= 8;
+        }
+    }
+    $risco_score -= count($dados_incompletos) * 8;
+    $risco_score = max(0, min(100, round($risco_score, 1)));
+
+    $viabilidade_geral = ($financeiro_score + $execucao_score + $prazo_score + $risco_score + $recursos_score) / 5;
+    $status_viabilidade = $viabilidade_geral >= 75 ? 'VIÁVEL' : ($viabilidade_geral >= 50 ? 'PARCIAL' : 'NÃO VIÁVEL');
+
     $temCritico = count(array_filter($alertas_financeiros, fn($alerta) => ($alerta['severidade'] ?? '') === 'critico')) > 0;
-    if ($temCritico || $financeiro_score < 50 || $viabilidade_geral < 50 || ($projectProgress && $projectProgress['tarefas_atrasadas'] >= 3)) {
+    if ($temCritico || $financeiro_score < 50 || $viabilidade_geral < 50 || ($projectProgress && $projectProgress['tarefas_atrasadas'] >= 3) || $risco_score < 50) {
         $decisao_status = 'REVISAR ANTES DE APROVAR';
         $decisao_tom = 'danger';
         $decisao_resumo = 'Há pontos críticos ou score baixo que podem comprometer a viabilidade.';
@@ -359,14 +414,21 @@ try {
             ? 'data_atualizacao'
             : (viabixDvHasColumn('anvis', 'data_criacao') ? 'data_criacao' : 'id');
 
+        $comparativoWhere = 'numero = ? AND id <> ?';
+        $comparativoParams = [$anvi['numero'], $anvi['id']];
+        if (viabixDvHasColumn('anvis', 'tenant_id')) {
+            $comparativoWhere = 'numero = ? AND tenant_id = ? AND id <> ?';
+            $comparativoParams = [$anvi['numero'], $tenant_id, $anvi['id']];
+        }
+
         $stmt = $pdo->prepare("
             SELECT " . implode(', ', $comparativoSelect) . "
             FROM anvis
-            WHERE numero = ? AND tenant_id = ? AND id <> ?
+            WHERE {$comparativoWhere}
             ORDER BY {$comparativoOrder} DESC
             LIMIT 1
         ");
-        $stmt->execute([$anvi['numero'], $tenant_id, $anvi['id']]);
+        $stmt->execute($comparativoParams);
         $revisao_anterior = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
         $revisao_anterior = null;
@@ -434,6 +496,29 @@ try {
                 'tarefas_atrasadas' => $projectProgress['tarefas_atrasadas'] ?? null,
                 'pontualidade_pct' => $projectProgress['pontualidade_pct'] ?? null,
             ],
+            'execucao' => [
+                'score' => round($execucao_score, 1),
+                'progresso' => $projectProgress['progresso'] ?? 0,
+                'tarefas_total' => $projectProgress['total_tarefas'] ?? 0,
+                'tarefas_concluidas' => $projectProgress['tarefas_concluidas'] ?? 0,
+                'tarefas_pendentes' => $tarefasPendentes,
+                'origem' => $projectRow ? 'projeto_vinculado' : 'anvi',
+            ],
+            'prazo' => [
+                'score' => round($prazo_score, 1),
+                'pontualidade_pct' => $projectProgress['pontualidade_pct'] ?? null,
+                'tarefas_atrasadas' => $projectProgress['tarefas_atrasadas'] ?? 0,
+                'acao' => ($projectProgress && $projectProgress['tarefas_atrasadas'] > 0)
+                    ? 'Priorizar recuperação das tarefas atrasadas antes da aprovação.'
+                    : 'Cronograma sem atrasos críticos identificados.',
+            ],
+            'risco' => [
+                'score' => round($risco_score, 1),
+                'alertas_financeiros' => count($alertas_financeiros),
+                'tarefas_atrasadas' => $projectProgress['tarefas_atrasadas'] ?? 0,
+                'dados_incompletos' => $dados_incompletos,
+                'nivel' => $risco_score >= 75 ? 'Baixo' : ($risco_score >= 50 ? 'Moderado' : 'Alto'),
+            ],
             'qualidade' => [
                 'cobertura_testes' => $dados['qualidade']['cobertura_testes'] ?? 0,
                 'score_codigo' => $dados['qualidade']['score_codigo'] ?? 0,
@@ -451,9 +536,12 @@ try {
             'recomendacao' => $viabilidade_geral >= 75 ? 'Projeto recomendado para implementação' : 'Recomenda-se revisar escopo e recursos',
             'scores_por_area' => [
                 'financeiro' => round($financeiro_score, 1),
+                'execucao' => round($execucao_score, 1),
+                'prazo' => round($prazo_score, 1),
+                'risco' => round($risco_score, 1),
+                'recursos' => round($recursos_score, 1),
                 'planejamento' => round($planejamento_score, 1),
                 'qualidade' => round($qualidade_score, 1),
-                'recursos' => round($recursos_score, 1),
             ]
         ],
         'projeto_vinculado' => $projectRow ? [
@@ -499,6 +587,26 @@ try {
                     : 'Duração de ' . ($dados['planejamento']['duracao_meses'] ?? 0) . ' meses em ' . ($dados['planejamento']['fases'] ?? 0) . ' fases'
             ],
             [
+                'area' => 'Execução',
+                'status' => $execucao_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($execucao_score, 1),
+                'detalhes' => $projectRow
+                    ? $tarefasPendentes . ' tarefa(s) pendente(s) no projeto vinculado'
+                    : 'Sem projeto vinculado para medir execução real'
+            ],
+            [
+                'area' => 'Prazo',
+                'status' => $prazo_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($prazo_score, 1),
+                'detalhes' => ($projectProgress['tarefas_atrasadas'] ?? 0) . ' tarefa(s) atrasada(s)'
+            ],
+            [
+                'area' => 'Risco',
+                'status' => $risco_score >= 80 ? 'compativel' : 'incompativel',
+                'score' => round($risco_score, 1),
+                'detalhes' => 'Nível ' . ($risco_score >= 75 ? 'baixo' : ($risco_score >= 50 ? 'moderado' : 'alto')) . ' com ' . count($alertas_financeiros) . ' alerta(s)'
+            ],
+            [
                 'area' => 'Qualidade',
                 'status' => $qualidade_score >= 80 ? 'compativel' : 'incompativel',
                 'score' => round($qualidade_score, 1),
@@ -515,7 +623,7 @@ try {
     
     echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
-} catch (Exception $e) {
+} catch (Throwable $e) {
     http_response_code(500);
     echo json_encode([
         'erro' => 'Erro ao processar relatório',

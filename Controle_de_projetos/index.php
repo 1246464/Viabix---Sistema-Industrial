@@ -2185,6 +2185,60 @@ $usuario = getUsuario();
         color: #607168;
         font-size: 0.9rem;
     }
+    .save-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 30px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #d8eadd;
+        background: #f7fbf8;
+        color: #607168;
+        font-size: 0.84rem;
+        font-weight: 700;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+    .save-status-pill.saving {
+        color: #735500;
+        background: #fff8e1;
+        border-color: #ffe082;
+    }
+    .save-status-pill.saved {
+        color: #1b5e20;
+        background: #e8f5e9;
+        border-color: #a5d6a7;
+    }
+    .save-status-pill.error {
+        color: #8a1c1c;
+        background: #ffebee;
+        border-color: #ef9a9a;
+    }
+    .project-linked-anvi {
+        grid-column: 1 / -1;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid #c8e6c9;
+        background: #f7fbf8;
+        color: #1f2d24;
+    }
+    .project-linked-anvi.visible {
+        display: flex;
+    }
+    .project-linked-anvi strong {
+        display: block;
+        color: #1b5e20;
+        margin-bottom: 2px;
+    }
+    .project-linked-anvi span {
+        color: #607168;
+        font-size: 0.88rem;
+    }
     body.project-busy .btn,
     body.project-busy button {
         pointer-events: none;
@@ -2486,6 +2540,15 @@ echo $nivel_texto[$usuario['nivel']] ?? $usuario['nivel'];
     <input id="anviId" type="hidden"/>
     <datalist id="projectAnviSuggestions"></datalist>
     <small style="display:block; margin-top:4px; color:#666; font-size:0.8rem">Escolha uma ANVI existente ou digite um número novo para uso apenas neste projeto.</small>
+</div>
+<div class="project-linked-anvi" id="projectLinkedAnviPanel">
+    <div>
+        <strong id="projectLinkedAnviTitle">ANVI vinculada</strong>
+        <span id="projectLinkedAnviMeta">Selecione um projeto para consultar o vínculo.</span>
+    </div>
+    <button class="btn btn-success btn-sm" id="projectLinkedAnviOpenBtn" type="button">
+        <i class="fas fa-external-link-alt"></i> Abrir ANVI
+    </button>
 </div>
 <div class="form-group"><label>Modelo</label>
 <select id="modelo">
@@ -3169,6 +3232,10 @@ echo $nivel_texto[$usuario['nivel']] ?? $usuario['nivel'];
 <button class="btn btn-danger" id="cancelProjectBtn">Cancelar</button>
 <?php if (!isVisualizador()): ?>
 <button class="btn btn-primary" id="saveProjectBtn">Salvar Projeto</button>
+<span class="save-status-pill" id="projectSaveStatus" aria-live="polite">
+    <i class="fas fa-circle"></i>
+    Pronto
+</span>
 <?php else: ?>
 <button class="btn btn-primary" disabled style="opacity: 0.5; cursor: not-allowed;">Sem permissão para salvar</button>
 <?php endif; ?>
@@ -3880,6 +3947,21 @@ function getProjectLoadingMessage(action) {
     return messages[action] || 'Atualizando informações...';
 }
 
+function setProjectSaveStatus(status, message) {
+    const element = document.getElementById('projectSaveStatus');
+    if (!element) return;
+
+    const icons = {
+        idle: 'fa-circle',
+        saving: 'fa-circle-notch fa-spin',
+        saved: 'fa-circle-check',
+        error: 'fa-triangle-exclamation'
+    };
+
+    element.className = `save-status-pill ${status && status !== 'idle' ? status : ''}`.trim();
+    element.innerHTML = `<i class="fas ${icons[status] || icons.idle}"></i>${message || 'Pronto'}`;
+}
+
 function setProjectLoading(message) {
     const overlay = document.getElementById('projectLoadingOverlay');
     const messageElement = document.getElementById('projectLoadingMessage');
@@ -3920,11 +4002,13 @@ function extractAjaxAction(settings) {
 $(document)
     .ajaxSend(function(_event, _xhr, settings) {
         if (!settings.url || !settings.url.includes('api_mysql.php')) return;
+        if (extractAjaxAction(settings) === 'saveProject') return;
         projectLoadingCount++;
         setProjectLoading(getProjectLoadingMessage(extractAjaxAction(settings)));
     })
     .ajaxComplete(function(_event, _xhr, settings) {
         if (!settings.url || !settings.url.includes('api_mysql.php')) return;
+        if (extractAjaxAction(settings) === 'saveProject') return;
         projectLoadingCount = Math.max(0, projectLoadingCount - 1);
         clearProjectLoading();
     });
@@ -4052,6 +4136,7 @@ function saveProjectToMySQL(projectData) {
         apqpKeys: projectData.apqp ? Object.keys(projectData.apqp) : []
     });
     
+    setProjectSaveStatus('saving', 'Salvando...');
     return new Promise((resolve, reject) => {
         $.ajax({
             url: 'api_mysql.php',
@@ -4065,10 +4150,15 @@ function saveProjectToMySQL(projectData) {
                 console.log('>>> Resposta do MySQL:', response);
                 if (response.success) {
                     console.log('✓ MySQL confirmou salvamento');
+                    setProjectSaveStatus('saved', 'Salvo');
                     resolve(response);
                 } else {
                     console.error('✗ MySQL retornou erro:', response.message);
-                    reject(response.message);
+                    const message = response.error_id
+                        ? `${response.message || 'Erro ao salvar'} (código ${response.error_id})`
+                        : (response.message || 'Erro ao salvar');
+                    setProjectSaveStatus('error', response.error_id ? `Erro ${response.error_id}` : 'Erro ao salvar');
+                    reject(message);
                 }
             },
             error: function(xhr, status, error) {
@@ -4077,7 +4167,17 @@ function saveProjectToMySQL(projectData) {
                     error: error,
                     responseText: xhr.responseText
                 });
-                reject(error);
+                let message = 'Erro ao salvar. Tente novamente em instantes.';
+                try {
+                    const payload = JSON.parse(xhr.responseText || '{}');
+                    if (payload.message) message = payload.message;
+                    if (payload.error_id) message += ` (código ${payload.error_id})`;
+                    setProjectSaveStatus('error', payload.error_id ? `Erro ${payload.error_id}` : 'Erro ao salvar');
+                } catch (_e) {
+                    setProjectSaveStatus('error', 'Erro ao salvar');
+                    if (error) message = error;
+                }
+                reject(message);
             }
         });
     });
@@ -5109,9 +5209,11 @@ function showProjectForm(editId = null) {
             }
             
             updateAllTaskStatusesDisplay(p.status);
+            verificarVinculoComANVI(editId);
         }
     } else {
         clearProjectForm();
+        renderProjectLinkedAnvi(null);
         
         const container = document.getElementById('capabilityCharacteristics');
         if (container) {
@@ -5368,9 +5470,9 @@ function saveProject() {
             document.getElementById('projectForm').style.display = 'none';
             currentEditingProjectId = null;
             
-            alert('Projeto atualizado com sucesso!');
+            setProjectSaveStatus('saved', 'Salvo');
         }).catch(error => {
-            alert('Erro ao salvar projeto no MySQL: ' + error);
+            alert('Não foi possível salvar o projeto. ' + error);
         });
     } else {
         // Novo projeto
@@ -5393,9 +5495,9 @@ function saveProject() {
             document.getElementById('projectForm').style.display = 'none';
             currentEditingProjectId = null;
             
-            alert('Projeto salvo com sucesso!');
+            setProjectSaveStatus('saved', 'Salvo');
         }).catch(error => {
-            alert('Erro ao salvar projeto no MySQL: ' + error);
+            alert('Não foi possível salvar o projeto. ' + error);
         });
     }
 }
@@ -11275,10 +11377,27 @@ function abrirProjetoInicialDaUrl() {
 // Variável global para armazenar dados do vínculo
 let vinculoANVI = null;
 
+function renderProjectLinkedAnvi(anvi) {
+    const panel = document.getElementById('projectLinkedAnviPanel');
+    const title = document.getElementById('projectLinkedAnviTitle');
+    const meta = document.getElementById('projectLinkedAnviMeta');
+    if (!panel || !title || !meta) return;
+
+    if (!anvi) {
+        panel.classList.remove('visible');
+        return;
+    }
+
+    title.textContent = `ANVI ${anvi.numero || anvi.id}${anvi.revisao ? ' Rev. ' + anvi.revisao : ''}`;
+    meta.textContent = [anvi.cliente, anvi.projeto, anvi.produto, anvi.status].filter(Boolean).join(' • ') || 'Sem detalhes adicionais';
+    panel.classList.add('visible');
+}
+
 // Verificar se o projeto selecionado está vinculado a uma ANVI
 async function verificarVinculoComANVI(projetoId) {
     if (!projetoId) {
         document.getElementById('btnVerANVI').style.display = 'none';
+        renderProjectLinkedAnvi(null);
         return;
     }
     
@@ -11295,10 +11414,12 @@ async function verificarVinculoComANVI(projetoId) {
         if (vinculoANVI.tem_vinculo && vinculoANVI.anvi) {
             // Projeto está vinculado a uma ANVI
             document.getElementById('btnVerANVI').style.display = 'inline-block';
-            document.getElementById('btnVerANVI').title = `ANVI: ${vinculoANVI.anvi.nome}`;
+            document.getElementById('btnVerANVI').title = `ANVI: ${vinculoANVI.anvi.numero || vinculoANVI.anvi.id}`;
+            renderProjectLinkedAnvi(vinculoANVI.anvi);
         } else {
             // Projeto não está vinculado
             document.getElementById('btnVerANVI').style.display = 'none';
+            renderProjectLinkedAnvi(null);
         }
     } catch (e) {
         console.error('Erro ao verificar vínculo:', e);
@@ -11316,6 +11437,7 @@ function abrirANVIVinculada() {
 
 // Event listener para o botão Ver ANVI
 document.getElementById('btnVerANVI')?.addEventListener('click', abrirANVIVinculada);
+document.getElementById('projectLinkedAnviOpenBtn')?.addEventListener('click', abrirANVIVinculada);
 
 // Observar mudanças na tabela de projetos para verificar vínculos
 const observarSelecaoProjeto = () => {

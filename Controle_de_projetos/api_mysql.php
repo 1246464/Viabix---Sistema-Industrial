@@ -19,8 +19,10 @@ if (in_array($origin, $allowed_origins)) {
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$isProduction = (getenv('APP_ENV') === 'production');
-ini_set('display_errors', $isProduction ? 0 : 1);
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$isLocalHost = preg_match('/^(localhost|127\.0\.0\.1)(:\d+)?$/', $host) === 1;
+$isProduction = (getenv('APP_ENV') === 'production') || !$isLocalHost;
+ini_set('display_errors', $isProduction ? '0' : '1');
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
 ini_set('error_log', __DIR__ . '/../logs/error_api_mysql.log');
@@ -96,6 +98,24 @@ try {
         $pdo->prepare($sql)->execute($params);
     }
 
+    function registrarAcaoProjeto($userId, $action, $details, $projectId = null) {
+        if (!function_exists('viabixLogActivity')) {
+            return;
+        }
+
+        try {
+            viabixLogActivity($userId, $action, $details, 'projeto', $projectId);
+        } catch (Throwable $e) {
+            if (function_exists('logError')) {
+                logError('Falha ao registrar ação de projeto', [
+                    'error' => $e->getMessage(),
+                    'action' => $action,
+                    'project_id' => $projectId,
+                ]);
+            }
+        }
+    }
+
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
@@ -139,7 +159,6 @@ try {
             $offset = ($page - 1) * $limit;
 
             if ($tenantAwareProjects) {
-                $total = (int)$pdo->prepare("SELECT COUNT(*) FROM projetos WHERE tenant_id = ?")->execute([$tenantId]);
                 $cStmt = $pdo->prepare("SELECT COUNT(*) FROM projetos WHERE tenant_id = ?");
                 $cStmt->execute([$tenantId]);
                 $total = (int)$cStmt->fetchColumn();
@@ -155,9 +174,12 @@ try {
             $projects = [];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $dados = json_decode($row['dados'], true);
+                if (!is_array($dados)) {
+                    $dados = [];
+                }
                 $dados['id'] = (int)$row['id'];
-                $dados['created_at'] = $row['created_at'];
-                $dados['updated_at'] = $row['updated_at'];
+                $dados['created_at'] = $row['created_at'] ?? null;
+                $dados['updated_at'] = $row['updated_at'] ?? null;
                 $projects[] = $dados;
             }
 
@@ -199,9 +221,16 @@ try {
                 }
                 registrarMudanca($pdo, 'projeto_atualizado', $id, $tenantId);
                 vincularAnviSelecionadaAoProjeto($pdo, $data, $id, $tenantId);
+                registrarAcaoProjeto(
+                    $_SESSION['user_id'] ?? null,
+                    'salvar_projeto',
+                    'Atualizou projeto #' . $id . ': ' . ($data['projectName'] ?? 'Sem nome'),
+                    (string)$id
+                );
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Projeto atualizado'
+                    'message' => 'Projeto atualizado',
+                    'updatedId' => $id
                 ]);
             } else {
                 if ($tenantAwareProjects) {
@@ -214,8 +243,15 @@ try {
                 $insertId = (int)$pdo->lastInsertId();
                 registrarMudanca($pdo, 'projeto_criado', $insertId, $tenantId);
                 vincularAnviSelecionadaAoProjeto($pdo, $data, $insertId, $tenantId);
+                registrarAcaoProjeto(
+                    $_SESSION['user_id'] ?? null,
+                    'criar_projeto',
+                    'Criou projeto #' . $insertId . ': ' . ($data['projectName'] ?? 'Sem nome'),
+                    (string)$insertId
+                );
                 echo json_encode([
                     'success' => true,
+                    'message' => 'Projeto salvo',
                     'insertId' => $insertId
                 ]);
             }
@@ -243,6 +279,12 @@ try {
             
             if ($affected > 0) {
                 registrarMudanca($pdo, 'projeto_excluido', $id, $tenantId);
+                registrarAcaoProjeto(
+                    $_SESSION['user_id'] ?? null,
+                    'excluir_projeto',
+                    'Excluiu projeto #' . $id,
+                    (string)$id
+                );
                 echo json_encode(['success' => true]);
             } else {
                 echo json_encode([
@@ -363,13 +405,31 @@ try {
     // PDO closes automatically when $pdo goes out of scope
 
 } catch (Throwable $e) {
+    $errorId = function_exists('viabixGenerateErrorId')
+        ? viabixGenerateErrorId('proj')
+        : ('proj_' . date('Ymd_His') . '_' . substr(sha1($e->getMessage()), 0, 8));
     http_response_code(500);
-    error_log('API MySQL Error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+    if (function_exists('logError')) {
+        logError('Erro na API do Controle de Projetos', [
+            'error_id' => $errorId,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'action' => $_POST['action'] ?? null,
+            'tenant_id' => $_SESSION['tenant_id'] ?? null,
+            'user_id' => $_SESSION['user_id'] ?? null,
+        ]);
+    } else {
+        error_log('API MySQL Error [' . $errorId . ']: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+    }
     
-    $isProduction = (getenv('APP_ENV') === 'production');
+    $friendlyMessage = function_exists('viabixPublicErrorMessage')
+        ? viabixPublicErrorMessage($e, 'Não foi possível salvar agora. Tente novamente em instantes.')
+        : 'Não foi possível salvar agora. Tente novamente em instantes.';
     echo json_encode([
         'success' => false,
-        'message' => $isProduction ? 'Erro interno do servidor' : ('Erro: ' . $e->getMessage()),
+        'message' => $friendlyMessage,
+        'error_id' => $errorId,
     ]);
 }
 ?>

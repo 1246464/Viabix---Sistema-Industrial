@@ -413,11 +413,47 @@ function logError($message, $context = []) {
         @mkdir($logDir, 0775, true);
     }
 
-    $logEntry = date('Y-m-d H:i:s') . " - " . $message . " - " . json_encode($context) . PHP_EOL;
+    if (empty($context['error_id'])) {
+        $context['error_id'] = viabixGenerateErrorId('err');
+    }
+    $context['url'] = $_SERVER['REQUEST_URI'] ?? null;
+    $context['user_id'] = $context['user_id'] ?? ($_SESSION['user_id'] ?? null);
+    $context['tenant_id'] = $context['tenant_id'] ?? ($_SESSION['tenant_id'] ?? null);
+
+    $logEntry = json_encode([
+        'timestamp' => date('c'),
+        'level' => 'error',
+        'message' => $message,
+        'context' => $context,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
     error_log($logEntry, 3, $logDir . '/error.log');
 
     // Enviar para Sentry também
     viabix_sentry_message($message, 'error', 'app.error', $context);
+}
+
+function viabixGenerateErrorId($prefix = 'err') {
+    return $prefix . '_' . date('Ymd_His') . '_' . substr(hash('sha256', microtime(true) . random_int(1000, 9999)), 0, 8);
+}
+
+function viabixPublicErrorMessage(Throwable $e, $fallback = 'Não foi possível concluir esta ação agora. Tente novamente em instantes.') {
+    if ($e instanceof PDOException) {
+        $message = $e->getMessage();
+        if (stripos($message, 'server has gone away') !== false || stripos($message, 'timeout') !== false || stripos($message, 'lock wait') !== false) {
+            return 'O banco demorou para responder. Aguarde alguns segundos e tente novamente.';
+        }
+        if (stripos($message, 'unknown column') !== false || stripos($message, 'base table') !== false) {
+            return 'A estrutura do banco precisa ser atualizada antes de continuar.';
+        }
+        if (stripos($message, 'duplicate') !== false) {
+            return 'Já existe um registro com estas informações.';
+        }
+        if (stripos($message, 'foreign key') !== false) {
+            return 'O vínculo escolhido não está mais disponível. Atualize a tela e tente novamente.';
+        }
+    }
+
+    return $fallback;
 }
 
 /**

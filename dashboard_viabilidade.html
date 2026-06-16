@@ -965,6 +965,63 @@
                 `;
             }
 
+            if (analise.execucao) {
+                const exec = analise.execucao;
+                container.innerHTML += `
+                    <div class="analise-item planejamento">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge ${obterClasseScore(exec.score)}">${exec.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Execução</h4>
+                                <p><strong>Progresso:</strong> ${formatarPercentual(exec.progresso)}</p>
+                                <p><strong>Tarefas:</strong> ${Number(exec.tarefas_concluidas || 0).toLocaleString('pt-BR')}/${Number(exec.tarefas_total || 0).toLocaleString('pt-BR')}</p>
+                                <p><strong>Pendentes:</strong> ${Number(exec.tarefas_pendentes || 0).toLocaleString('pt-BR')}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analise.prazo) {
+                const prazo = analise.prazo;
+                container.innerHTML += `
+                    <div class="analise-item qualidade">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge ${obterClasseScore(prazo.score)}">${prazo.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Prazo</h4>
+                                <p><strong>Pontualidade:</strong> ${formatarPercentual(prazo.pontualidade_pct)}</p>
+                                <p><strong>Tarefas atrasadas:</strong> ${Number(prazo.tarefas_atrasadas || 0).toLocaleString('pt-BR')}</p>
+                                <p><strong>Ação:</strong> ${escapeHtml(prazo.acao || '-')}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analise.risco) {
+                const risco = analise.risco;
+                container.innerHTML += `
+                    <div class="analise-item financeiro">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="score-badge ${obterClasseScore(risco.score)}">${risco.score}</div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4>Risco</h4>
+                                <p><strong>Nível:</strong> ${escapeHtml(risco.nivel || '-')}</p>
+                                <p><strong>Alertas financeiros:</strong> ${Number(risco.alertas_financeiros || 0).toLocaleString('pt-BR')}</p>
+                                <p><strong>Dados incompletos:</strong> ${(risco.dados_incompletos || []).length ? escapeHtml((risco.dados_incompletos || []).join(', ')) : 'nenhum'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             if (analise.recursos) {
                 const rec = analise.recursos;
                 container.innerHTML += `
