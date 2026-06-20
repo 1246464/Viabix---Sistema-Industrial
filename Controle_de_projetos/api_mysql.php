@@ -117,6 +117,20 @@ try {
     }
 
     $action = $_POST['action'] ?? '';
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+    if ($method !== 'GET') {
+        try {
+            viabixValidateCsrfTokenWithInput($_POST);
+        } catch (RuntimeException $e) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Validação de segurança falhou. Recarregue a página e tente novamente.'
+            ]);
+            exit;
+        }
+    }
 
     switch ($action) {
 

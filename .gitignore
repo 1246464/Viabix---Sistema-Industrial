@@ -23,8 +23,16 @@ api/debug_*.php
 api/test_*.php
 api/list_users.php
 api/check_user.php
+api/setup_*.php
+api/criar_*.php
+api/create_*_table.php
+api/importar_*.php
+api/unificar_*.php
+api/deploy.php
+api/webhook.php
 api/generate_test_token.php
 teste-jwt.html
+diagnostico_*.html
 
 # Exclude files with exposed credentials
 auto-setup-digitalocean.sh
@@ -40,3 +48,11 @@ deploy/test_*.sh
 check_mysql_users.sh
 diagnostico_ssh.sh
 diagnostico_remoto.sh
+check_tables.sh
+contar_anvis.sh
+create_db_user.sh
+criar_banco.sh
+criar_anvi.sh
+Controle_de_projetos/setup.php
+Controle_de_projetos/simple_test.php
+Controle_de_projetos/*.ps1

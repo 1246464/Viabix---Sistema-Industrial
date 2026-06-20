@@ -138,7 +138,7 @@ http://localhost/ANVI/
 
 Credenciais padrao atuais do ambiente local:
 
-- admin / admin123
+- crie o administrador inicial com senha forte definida em `INITIAL_ADMIN_PASSWORD`
 - usuario / usuario123
 - visitante / visitante123
 
@@ -274,16 +274,6 @@ Resumo da estrategia:
 4. mover a aplicacao para filtros obrigatorios por tenant
 
 ## Solucao de problemas
-
-### Erro de JSON ou BOM em arquivos PHP
-
-Se aparecer erro de parse de JSON causado por BOM, execute no PowerShell dentro de `Controle_de_projetos/`:
-
-```powershell
-.\remover_bom.ps1
-```
-
-Depois recarregue o navegador sem cache.
 
 ### Sessao entre modulos
 

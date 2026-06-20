@@ -244,6 +244,67 @@
             border: 1px solid #ddd1b8;
         }
 
+        .onboarding-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin: 18px 0 22px;
+        }
+
+        .onboarding-step {
+            border: 1px solid #ded4c2;
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255,255,255,0.72);
+        }
+
+        .onboarding-step strong {
+            display: block;
+            color: #173227;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .onboarding-step span {
+            color: #65736b;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .plan-choice-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .plan-choice {
+            border: 1px solid #d9d2c5;
+            border-radius: 14px;
+            padding: 12px;
+            background: #fffaf2;
+            cursor: pointer;
+            text-align: left;
+            color: #173227;
+        }
+
+        .plan-choice.active {
+            border-color: var(--forest-soft);
+            box-shadow: 0 0 0 4px rgba(31, 107, 83, 0.12);
+            background: #f2fbf4;
+        }
+
+        .plan-choice strong,
+        .plan-choice span {
+            display: block;
+        }
+
+        .plan-choice span {
+            color: #627169;
+            font-size: 0.82rem;
+            margin-top: 4px;
+        }
+
         .trial-box strong {
             display: block;
             font-size: 1.1rem;
@@ -360,7 +421,9 @@
             }
 
             .form-grid,
-            .hero-grid {
+            .hero-grid,
+            .onboarding-steps,
+            .plan-choice-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -421,6 +484,21 @@
                 <p>
                     Preencha os dados iniciais da empresa e do administrador. Ao concluir, você entra direto no ambiente e pode começar a usar.
                 </p>
+            </div>
+
+            <div class="onboarding-steps">
+                <div class="onboarding-step">
+                    <strong>1. Cadastro</strong>
+                    <span>Criamos empresa, admin e sessão.</span>
+                </div>
+                <div class="onboarding-step">
+                    <strong>2. Trial</strong>
+                    <span>14 dias para validar ANVI e Projetos.</span>
+                </div>
+                <div class="onboarding-step">
+                    <strong>3. Ativação</strong>
+                    <span>Depois, gere pagamento em Minha assinatura.</span>
+                </div>
             </div>
 
             <div id="alert" class="alert"></div>
@@ -498,6 +576,20 @@
                 <div class="selected-plan" id="selectedPlanBox">
                     <strong>Plano selecionado para o trial: Starter</strong>
                     <span id="selectedPlanDescription">O seu onboarding começa já vinculado ao plano Starter, para que a conta nasça no contexto comercial correto.</span>
+                    <div class="plan-choice-grid" id="planChoiceGrid">
+                        <button class="plan-choice" type="button" data-plan="starter">
+                            <strong>Starter</strong>
+                            <span>Até 3 usuários</span>
+                        </button>
+                        <button class="plan-choice" type="button" data-plan="pro">
+                            <strong>Pro</strong>
+                            <span>API e operação completa</span>
+                        </button>
+                        <button class="plan-choice" type="button" data-plan="enterprise">
+                            <strong>Enterprise</strong>
+                            <span>SSO e suporte dedicado</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="actions">
@@ -567,6 +659,9 @@
             planInput.value = normalizedPlan;
             selectedPlanBox.querySelector('strong').textContent = `Plano selecionado para o trial: ${plan.name}`;
             selectedPlanDescription.textContent = plan.description;
+            document.querySelectorAll('.plan-choice').forEach((button) => {
+                button.classList.toggle('active', button.dataset.plan === normalizedPlan);
+            });
         }
 
         function showAlert(message, type = 'error') {
@@ -587,6 +682,12 @@
             const requestedPlan = (params.get('plan') || '').toLowerCase();
             applySelectedPlan(requestedPlan);
         })();
+
+        document.getElementById('planChoiceGrid').addEventListener('click', (event) => {
+            const button = event.target.closest('.plan-choice');
+            if (!button) return;
+            applySelectedPlan(button.dataset.plan);
+        });
 
         signupForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -617,7 +718,7 @@
                 showAlert(`Conta criada com sucesso${planName}. Redirecionando...`, 'success');
 
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'billing.html';
                 }, 1200);
             } catch (error) {
                 console.error(error);

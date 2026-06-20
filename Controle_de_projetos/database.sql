@@ -73,9 +73,9 @@ INSERT INTO lideres (nome, email, departamento) VALUES
 -- DADOS INICIAIS - USUÁRIOS
 -- ==============================================
 INSERT INTO usuarios (username, senha, nome, nivel) VALUES
-('admin', '123', 'Administrador', 'admin'),
-('lider', '123', 'Líder de Projetos', 'lider'),
-('visualizador', '123', 'Visualizador', 'visualizador');
+('admin', '$2y$12$replaceWithGeneratedHashBeforeImport', 'Administrador', 'admin'),
+('lider', '$2y$12$replaceWithGeneratedHashBeforeImport', 'Líder de Projetos', 'lider'),
+('visualizador', '$2y$12$replaceWithGeneratedHashBeforeImport', 'Visualizador', 'visualizador');
 
 -- ==============================================
 -- DADOS INICIAIS - PROJETOS (exemplos)

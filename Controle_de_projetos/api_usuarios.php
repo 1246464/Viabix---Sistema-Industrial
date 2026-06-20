@@ -21,6 +21,17 @@ if (!isAdmin()) {
 }
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($method !== 'GET') {
+    try {
+        viabixValidateCsrfTokenWithInput($_POST);
+    } catch (RuntimeException $e) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Validação de segurança falhou. Recarregue a página e tente novamente.']);
+        exit;
+    }
+}
 
 // SECURITY: Obter tenant_id do usuário logado
 $currentTenantId = $_SESSION['tenant_id'] ?? null;
@@ -76,10 +87,10 @@ try {
             // SECURITY FIX: Inserir com tenant_id se disponível
             if ($tenantAware && $currentTenantId) {
                 $stmt = $pdo->prepare("INSERT INTO usuarios (tenant_id, username, senha, nome, nivel) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$currentTenantId, $username, $senha, $nome, $nivel]);
+                $stmt->execute([$currentTenantId, $username, password_hash($senha, PASSWORD_BCRYPT), $nome, $nivel]);
             } else {
                 $stmt = $pdo->prepare("INSERT INTO usuarios (username, senha, nome, nivel) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$username, $senha, $nome, $nivel]);
+                $stmt->execute([$username, password_hash($senha, PASSWORD_BCRYPT), $nome, $nivel]);
             }
 
             echo json_encode([
@@ -140,10 +151,10 @@ try {
             if (!empty($senha)) {
                 if ($tenantAware && $currentTenantId) {
                     $stmt = $pdo->prepare("UPDATE usuarios SET username = ?, senha = ?, nome = ?, nivel = ?, ativo = ? WHERE id = ? AND tenant_id = ?");
-                    $stmt->execute([$username, $senha, $nome, $nivel, $ativo, $id, $currentTenantId]);
+                    $stmt->execute([$username, password_hash($senha, PASSWORD_BCRYPT), $nome, $nivel, $ativo, $id, $currentTenantId]);
                 } else {
                     $stmt = $pdo->prepare("UPDATE usuarios SET username = ?, senha = ?, nome = ?, nivel = ?, ativo = ? WHERE id = ?");
-                    $stmt->execute([$username, $senha, $nome, $nivel, $ativo, $id]);
+                    $stmt->execute([$username, password_hash($senha, PASSWORD_BCRYPT), $nome, $nivel, $ativo, $id]);
                 }
             } else {
                 if ($tenantAware && $currentTenantId) {

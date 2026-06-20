@@ -7,12 +7,18 @@
     'use strict';
 
     // Detecta se está em subpasta (ex: /Controle_de_projetos/) ou raiz
-    const basePath = (function () {
+    const apiPaths = (function () {
         const path = window.location.pathname;
         if (path.includes('/Controle_de_projetos/') || path.includes('/api/')) {
-            return '../api/chat_suporte.php';
+            return {
+                chat: '../api/chat_suporte.php',
+                session: '../api/check_session.php',
+            };
         }
-        return 'api/chat_suporte.php';
+        return {
+            chat: 'api/chat_suporte.php',
+            session: 'api/check_session.php',
+        };
     })();
 
     const QUICK_REPLIES = [
@@ -26,6 +32,7 @@
     let history = [];
     let isOpen = false;
     let isLoading = false;
+    let csrfToken = '';
 
     // ---- CSS ----
     const css = `
@@ -335,6 +342,20 @@
         quickEl.innerHTML = '';
     }
 
+    async function ensureCsrfToken() {
+        if (csrfToken) return csrfToken;
+
+        const res = await fetch(apiPaths.session, { credentials: 'include' });
+        const data = await res.json();
+
+        if (!res.ok || !data.logado || !data.csrf_token) {
+            throw new Error('Entre na sua conta para usar o suporte por IA.');
+        }
+
+        csrfToken = data.csrf_token;
+        return csrfToken;
+    }
+
     async function sendMessage(text) {
         if (!text || isLoading) return;
         isLoading = true;
@@ -347,9 +368,11 @@
         showTyping();
 
         try {
-            const res = await fetch(basePath, {
+            const token = await ensureCsrfToken();
+            const res = await fetch(apiPaths.chat, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+                credentials: 'include',
                 body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
             });
 
@@ -365,7 +388,7 @@
             }
         } catch (e) {
             removeTyping();
-            addMessage('error', 'Erro de conexão. Verifique sua internet e tente novamente.');
+            addMessage('error', e.message || 'Erro de conexão. Verifique sua internet e tente novamente.');
         }
 
         isLoading = false;

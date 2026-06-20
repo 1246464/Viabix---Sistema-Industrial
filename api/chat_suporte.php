@@ -15,6 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$user = viabixRequireAuthenticatedSession();
+if (empty($user['tenant_id'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Tenant não identificado']);
+    exit;
+}
+
+$body = json_decode(file_get_contents('php://input'), true) ?: [];
+if (($user['source'] ?? '') !== 'jwt') {
+    try {
+        viabixValidateCsrfTokenWithInput($body);
+    } catch (RuntimeException $e) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Validação de segurança falhou. Recarregue a página e tente novamente.']);
+        exit;
+    }
+}
+
 // --- Rate limiting por sessão (15 msgs) ---
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -29,7 +47,6 @@ if ($_SESSION['chat_count'] >= 15) {
 }
 
 // --- Entrada ---
-$body = json_decode(file_get_contents('php://input'), true);
 $message = trim($body['message'] ?? '');
 $history = is_array($body['history'] ?? null) ? $body['history'] : [];
 

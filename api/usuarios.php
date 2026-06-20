@@ -40,6 +40,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 $tenant_id = viabixCurrentTenantId();
 $tenantAwareUsuarios = viabixHasColumn('usuarios', 'tenant_id') && $tenant_id;
 
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && ($current_user['source'] ?? '') !== 'jwt') {
+    viabixValidateCsrfMiddleware();
+}
+
 try {
     switch ($method) {
         case 'GET':

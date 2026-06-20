@@ -5,14 +5,26 @@
 
 DirectoryIndex index.html index.php
 
-# Desativar rewrite engine completamente para permitir acesso direto a todos os arquivos
-RewriteEngine Off
+# Ativar regras apenas para bloquear scripts operacionais expostos.
+RewriteEngine On
 
 # Bloquear listagem de diretórios
 Options -Indexes
 
 # Bloquear acesso a arquivos sensíveis
 <FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|bak|config|env)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Bloquear scripts operacionais/testes/setup/deploy quando a raiz do projeto
+# for usada como pasta pública. Rotas de aplicação continuam acessíveis.
+<FilesMatch "^(setup.*|simple_test|teste-jwt|check_tables|contar_anvis|create_db_user|criar_banco|criar_db|criar_anvi.*|schema_maintenance|importar_db|unificar_bancos|create_anvis_table|deploy|webhook)\.(php|html|sh|ps1)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

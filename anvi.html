@@ -292,6 +292,40 @@
         font-weight: 600;
     }
 
+    .anvi-guidance {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .anvi-guidance-panel {
+        background: #ffffff;
+        border: 1px solid rgba(10, 48, 36, 0.12);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 8px 20px rgba(10, 48, 36, 0.06);
+    }
+
+    .anvi-guidance-panel h2,
+    .anvi-guidance-panel h3 {
+        font-size: 1.05rem;
+        margin-bottom: 8px;
+        color: var(--primary-dark);
+    }
+
+    .anvi-guidance-panel p,
+    .anvi-guidance-panel li {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .anvi-guidance-panel ol {
+        margin: 0;
+        padding-left: 18px;
+    }
+
     footer {
         background: linear-gradient(145deg, var(--primary-dark), var(--primary-color));
         color: white;
@@ -1238,6 +1272,10 @@
         .linked-project-progress {
             max-width: 100%;
         }
+
+        .anvi-guidance {
+            grid-template-columns: 1fr;
+        }
         
         .capacity-validation .items {
             justify-content: center;
@@ -1948,6 +1986,9 @@
                 <button class="btn btn-warning" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Imprimir DRE
                 </button>
+                <button class="btn btn-outline-primary" type="button" onclick="carregarDemoComercialANVI()">
+                    <i class="fas fa-wand-magic-sparkles me-2"></i>Demo Comercial
+                </button>
                 <!-- Botão de Gerenciar Usuários (visível apenas para Admin) -->
                 <button class="btn btn-secondary" id="btnGerenciarUsuarios" onclick="abrirModalUsuarios()" style="display: none;">
                     <i class="fas fa-users-cog me-2"></i>Gerenciar Usuários
@@ -1962,6 +2003,21 @@
                     <i class="fas fa-link me-1"></i> 
                     <span id="vinculoStatus"></span>
                 </span>
+            </div>
+        </div>
+
+        <div class="anvi-guidance">
+            <div class="anvi-guidance-panel">
+                <h2><i class="fas fa-route me-2"></i>Fluxo recomendado da ANVI</h2>
+                <p>Comece pelos dados gerais, avance pelo stepper e só entre em custos quando produto, volume e processo estiverem definidos.</p>
+            </div>
+            <div class="anvi-guidance-panel">
+                <h3><i class="fas fa-bullseye me-2"></i>Para apresentação comercial</h3>
+                <ol>
+                    <li>Carregue a demo comercial.</li>
+                    <li>Mostre margem, ROI e payback no resumo.</li>
+                    <li>Salve a ANVI e crie um projeto vinculado.</li>
+                </ol>
             </div>
         </div>
 
@@ -11473,6 +11529,66 @@
             });
         });
     }
+
+    function setAnviDemoField(id, value) {
+        const field = document.getElementById(id);
+        if (!field) return;
+
+        field.value = value;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function carregarDemoComercialANVI() {
+        if (!confirm('Carregar dados de exemplo para apresentação comercial? Dados não salvos serão substituídos.')) {
+            return;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const currentYear = new Date().getFullYear();
+
+        setAnviDemoField('anviNumber', `DEMO-${currentYear}-LAM-001`);
+        setAnviDemoField('dataANVI', today);
+        setAnviDemoField('revisaoANVI', '00');
+        setAnviDemoField('lastUpdateDate', today);
+        setAnviDemoField('statusAprovacao', 'em-andamento');
+        setAnviDemoField('client', 'Montadora Aurora');
+        setAnviDemoField('project', 'Para-brisa panorâmico SUV elétrico');
+        setAnviDemoField('codigo', 'PA-SUV-EV-2026');
+        setAnviDemoField('productDescription', 'Vidro laminado panorâmico com controle solar e serigrafia técnica');
+        setAnviDemoField('segment', 'Autos');
+        setAnviDemoField('monthlyVolume', '8500');
+        setAnviDemoField('desenhoDate', today);
+        setAnviDemoField('revisao', 'A');
+        setAnviDemoField('glassType', 'laminado');
+        setAnviDemoField('geometry', 'esferico');
+        setAnviDemoField('thickness', '5.76');
+        setAnviDemoField('width', '1480');
+        setAnviDemoField('height', '920');
+        setAnviDemoField('responsavelTecnica', 'Eng. Marina Costa');
+        setAnviDemoField('responsavelComercial', 'Lucas Almeida');
+        setAnviDemoField('responsavelEconomica', 'Patricia Nunes');
+        setAnviDemoField('responsavelFiscal', 'Renato Fiscal');
+        setAnviDemoField('observacaoGeral', 'Demo comercial com volume, margem e payback favoráveis para apresentação executiva.');
+        setAnviDemoField('margemLucroMarkup', '22');
+        setAnviDemoField('regimeTributario', 'lucro-real');
+        setAnviDemoField('aliquotaIPI', '10');
+        setAnviDemoField('aliquotaICMS', '18');
+        setAnviDemoField('aliquotaPIS', '1.65');
+        setAnviDemoField('aliquotaCOFINS', '7.6');
+        setAnviDemoField('aliquotaIRPJ', '15');
+        setAnviDemoField('aliquotaCSLL', '9');
+
+        goToAnviStep(0);
+        updateAnviSummary(false);
+
+        if (typeof validarConsistenciaGeral === 'function') {
+            setTimeout(validarConsistenciaGeral, 150);
+        }
+
+        alert('Demo comercial carregada. Revise os dados, complete custos se necessário e salve a ANVI para vinculá-la a um projeto.');
+    }
+    window.carregarDemoComercialANVI = carregarDemoComercialANVI;
 
     const salvarANVIOriginal = salvarANVI;
     async function salvarANVIFase3() {

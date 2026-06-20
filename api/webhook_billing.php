@@ -33,10 +33,14 @@ function viabixValidateWebhookSignature($provider, $rawPayload, $receivedSignatu
             $headerName = 'X-Signature';
     }
     
-    // Se não houver secret configurado, apenas log (modo desenvolvimento)
+    // Em produção, webhook sem segredo configurado deve falhar fechado.
     if (!$secret) {
-        error_log("[WEBHOOK] Aviso: WEBHOOK_SECRET não configurado para provider '{$provider}'. Validação desabilitada.");
-        return true; // Permitir em desenvolvimento, mas registrar aviso
+        if (viabix_env('APP_ENV', 'development') === 'production') {
+            error_log("[WEBHOOK] WEBHOOK_SECRET não configurado para provider '{$provider}'. Requisição bloqueada.");
+            return false;
+        }
+        error_log("[WEBHOOK] Aviso: WEBHOOK_SECRET não configurado para provider '{$provider}'. Permitido apenas fora de produção.");
+        return true;
     }
     
     // Calcular assinatura esperada

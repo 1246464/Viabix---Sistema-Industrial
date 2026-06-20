@@ -474,10 +474,8 @@ ORDER BY c.data_conflito DESC;
 -- ======================================================
 -- INSERIR USUÁRIOS PADRÃO
 -- ======================================================
--- Senhas (bcrypt hash):
--- admin: admin123
--- usuario: 123456
--- visitante: visit
+-- Senhas devem ser definidas fora deste script com hashes bcrypt gerados
+-- para o ambiente. Não inclua credenciais padrão em produção.
 
 INSERT IGNORE INTO usuarios (id, login, nome, senha, nivel) VALUES
 ('admin-001', 'admin', 'Administrador', '$2y$12$HIi9Ehd3JKaHJP5hnKNaPuuEYGAoNtUbib.NPOrwJLt.aTEoku4w.', 'admin'),
@@ -587,12 +585,13 @@ DELIMITER ;
 -- ======================================================
 -- PRIVILÉGIOS (AJUSTE CONFORME NECESSÁRIO)
 -- ======================================================
--- Criar usuário específico para a aplicação
-CREATE USER IF NOT EXISTS 'fanavid_user'@'localhost' IDENTIFIED BY 'Fanavid@2025';
-GRANT ALL PRIVILEGES ON fanavid_db.* TO 'fanavid_user'@'localhost';
+-- Criar usuário específico para a aplicação fora deste script, com senha
+-- forte gerada pelo gestor de segredos/ambiente.
+-- CREATE USER IF NOT EXISTS 'fanavid_user'@'localhost' IDENTIFIED BY '<senha-forte-gerada>';
+-- GRANT ALL PRIVILEGES ON fanavid_db.* TO 'fanavid_user'@'localhost';
 
 -- Para acesso remoto (cuidado em produção)
--- CREATE USER IF NOT EXISTS 'fanavid_user'@'%' IDENTIFIED BY 'Fanavid@2025';
+-- CREATE USER IF NOT EXISTS 'fanavid_user'@'%' IDENTIFIED BY '<senha-forte-gerada>';
 -- GRANT ALL PRIVILEGES ON fanavid_db.* TO 'fanavid_user'@'%';
 
 FLUSH PRIVILEGES;

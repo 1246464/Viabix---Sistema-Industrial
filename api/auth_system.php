@@ -200,6 +200,7 @@ function viabixRequireAuthentication($requireAdmin = false) {
         'nome'         => $_SESSION['user_nome'] ?? $_SESSION['nome'] ?? $user['nome'] ?? 'Desconhecido',
         'role'         => $user_role,
         'permissions'  => $_SESSION['user_permissions'] ?? [],
+        'source'       => $user['source'] ?? 'session',
     ];
 }
 

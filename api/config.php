@@ -955,6 +955,7 @@ function viabixRequireAuthenticatedSession() {
         'nome' => $user['nome'] ?? null,
         'nivel' => $user['nivel'] ?? null,
         'tenant_id' => $user['tenant_id'] ?? null,
+        'source' => $user['source'] ?? null,
     ];
 }
 

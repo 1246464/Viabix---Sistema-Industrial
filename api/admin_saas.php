@@ -9,6 +9,10 @@ viabixEnsureBillingSchema();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && ($admin['source'] ?? '') !== 'jwt') {
+    viabixValidateCsrfMiddleware();
+}
+
 function adminSaasTenantSummary() {
     global $pdo;
 

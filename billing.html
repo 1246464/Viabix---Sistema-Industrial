@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billing - Viabix</title>
+    <title>Minha assinatura - Viabix</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,7 +74,7 @@
         .pill.warn { background: #fff6df; color: #8a6500; }
         .metrics {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 14px;
             margin-top: 18px;
         }
@@ -93,6 +93,50 @@
             color: #5a6b62;
             font-size: 0.9rem;
         }
+        .primary-action {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .pay-button,
+        .outline-button {
+            border: none;
+            border-radius: 14px;
+            padding: 13px 16px;
+            font-weight: 800;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .pay-button {
+            background: linear-gradient(135deg, #2e7d32, #0f4a32);
+            color: white;
+        }
+        .outline-button {
+            background: #eef6f1;
+            color: #15543a;
+        }
+        .lifecycle {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .lifecycle-step {
+            background: white;
+            border: 1px solid #dce8e1;
+            border-radius: 18px;
+            padding: 16px;
+            min-height: 106px;
+        }
+        .lifecycle-step.done { border-color: #2e7d32; background: #f6fbf7; }
+        .lifecycle-step.current { border-color: #d4a017; background: #fffaf0; }
+        .lifecycle-step strong { display:block; margin-bottom: 6px; }
+        .lifecycle-step span { color:#5a6b62; font-size:0.88rem; line-height:1.45; }
         .plan-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -201,7 +245,7 @@
             margin-bottom: 12px;
         }
         @media (max-width: 980px) {
-            .hero, .plan-grid { grid-template-columns: 1fr; }
+            .hero, .plan-grid, .lifecycle { grid-template-columns: 1fr; }
             .metrics { grid-template-columns: 1fr; }
         }
     </style>
@@ -211,7 +255,7 @@
         <div class="topbar">
             <div class="brand">
                 <i class="fas fa-wallet"></i>
-                <span>Billing Viabix</span>
+                <span>Minha assinatura</span>
             </div>
             <a class="back-link" href="dashboard.html">Voltar ao dashboard</a>
         </div>
@@ -220,8 +264,8 @@
 
         <section class="hero">
             <div class="card">
-                <h1>Assinatura e cobrança</h1>
-                <p>Gerencie plano, ciclo de cobrança e acompanhe as faturas geradas para o seu tenant.</p>
+                <h1>Minha assinatura</h1>
+                <p>Veja status, vencimento, plano atual e a próxima ação para manter a conta ativa.</p>
                 <div id="subscriptionBadge" class="pill warn">Carregando assinatura...</div>
                 <div class="metrics">
                     <div class="metric">
@@ -234,8 +278,20 @@
                     </div>
                     <div class="metric">
                         <strong id="renewalDate">-</strong>
-                        <span>Próxima renovação</span>
+                        <span id="renewalLabel">Vencimento</span>
                     </div>
+                    <div class="metric">
+                        <strong id="daysRemaining">-</strong>
+                        <span>Dias restantes</span>
+                    </div>
+                </div>
+                <div class="primary-action">
+                    <a id="primaryPaymentButton" class="pay-button" href="#" target="_blank" rel="noopener" style="display:none">
+                        <i class="fas fa-credit-card"></i> Pagar fatura aberta
+                    </a>
+                    <button class="outline-button" type="button" onclick="loadAll(true)">
+                        <i class="fas fa-rotate"></i> Atualizar assinatura
+                    </button>
                 </div>
             </div>
             <div class="card">
@@ -243,6 +299,25 @@
                 <div id="providerBadge" class="provider-badge">Carregando modo de cobrança...</div>
                 <p id="providerNotePrimary" class="note">A base de checkout já gera fatura e registra eventos no banco. Enquanto o gateway real não é plugado, a confirmação pode ser simulada pelo endpoint de webhook.</p>
                 <p id="providerNoteSecondary" class="note">Isso permite construir billing, regras de ativação e painel interno antes de fechar a integração com Asaas, Stripe ou outro provedor.</p>
+            </div>
+        </section>
+
+        <section class="lifecycle" id="lifecycleSteps">
+            <div class="lifecycle-step done">
+                <strong>1. Cadastro</strong>
+                <span>Conta e tenant criados com isolamento de dados.</span>
+            </div>
+            <div class="lifecycle-step current">
+                <strong>2. Trial</strong>
+                <span>Valide ANVI, projetos e dashboards antes de contratar.</span>
+            </div>
+            <div class="lifecycle-step">
+                <strong>3. Ativação</strong>
+                <span>Gere checkout e pague a primeira fatura.</span>
+            </div>
+            <div class="lifecycle-step">
+                <strong>4. Crescimento</strong>
+                <span>Troque de plano quando precisar de mais recursos.</span>
             </div>
         </section>
 
@@ -305,6 +380,7 @@
         ];
 
         let currentSubscription = null;
+        let latestOpenInvoice = null;
         let billingProviders = {
             default: 'manual',
             manual: { enabled: true, mode: 'local', label: 'Manual' },
@@ -350,6 +426,8 @@
             document.getElementById('planName').textContent = subscription?.plan?.name || '-';
             document.getElementById('billingCycle').textContent = subscription?.cycle || '-';
             document.getElementById('renewalDate').textContent = formatDate(subscription?.ends_at || subscription?.trial_until);
+            document.getElementById('renewalLabel').textContent = subscription?.status === 'trial' ? 'Fim do trial' : 'Vencimento';
+            document.getElementById('daysRemaining').textContent = subscription?.days_remaining != null ? subscription.days_remaining : '-';
 
             if (!subscription) {
                 badge.textContent = 'Sem assinatura';
@@ -359,12 +437,33 @@
 
             badge.textContent = `Status: ${subscription.status}`;
             badge.className = `pill ${subscription.status === 'ativa' ? 'active' : 'warn'}`;
+            renderLifecycle(subscription.status);
+        }
+
+        function renderLifecycle(status) {
+            const steps = document.querySelectorAll('#lifecycleSteps .lifecycle-step');
+            steps.forEach((step) => step.classList.remove('done', 'current'));
+            steps[0].classList.add('done');
+
+            if (status === 'trial') {
+                steps[1].classList.add('current');
+                return;
+            }
+
+            steps[1].classList.add('done');
+            if (status === 'ativa') {
+                steps[2].classList.add('done');
+                steps[3].classList.add('current');
+                return;
+            }
+
+            steps[2].classList.add('current');
         }
 
         function renderPlans() {
             planGrid.innerHTML = planCatalog.map((plan) => {
                 const current = currentSubscription?.plan?.code === plan.code;
-                const buttonLabel = current ? 'Plano atual' : 'Gerar checkout';
+                const buttonLabel = current ? 'Plano atual' : (currentSubscription?.status === 'trial' ? 'Ativar neste plano' : 'Trocar para este plano');
                 return `
                     <article class="plan-card ${current ? 'current' : ''}">
                         <h3>${plan.name}</h3>
@@ -382,8 +481,12 @@
         function renderInvoices(invoices) {
             if (!invoices.length) {
                 invoiceRows.innerHTML = '<tr><td colspan="6">Nenhuma fatura encontrada.</td></tr>';
+                updatePrimaryPaymentButton(null);
                 return;
             }
+
+            latestOpenInvoice = invoices.find((invoice) => ['pendente', 'vencida'].includes(invoice.status) && invoice.billing_url) || null;
+            updatePrimaryPaymentButton(latestOpenInvoice);
 
             invoiceRows.innerHTML = invoices.map((invoice) => `
                 <tr>
@@ -395,6 +498,20 @@
                     <td>${invoice.billing_url ? `<a href="${invoice.billing_url}" target="_blank" rel="noopener">Abrir</a>` : '-'}</td>
                 </tr>
             `).join('');
+        }
+
+        function updatePrimaryPaymentButton(invoice) {
+            const button = document.getElementById('primaryPaymentButton');
+            if (!invoice) {
+                button.style.display = 'none';
+                button.removeAttribute('href');
+                return;
+            }
+
+            button.href = invoice.billing_url;
+            button.textContent = invoice.status === 'vencida' ? 'Pagar fatura vencida' : 'Pagar fatura aberta';
+            button.insertAdjacentHTML('afterbegin', '<i class="fas fa-credit-card"></i> ');
+            button.style.display = 'inline-flex';
         }
 
         async function loadSubscription() {
@@ -446,13 +563,20 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function loadAll(force = false) {
             try {
                 await loadSubscription();
                 await loadInvoices();
+                if (force) {
+                    showAlert('Assinatura atualizada.', 'success');
+                }
             } catch (error) {
                 showAlert(error.message || 'Não foi possível carregar a área de billing.');
             }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAll();
         });
     </script>
     <script src="js/anvi-api-core.js"></script>

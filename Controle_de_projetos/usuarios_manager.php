@@ -8,6 +8,7 @@ if (!isAdmin()) {
 }
 
 $usuario = getUsuario();
+$csrfToken = viabixGetCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -410,7 +411,7 @@ $usuario = getUsuario();
                     <label for="senha">
                         <i class="fas fa-lock"></i> Senha <span id="senhaOptional" style="display:none;">(deixe em branco para manter)</span>
                     </label>
-                    <input type="text" id="senha" name="senha" required>
+                    <input type="password" id="senha" name="senha" required autocomplete="new-password">
                 </div>
                 
                 <div class="form-group">
@@ -448,6 +449,7 @@ $usuario = getUsuario();
         let usuarios = [];
         let currentUserId = <?php echo $_SESSION['user_id']; ?>;
         let editingUserId = null;
+        const csrfToken = <?php echo json_encode($csrfToken); ?>;
         
         // Carregar usuários ao iniciar
         window.addEventListener('DOMContentLoaded', loadUsers);
@@ -560,6 +562,7 @@ $usuario = getUsuario();
             const formData = new FormData(event.target);
             const action = editingUserId ? 'update' : 'create';
             formData.append('action', action);
+            formData.append('_csrf_token', csrfToken);
             
             if (editingUserId) {
                 formData.append('ativo', 1);
@@ -574,13 +577,7 @@ $usuario = getUsuario();
                 if (data.success) {
                     alert(data.message);
                     
-                    // Se criou novo usuário, mostrar credenciais
-                    if (!editingUserId && data.usuario) {
-                        showCredentials(data.usuario);
-                    } else {
-                        closeModal();
-                    }
-                    
+                    closeModal();
                     loadUsers();
                 } else {
                     alert('Erro: ' + data.message);
@@ -592,45 +589,6 @@ $usuario = getUsuario();
             });
         }
         
-        function showCredentials(usuario) {
-            const nivelTexto = usuario.nivel === 'admin' ? 'Administrador' : 
-                              usuario.nivel === 'lider' ? 'Líder de Projetos' : 'Visualizador';
-            
-            const credenciaisHTML = `
-                <div><strong>Nome:</strong> ${usuario.nome}</div>
-                <div><strong>Usuário:</strong> ${usuario.username}</div>
-                <div><strong>Senha:</strong> ${usuario.senha}</div>
-                <div><strong>Nível:</strong> ${nivelTexto}</div>
-                <div><strong>Link:</strong> http://localhost/cristiano/login.php</div>
-            `;
-            
-            document.getElementById('credentialsData').innerHTML = credenciaisHTML;
-            document.getElementById('credentialsBox').style.display = 'block';
-            
-            // Armazenar para copiar
-            window.lastCredentials = `
-CREDENCIAIS DE ACESSO - Sistema de Projetos
-
-Nome: ${usuario.nome}
-Usuário: ${usuario.username}
-Senha: ${usuario.senha}
-Nível: ${nivelTexto}
-
-Acesse: http://localhost/cristiano/login.php
-            `.trim();
-        }
-        
-        function copyCredentials() {
-            if (window.lastCredentials) {
-                navigator.clipboard.writeText(window.lastCredentials).then(() => {
-                    alert('Credenciais copiadas! Agora você pode colar e enviar para o usuário.');
-                }).catch(err => {
-                    console.error('Erro ao copiar:', err);
-                    alert('Erro ao copiar. Selecione o texto manualmente.');
-                });
-            }
-        }
-        
         function toggleStatus(id, ativo) {
             const action = ativo == 1 ? 'ativar' : 'desativar';
             if (!confirm(`Deseja realmente ${action} este usuário?`)) return;
@@ -639,6 +597,7 @@ Acesse: http://localhost/cristiano/login.php
             formData.append('action', 'toggle_status');
             formData.append('id', id);
             formData.append('ativo', ativo);
+            formData.append('_csrf_token', csrfToken);
             
             fetch('api_usuarios.php', {
                 method: 'POST',
@@ -665,6 +624,7 @@ Acesse: http://localhost/cristiano/login.php
             const formData = new FormData();
             formData.append('action', 'delete');
             formData.append('id', id);
+            formData.append('_csrf_token', csrfToken);
             
             fetch('api_usuarios.php', {
                 method: 'POST',

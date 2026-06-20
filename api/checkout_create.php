@@ -12,6 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+if (($user['source'] ?? '') !== 'jwt') {
+    viabixValidateCsrfMiddleware();
+}
+
 $tenantId = $user['tenant_id'] ?? viabixCurrentTenantId();
 if (!$tenantId) {
     http_response_code(422);

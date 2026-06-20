@@ -17,6 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $user = viabixRequireAuthenticatedSession();
 $tenantId = $user['tenant_id'] ?? viabixCurrentTenantId();
 
+if (($user['source'] ?? '') !== 'jwt') {
+    viabixValidateCsrfMiddleware();
+}
+
 if (!viabixHasTable('anvis') || !viabixHasTable('projetos')) {
     http_response_code(503);
     echo json_encode(['sucesso' => false, 'erro' => 'Estrutura de integração ANVI-Projetos indisponível.']);

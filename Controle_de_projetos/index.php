@@ -1,6 +1,7 @@
 <?php
 require_once 'auth.php';
 $usuario = getUsuario();
+$csrfToken = viabixGetCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -16,6 +17,9 @@ $usuario = getUsuario();
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+window.viabixCsrfToken = <?php echo json_encode($csrfToken); ?>;
+</script>
 <style>
     /* TODO o CSS original permanece inalterado */
     * {
@@ -4002,6 +4006,7 @@ function extractAjaxAction(settings) {
 $(document)
     .ajaxSend(function(_event, _xhr, settings) {
         if (!settings.url || !settings.url.includes('api_mysql.php')) return;
+        _xhr.setRequestHeader('X-CSRF-Token', window.viabixCsrfToken || '');
         if (extractAjaxAction(settings) === 'saveProject') return;
         projectLoadingCount++;
         setProjectLoading(getProjectLoadingMessage(extractAjaxAction(settings)));

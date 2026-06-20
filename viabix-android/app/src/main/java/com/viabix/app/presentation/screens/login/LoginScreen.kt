@@ -20,8 +20,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val loginState by viewModel.loginState.collectAsState()
-    var emailInput by remember { mutableStateOf("admin") }
-    var passwordInput by remember { mutableStateOf("123456") }
+    var emailInput by remember { mutableStateOf("") }
+    var passwordInput by remember { mutableStateOf("") }
 
     LaunchedEffect(loginState.isLoggedIn) {
         if (loginState.isLoggedIn) {
