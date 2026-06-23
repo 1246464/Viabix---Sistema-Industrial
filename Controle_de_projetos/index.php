@@ -2251,6 +2251,7 @@ window.viabixCsrfToken = <?php echo json_encode($csrfToken); ?>;
         to { transform: rotate(360deg); }
     }
 </style>
+<link href="../assets/css/viabix-theme.css" rel="stylesheet"/>
 </head>
 <body>
 <div id="projectLoadingOverlay" class="project-loading-overlay" role="status" aria-live="polite" aria-hidden="true">

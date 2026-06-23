@@ -1221,6 +1221,239 @@
             margin: 0;
         }
 
+        .product-demo-reel {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: 210px 1fr;
+            background: #f4f7f2;
+            color: var(--ink-900);
+            overflow: hidden;
+        }
+
+        .demo-sidebar {
+            background: linear-gradient(180deg, #0f3f2f, #122d27);
+            color: white;
+            padding: 22px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .demo-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .demo-brand span:first-child {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: #1f6b53;
+            color: #fff;
+        }
+
+        .demo-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.86rem;
+        }
+
+        .demo-nav-item.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .demo-stage {
+            position: relative;
+            padding: 22px;
+        }
+
+        .demo-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .demo-topline h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .demo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 11px;
+            border-radius: 999px;
+            background: #e7f4ea;
+            color: #2e7d32;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .demo-screen {
+            position: absolute;
+            inset: 76px 22px 22px;
+            display: grid;
+            grid-template-columns: 0.95fr 1.05fr;
+            gap: 16px;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: demoScene 18s infinite;
+        }
+
+        .demo-screen:nth-of-type(3) { animation-delay: 6s; }
+        .demo-screen:nth-of-type(4) { animation-delay: 12s; }
+
+        .demo-panel,
+        .demo-result,
+        .demo-table,
+        .demo-kanban {
+            background: #fff;
+            border: 1px solid #dfe9e2;
+            border-radius: 8px;
+            box-shadow: 0 14px 36px rgba(15, 63, 47, 0.08);
+            padding: 16px;
+        }
+
+        .demo-field {
+            height: 34px;
+            border-radius: 8px;
+            background: #eef4ef;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-field::after,
+        .demo-bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            width: 42%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+            animation: demoSweep 2.8s infinite;
+        }
+
+        .demo-bar {
+            height: 10px;
+            border-radius: 999px;
+            background: #e8efe9;
+            margin: 12px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .demo-bar.fill-1 { background: linear-gradient(90deg, #1f6b53 72%, #e8efe9 72%); }
+        .demo-bar.fill-2 { background: linear-gradient(90deg, #d89b2b 54%, #e8efe9 54%); }
+        .demo-bar.fill-3 { background: linear-gradient(90deg, #1565c0 86%, #e8efe9 86%); }
+
+        .demo-kpis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .demo-kpi {
+            border-radius: 8px;
+            background: #f7faf8;
+            border: 1px solid #e4ece6;
+            padding: 12px;
+        }
+
+        .demo-kpi strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #0f3f2f;
+        }
+
+        .demo-kpi span,
+        .demo-row span {
+            color: #64736a;
+            font-size: 0.76rem;
+        }
+
+        .demo-row {
+            display: grid;
+            grid-template-columns: 1fr 86px 68px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eef3f0;
+        }
+
+        .demo-row:last-child {
+            border-bottom: 0;
+        }
+
+        .demo-kanban {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .demo-lane {
+            background: #f7faf8;
+            border: 1px solid #e4ece6;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .demo-task {
+            background: white;
+            border: 1px solid #e3ebe5;
+            border-left: 4px solid #1f6b53;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.78rem;
+            box-shadow: 0 8px 18px rgba(15, 63, 47, 0.06);
+        }
+
+        .demo-cursor {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            left: 58%;
+            top: 54%;
+            color: #0f3f2f;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.18));
+            animation: cursorTour 18s infinite;
+            z-index: 3;
+        }
+
+        @keyframes demoScene {
+            0%, 5% { opacity: 0; transform: translateY(16px); }
+            10%, 30% { opacity: 1; transform: translateY(0); }
+            35%, 100% { opacity: 0; transform: translateY(-12px); }
+        }
+
+        @keyframes demoSweep {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(260%); }
+        }
+
+        @keyframes cursorTour {
+            0%, 9% { left: 36%; top: 64%; }
+            16%, 30% { left: 67%; top: 38%; }
+            39%, 53% { left: 50%; top: 42%; }
+            61%, 78% { left: 75%; top: 66%; }
+            86%, 100% { left: 38%; top: 58%; }
+        }
+
         .play-button {
             width: 90px;
             height: 90px;
@@ -1342,6 +1575,44 @@
                 justify-content: center;
             }
 
+            .product-demo-reel {
+                grid-template-columns: 1fr;
+            }
+
+            .demo-sidebar {
+                display: none;
+            }
+
+            .demo-stage {
+                padding: 14px;
+            }
+
+            .demo-topline {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .demo-screen {
+                inset: 98px 14px 14px;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .demo-kpis,
+            .demo-kanban {
+                grid-template-columns: 1fr;
+            }
+
+            .demo-result,
+            .demo-table {
+                display: none;
+            }
+
+            .demo-cursor {
+                display: none;
+            }
+
             .footer-content {
                 grid-template-columns: 1fr;
                 gap: 30px;
@@ -1370,6 +1641,7 @@
             }
         }
     </style>
+    <link href="assets/css/viabix-theme.css" rel="stylesheet">
 </head>
 <body>
 
@@ -1501,14 +1773,76 @@
                             Seu navegador não suporta vídeos HTML5.
                         </video> -->
 
-                        <!-- PLACEHOLDER (Remover quando adicionar vídeo real) -->
-                        <div class="video-placeholder">
-                            <i class="fas fa-video"></i>
-                            <h3>Vídeo Demonstrativo</h3>
-                            <p>Adicione seu vídeo do YouTube, Vimeo ou arquivo local</p>
-                            <button class="play-button">
-                                <i class="fas fa-play"></i>
-                            </button>
+                        <div class="product-demo-reel" aria-label="Demonstração visual do sistema Viabix">
+                            <aside class="demo-sidebar">
+                                <div class="demo-brand">
+                                    <span>V</span>
+                                    <span>Viabix</span>
+                                </div>
+                                <div class="demo-nav-item active"><i class="fas fa-chart-line"></i> ANVI</div>
+                                <div class="demo-nav-item"><i class="fas fa-list-check"></i> Projetos</div>
+                                <div class="demo-nav-item"><i class="fas fa-credit-card"></i> Assinatura</div>
+                                <div class="demo-nav-item"><i class="fas fa-shield-halved"></i> Admin</div>
+                            </aside>
+                            <div class="demo-stage">
+                                <div class="demo-topline">
+                                    <h3>Fluxo comercial em dados reais de demonstração</h3>
+                                    <span class="demo-chip"><i class="fas fa-circle-check"></i> Trial ativo</span>
+                                </div>
+
+                                <div class="demo-screen">
+                                    <div class="demo-panel">
+                                        <strong>Nova ANVI</strong>
+                                        <div class="demo-field" style="margin-top: 14px;"></div>
+                                        <div class="demo-field" style="width: 84%;"></div>
+                                        <div class="demo-field" style="width: 68%;"></div>
+                                        <div class="demo-bar fill-1"></div>
+                                        <div class="demo-bar fill-2"></div>
+                                        <div class="demo-bar fill-3"></div>
+                                    </div>
+                                    <div class="demo-result">
+                                        <strong>Resultado calculado</strong>
+                                        <div class="demo-kpis">
+                                            <div class="demo-kpi"><strong>23,4%</strong><span>Margem</span></div>
+                                            <div class="demo-kpi"><strong>3,2a</strong><span>Payback</span></div>
+                                            <div class="demo-kpi"><strong>87</strong><span>Score</span></div>
+                                        </div>
+                                        <div class="demo-bar fill-1"></div>
+                                        <div class="demo-bar fill-3"></div>
+                                    </div>
+                                </div>
+
+                                <div class="demo-screen">
+                                    <div class="demo-table" style="grid-column: 1 / -1;">
+                                        <strong>Projetos gerados a partir da viabilidade</strong>
+                                        <div class="demo-row"><strong>Linha automatizada</strong><span>Em andamento</span><span>74%</span></div>
+                                        <div class="demo-row"><strong>Redução de setup</strong><span>Planejado</span><span>42%</span></div>
+                                        <div class="demo-row"><strong>Expansão de capacidade</strong><span>Aprovado</span><span>91%</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="demo-screen">
+                                    <div class="demo-kanban" style="grid-column: 1 / -1;">
+                                        <div class="demo-lane">
+                                            <strong>A fazer</strong>
+                                            <div class="demo-task">Validar custos industriais</div>
+                                            <div class="demo-task">Enviar proposta</div>
+                                        </div>
+                                        <div class="demo-lane">
+                                            <strong>Em andamento</strong>
+                                            <div class="demo-task">Revisar cronograma</div>
+                                            <div class="demo-task">Aprovar investimento</div>
+                                        </div>
+                                        <div class="demo-lane">
+                                            <strong>Concluído</strong>
+                                            <div class="demo-task">ANVI aprovada</div>
+                                            <div class="demo-task">Cliente ativado</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <i class="fas fa-arrow-pointer demo-cursor"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
