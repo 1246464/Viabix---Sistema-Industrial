@@ -278,6 +278,18 @@
                         <span>Ciclo de cobrança</span>
                     </div>
                     <div class="metric">
+                        <strong id="usersLimit">-</strong>
+                        <span>Usuários</span>
+                    </div>
+                    <div class="metric">
+                        <strong id="anvisLimit">-</strong>
+                        <span>ANVIs/mês</span>
+                    </div>
+                    <div class="metric">
+                        <strong id="projectsLimit">-</strong>
+                        <span>Projetos ativos</span>
+                    </div>
+                    <div class="metric">
                         <strong id="renewalDate">-</strong>
                         <span id="renewalLabel">Vencimento</span>
                     </div>
@@ -422,10 +434,18 @@
             providerNoteSecondary.textContent = 'Assim que a chave do Asaas for configurada, esta tela passa a abrir a cobrança oficial sem trocar o fluxo principal.';
         }
 
+        function formatLimit(value) {
+            return value === null || value === undefined ? 'Ilimitado' : value;
+        }
+
         function setSubscriptionHeader(subscription) {
             const badge = document.getElementById('subscriptionBadge');
+            const limits = subscription?.plan?.limits || {};
             document.getElementById('planName').textContent = subscription?.plan?.name || '-';
             document.getElementById('billingCycle').textContent = subscription?.cycle || '-';
+            document.getElementById('usersLimit').textContent = formatLimit(limits.users);
+            document.getElementById('anvisLimit').textContent = formatLimit(limits.anvis_monthly);
+            document.getElementById('projectsLimit').textContent = formatLimit(limits.active_projects);
             document.getElementById('renewalDate').textContent = formatDate(subscription?.ends_at || subscription?.trial_until);
             document.getElementById('renewalLabel').textContent = subscription?.status === 'trial' ? 'Fim do trial' : 'Vencimento';
             document.getElementById('daysRemaining').textContent = subscription?.days_remaining != null ? subscription.days_remaining : '-';

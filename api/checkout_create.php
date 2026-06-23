@@ -67,12 +67,13 @@ try {
 
     $stmt = $pdo->prepare(
         'UPDATE subscriptions
-         SET plan_id = ?, ciclo = ?, valor_contratado = ?, gateway = ?, updated_at = NOW()
+         SET plan_id = ?, ciclo = ?, quantidade_usuarios_contratados = ?, valor_contratado = ?, gateway = ?, updated_at = NOW()
          WHERE id = ?'
     );
     $stmt->execute([
         $plan['id'],
         $cycle,
+        $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : 999,
         $amount,
         $provider,
         $currentSubscription['id'],

@@ -413,6 +413,187 @@
             background: #fdecea;
         }
 
+        .intelligence-hero {
+            display: grid;
+            grid-template-columns: minmax(280px, 1.2fr) minmax(280px, 0.8fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .insight-card {
+            background: #fff;
+            border: 1px solid #dfe8e2;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(13, 40, 28, 0.08);
+            padding: 18px;
+        }
+
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .insight-header h2 {
+            color: #0a3d2e;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .insight-header p {
+            color: #607168;
+            margin: 5px 0 0;
+        }
+
+        .insight-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 999px;
+            padding: 7px 10px;
+            background: #e7f4ea;
+            color: #2e7d32;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .portfolio-kpi {
+            background: #f8faf8;
+            border: 1px solid #dfe8e2;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .portfolio-kpi small {
+            display: block;
+            color: #607168;
+            margin-bottom: 5px;
+        }
+
+        .portfolio-kpi strong {
+            color: #0a3d2e;
+            font-size: 1.28rem;
+        }
+
+        .anvi-radar-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .anvi-radar-item {
+            display: grid;
+            grid-template-columns: 1fr 84px;
+            gap: 12px;
+            align-items: center;
+            border: 1px solid #e5ede8;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .anvi-radar-item:hover {
+            border-color: #1a5a3a;
+            box-shadow: 0 8px 20px rgba(13, 40, 28, 0.08);
+        }
+
+        .anvi-radar-item strong {
+            display: block;
+            color: #1d2b24;
+        }
+
+        .anvi-radar-item span {
+            display: block;
+            color: #607168;
+            font-size: 0.84rem;
+            line-height: 1.35;
+        }
+
+        .radar-score {
+            border-radius: 8px;
+            padding: 9px 8px;
+            text-align: center;
+            background: #e7f4ea;
+            color: #2e7d32;
+            font-weight: 800;
+        }
+
+        .radar-score.warn {
+            background: #fff6df;
+            color: #8a6500;
+        }
+
+        .radar-score.danger {
+            background: #fdecea;
+            color: #b3261e;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .chart-box {
+            min-height: 320px;
+        }
+
+        .chart-box canvas {
+            width: 100% !important;
+            max-height: 250px;
+        }
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .suggestion-card {
+            border: 1px solid #dfe8e2;
+            border-left: 4px solid #0a3d2e;
+            border-radius: 8px;
+            padding: 14px;
+            background: #fff;
+        }
+
+        .suggestion-card.warning {
+            border-left-color: #b7791f;
+        }
+
+        .suggestion-card.danger {
+            border-left-color: #c62828;
+        }
+
+        .suggestion-card small {
+            display: block;
+            color: #607168;
+            margin-bottom: 5px;
+        }
+
+        .suggestion-card strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #1d2b24;
+        }
+
+        .suggestion-card p {
+            color: #607168;
+            margin: 0;
+            line-height: 1.45;
+        }
+
         .loading {
             display: none;
             text-align: center;
@@ -446,7 +627,11 @@
 
             .decision-layout,
             .executive-grid,
-            .project-meta-grid {
+            .project-meta-grid,
+            .intelligence-hero,
+            .chart-grid,
+            .suggestion-grid,
+            .portfolio-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -461,6 +646,7 @@
             }
         }
     </style>
+    <link href="assets/css/viabix-theme.css" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -520,6 +706,79 @@
                 <p>Digite um ANVI e clique em "Carregar Análise"</p>
             </div>
         </div>
+
+        <!-- Inteligência pré-carregada -->
+        <section class="intelligence-hero" aria-label="Inteligência de portfólio">
+            <div class="insight-card">
+                <div class="insight-header">
+                    <div>
+                        <h2><i class="fas fa-brain"></i> Inteligência das ANVIs</h2>
+                        <p>Leitura pré-carregada para apresentação, triagem e priorização comercial.</p>
+                    </div>
+                    <span class="insight-pill"><i class="fas fa-bolt"></i> Demo inteligente</span>
+                </div>
+                <div class="portfolio-grid">
+                    <div class="portfolio-kpi">
+                        <small>ANVIs analisadas</small>
+                        <strong id="portfolioTotal">-</strong>
+                    </div>
+                    <div class="portfolio-kpi">
+                        <small>Score médio</small>
+                        <strong id="portfolioScore">-</strong>
+                    </div>
+                    <div class="portfolio-kpi">
+                        <small>Eficiência média</small>
+                        <strong id="portfolioEfficiency">-</strong>
+                    </div>
+                    <div class="portfolio-kpi">
+                        <small>Projetos vinculados</small>
+                        <strong id="portfolioProjects">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-header">
+                    <div>
+                        <h2><i class="fas fa-sort-amount-up"></i> Ranking rápido</h2>
+                        <p>Selecione uma ANVI para abrir a análise detalhada.</p>
+                    </div>
+                </div>
+                <div id="anviRadarList" class="anvi-radar-list"></div>
+            </div>
+        </section>
+
+        <section class="chart-grid" aria-label="Gráficos comparativos">
+            <div class="insight-card chart-box">
+                <div class="insight-header">
+                    <div>
+                        <h2><i class="fas fa-chart-column"></i> Eficiência comparativa</h2>
+                        <p>ANVI selecionada contra média das análises e projetos.</p>
+                    </div>
+                </div>
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+
+            <div class="insight-card chart-box">
+                <div class="insight-header">
+                    <div>
+                        <h2><i class="fas fa-bullseye"></i> Risco x retorno</h2>
+                        <p>Distribuição simulada com base em margem, payback e execução.</p>
+                    </div>
+                </div>
+                <canvas id="riskReturnChart"></canvas>
+            </div>
+        </section>
+
+        <section class="insight-card mb-3" aria-label="Sugestões por ANVI">
+            <div class="insight-header">
+                <div>
+                    <h2><i class="fas fa-lightbulb"></i> Sugestões acionáveis</h2>
+                    <p>Regras simples transformam os indicadores em recomendações diretas para decisão.</p>
+                </div>
+            </div>
+            <div id="suggestionsGrid" class="suggestion-grid"></div>
+        </section>
 
         <!-- Error Message -->
         <div id="errorContainer" class="alert alert-danger error-message">
@@ -665,10 +924,64 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         let anviSuggestionTimer = null;
         let anviSuggestionMap = new Map();
+        let efficiencyChart = null;
+        let riskReturnChart = null;
+
+        const demoPortfolio = [
+            {
+                id: 'DEMO-ANVI-001',
+                numero: 'ANVI-DEMO-001',
+                cliente: 'Metal Norte',
+                projeto: 'Linha automatizada',
+                score: 87,
+                margem: 23.4,
+                payback: 18,
+                eficiencia: 82,
+                projetos: 1,
+                risco: 24
+            },
+            {
+                id: 'DEMO-ANVI-002',
+                numero: 'ANVI-DEMO-002',
+                cliente: 'Química Alfa',
+                projeto: 'Redução de setup',
+                score: 74,
+                margem: 16.8,
+                payback: 24,
+                eficiencia: 71,
+                projetos: 1,
+                risco: 38
+            },
+            {
+                id: 'DEMO-ANVI-003',
+                numero: 'ANVI-DEMO-003',
+                cliente: 'Manufatura Beta',
+                projeto: 'Expansão de capacidade',
+                score: 58,
+                margem: 9.6,
+                payback: 31,
+                eficiencia: 62,
+                projetos: 0,
+                risco: 61
+            },
+            {
+                id: 'DEMO-ANVI-004',
+                numero: 'ANVI-DEMO-004',
+                cliente: 'Consultoria Delta',
+                projeto: 'Novo centro operacional',
+                score: 81,
+                margem: 21.2,
+                payback: 20,
+                eficiencia: 78,
+                projetos: 1,
+                risco: 29
+            }
+        ];
 
         function formatarData(dataStr) {
             if (!dataStr) return 'N/A';
@@ -705,6 +1018,206 @@
 
         function formatarPayback(valor) {
             return `${Number(valor || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`;
+        }
+
+        function scoreTone(score) {
+            if (score < 60) return 'danger';
+            if (score < 78) return 'warn';
+            return '';
+        }
+
+        function normalizarPortfolio(lista) {
+            const source = Array.isArray(lista) && lista.length ? lista : demoPortfolio;
+            return source.slice(0, 6).map((item, index) => {
+                const baseScore = item.score ?? (86 - index * 7);
+                return {
+                    id: item.id || item.numero || `ANVI-${index + 1}`,
+                    numero: item.numero || item.nome || item.id || `ANVI-${index + 1}`,
+                    cliente: item.cliente || 'Cliente demo',
+                    projeto: item.projeto || item.produto || 'Projeto em análise',
+                    score: Math.max(42, Math.min(94, Number(baseScore))),
+                    margem: Number(item.margem ?? (24 - index * 2.8)),
+                    payback: Number(item.payback ?? (16 + index * 4)),
+                    eficiencia: Number(item.eficiencia ?? (82 - index * 4)),
+                    projetos: Number(item.projetos ?? (index % 3 === 2 ? 0 : 1)),
+                    risco: Number(item.risco ?? (24 + index * 8))
+                };
+            });
+        }
+
+        function sugestaoParaANVI(item) {
+            if (item.score < 60 || item.margem < 10) {
+                return {
+                    tone: 'danger',
+                    titulo: 'Revisar antes de aprovar',
+                    texto: `${item.numero} tem margem baixa ou score inferior ao mínimo. Reavalie custo, preço sugerido e payback.`
+                };
+            }
+            if (item.payback > 24 || item.risco > 45) {
+                return {
+                    tone: 'warning',
+                    titulo: 'Aprovar com ressalvas',
+                    texto: `${item.numero} pode seguir, mas precisa reduzir risco ou fasear investimento para melhorar retorno.`
+                };
+            }
+            return {
+                tone: '',
+                titulo: 'Boa candidata para execução',
+                texto: `${item.numero} está acima da média de eficiência e pode ser priorizada para virar projeto.`
+            };
+        }
+
+        function renderizarPortfolio(lista) {
+            const dados = normalizarPortfolio(lista);
+            const total = dados.length;
+            const mediaScore = total ? dados.reduce((acc, item) => acc + item.score, 0) / total : 0;
+            const mediaEficiencia = total ? dados.reduce((acc, item) => acc + item.eficiencia, 0) / total : 0;
+            const projetos = dados.reduce((acc, item) => acc + item.projetos, 0);
+
+            document.getElementById('portfolioTotal').textContent = total.toLocaleString('pt-BR');
+            document.getElementById('portfolioScore').textContent = mediaScore.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+            document.getElementById('portfolioEfficiency').textContent = formatarPercentual(mediaEficiencia);
+            document.getElementById('portfolioProjects').textContent = projetos.toLocaleString('pt-BR');
+
+            document.getElementById('anviRadarList').innerHTML = dados.slice(0, 4).map(item => `
+                <button type="button" class="anvi-radar-item" onclick="selecionarAnviRadar(decodeURIComponent('${encodeURIComponent(item.numero)}'))">
+                    <span>
+                        <strong>${escapeHtml(item.numero)}</strong>
+                        <span>${escapeHtml(item.cliente)} · ${escapeHtml(item.projeto)}</span>
+                    </span>
+                    <span class="radar-score ${scoreTone(item.score)}">${item.score}</span>
+                </button>
+            `).join('');
+
+            document.getElementById('suggestionsGrid').innerHTML = dados.slice(0, 3).map(item => {
+                const sugestao = sugestaoParaANVI(item);
+                return `
+                    <div class="suggestion-card ${sugestao.tone}">
+                        <small>${escapeHtml(item.cliente)}</small>
+                        <strong>${escapeHtml(sugestao.titulo)}</strong>
+                        <p>${escapeHtml(sugestao.texto)}</p>
+                    </div>
+                `;
+            }).join('');
+
+            renderizarGraficosPortfolio(dados);
+        }
+
+        function selecionarAnviRadar(numero) {
+            document.getElementById('anviInput').value = numero;
+            if (!numero.startsWith('ANVI-DEMO')) {
+                carregarAnalise();
+            }
+        }
+
+        function renderizarGraficosPortfolio(dados, selecionada = null) {
+            const labels = dados.map(item => item.numero.replace('ANVI-', ''));
+            const selectedScore = selecionada?.score ?? dados[0]?.score ?? 0;
+            const selectedExec = selecionada?.execucao ?? dados[0]?.eficiencia ?? 0;
+            const selectedPrazo = selecionada?.prazo ?? Math.max(35, 100 - (dados[0]?.payback || 24));
+            const selectedRisco = selecionada?.riscoScore ?? Math.max(20, 100 - (dados[0]?.risco || 35));
+
+            const efficiencyData = {
+                labels: ['Score geral', 'Execução', 'Prazo', 'Risco controlado'],
+                datasets: [
+                    {
+                        label: 'ANVI selecionada',
+                        data: [selectedScore, selectedExec, selectedPrazo, selectedRisco],
+                        backgroundColor: '#0a3d2e'
+                    },
+                    {
+                        label: 'Média do portfólio',
+                        data: [
+                            media(dados, 'score'),
+                            media(dados, 'eficiencia'),
+                            media(dados.map(item => ({ valor: Math.max(35, 100 - item.payback) })), 'valor'),
+                            media(dados.map(item => ({ valor: Math.max(20, 100 - item.risco) })), 'valor')
+                        ],
+                        backgroundColor: '#d89b2b'
+                    }
+                ]
+            };
+
+            const riskData = {
+                datasets: [{
+                    label: 'ANVIs',
+                    data: dados.map(item => ({
+                        x: item.risco,
+                        y: item.margem,
+                        r: Math.max(7, item.score / 7),
+                        numero: item.numero
+                    })),
+                    backgroundColor: 'rgba(15, 63, 47, 0.72)',
+                    borderColor: '#0a3d2e'
+                }]
+            };
+
+            if (efficiencyChart) efficiencyChart.destroy();
+            if (riskReturnChart) riskReturnChart.destroy();
+
+            const efficiencyCtx = document.getElementById('efficiencyChart');
+            const riskCtx = document.getElementById('riskReturnChart');
+
+            if (!window.Chart || !efficiencyCtx || !riskCtx) return;
+
+            efficiencyChart = new Chart(efficiencyCtx, {
+                type: 'bar',
+                data: efficiencyData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            riskReturnChart = new Chart(riskCtx, {
+                type: 'bubble',
+                data: riskData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Risco' }, min: 0, max: 80 },
+                        y: { title: { display: true, text: 'Margem %' }, min: 0, max: 32 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.raw.numero}: margem ${formatarPercentual(ctx.raw.y)}, risco ${ctx.raw.x}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function media(lista, chave) {
+            if (!Array.isArray(lista) || !lista.length) return 0;
+            return Number((lista.reduce((acc, item) => acc + Number(item[chave] || 0), 0) / lista.length).toFixed(1));
+        }
+
+        function atualizarInteligenciaComAnalise(data) {
+            const scores = data.viabilidade?.scores_por_area || {};
+            const indicadores = data.indicadores_financeiros || {};
+            const atual = {
+                id: data.anvi?.id,
+                numero: data.anvi?.numero || data.anvi?.id || 'ANVI selecionada',
+                cliente: data.anvi?.cliente || 'Cliente',
+                projeto: data.anvi?.projeto || 'Projeto',
+                score: Number(data.viabilidade?.score_geral || 0),
+                margem: Number(indicadores.margem_esperada_pct || 0),
+                payback: Number(indicadores.payback_meses || 0),
+                eficiencia: Number(scores.execucao || scores.planejamento || 0),
+                projetos: data.projeto_vinculado ? 1 : 0,
+                risco: Math.max(0, 100 - Number(scores.risco || 0)),
+                execucao: Number(scores.execucao || 0),
+                prazo: Number(scores.prazo || 0),
+                riscoScore: Number(scores.risco || 0)
+            };
+            const portfolio = [atual, ...demoPortfolio.filter(item => item.numero !== atual.numero)].slice(0, 5);
+            renderizarPortfolio(portfolio);
         }
 
         function renderizarPrioridades(decisao) {
@@ -820,7 +1333,11 @@
                 .then(response => response.ok ? response.json() : null)
                 .then(data => {
                     if (data?.success) {
-                        renderizarSugestoesANVI(data.data || []);
+                        const lista = data.data || [];
+                        renderizarSugestoesANVI(lista);
+                        if (!termo) {
+                            renderizarPortfolio(lista.length ? lista : demoPortfolio);
+                        }
                     }
                 })
                 .catch(() => {});
@@ -1143,6 +1660,8 @@
                     if (data.compatibilidades) {
                         renderizarCompatibilidades(data.compatibilidades);
                     }
+
+                    atualizarInteligenciaComAnalise(data);
                 })
                 .catch(erro => {
                     console.error('Erro:', erro);
@@ -1165,6 +1684,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
+            renderizarPortfolio(demoPortfolio);
             buscarSugestoesANVI('');
             const params = new URLSearchParams(window.location.search);
             const anviId = params.get('anvi_id');

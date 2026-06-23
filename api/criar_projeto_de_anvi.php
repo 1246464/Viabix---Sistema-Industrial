@@ -133,6 +133,24 @@ try {
         exit;
     }
 
+    if ($tenantId) {
+        $quota = viabixCheckPlanQuota($tenantId, 'active_projects');
+        if (!$quota['allowed']) {
+            http_response_code(403);
+            echo json_encode([
+                'sucesso' => false,
+                'erro' => sprintf(
+                    'Seu plano %s permite %s projeto(s) ativo(s). Você já usa %s.',
+                    $quota['plan_name'] ?? 'atual',
+                    $quota['limit'],
+                    $quota['used']
+                ),
+                'quota' => $quota,
+            ]);
+            exit;
+        }
+    }
+
     $anviDados = json_decode($anvi['dados'] ?? '{}', true);
     if (!is_array($anviDados)) {
         $anviDados = [];

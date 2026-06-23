@@ -160,6 +160,24 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Usuário já existe']);
                 exit;
             }
+
+            if ($tenantAwareUsuarios) {
+                $quota = viabixCheckPlanQuota($tenant_id, 'users');
+                if (!$quota['allowed']) {
+                    http_response_code(403);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => sprintf(
+                            'Seu plano %s permite %s usuário(s). Você já usa %s.',
+                            $quota['plan_name'] ?? 'atual',
+                            $quota['limit'],
+                            $quota['used']
+                        ),
+                        'quota' => $quota,
+                    ]);
+                    exit;
+                }
+            }
             
             // Criar usuário
             $id = generateUUID();

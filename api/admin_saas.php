@@ -547,6 +547,7 @@ try {
             $tenantId = trim($input['tenant_id'] ?? '');
             $tenantStatus = trim($input['tenant_status'] ?? '');
             $subscriptionStatus = trim($input['subscription_status'] ?? '');
+            $trialDays = max(1, min(90, (int) ($input['trial_days'] ?? 14)));
 
             if ($tenantId === '' || $tenantStatus === '' || $subscriptionStatus === '') {
                 http_response_code(422);
@@ -572,11 +573,22 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare('UPDATE tenants SET status = ?, updated_at = NOW(), cancelado_em = CASE WHEN ? = "cancelado" THEN NOW() ELSE cancelado_em END WHERE id = ?');
+            $trialUntilSql = $subscriptionStatus === 'trial'
+                ? 'DATE_ADD(NOW(), INTERVAL ' . $trialDays . ' DAY)'
+                : 'trial_ate';
+
+            $stmt = $pdo->prepare("UPDATE tenants SET status = ?, trial_ate = {$trialUntilSql}, updated_at = NOW(), cancelado_em = CASE WHEN ? = 'cancelado' THEN NOW() ELSE cancelado_em END WHERE id = ?");
             $stmt->execute([$tenantStatus, $tenantStatus, $tenantId]);
 
-            $stmt = $pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = NOW(), cancelada_em = CASE WHEN ? = "cancelada" THEN NOW() ELSE cancelada_em END WHERE id = ?');
-            $stmt->execute([$subscriptionStatus, $subscriptionStatus, $subscription['id']]);
+            $stmt = $pdo->prepare("UPDATE subscriptions
+                SET status = ?,
+                    trial_iniciado_em = CASE WHEN ? = 'trial' THEN NOW() ELSE trial_iniciado_em END,
+                    trial_ate = CASE WHEN ? = 'trial' THEN {$trialUntilSql} ELSE trial_ate END,
+                    fim_vigencia = CASE WHEN ? = 'trial' THEN {$trialUntilSql} ELSE fim_vigencia END,
+                    cancelada_em = CASE WHEN ? = 'cancelada' THEN NOW() ELSE cancelada_em END,
+                    updated_at = NOW()
+                WHERE id = ?");
+            $stmt->execute([$subscriptionStatus, $subscriptionStatus, $subscriptionStatus, $subscriptionStatus, $subscriptionStatus, $subscription['id']]);
 
             $stmt = $pdo->prepare('INSERT INTO subscription_events (subscription_id, tenant_id, tipo_evento, origem, payload) VALUES (?, ?, ?, ?, ?)');
             $stmt->execute([
@@ -587,6 +599,7 @@ try {
                 json_encode([
                     'tenant_status' => $tenantStatus,
                     'subscription_status' => $subscriptionStatus,
+                    'trial_days' => $subscriptionStatus === 'trial' ? $trialDays : null,
                     'admin_user' => $admin['login'],
                 ], JSON_UNESCAPED_UNICODE),
             ]);
@@ -635,8 +648,9 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare('UPDATE subscriptions SET plan_id = ?, ciclo = ?, valor_contratado = ?, updated_at = NOW() WHERE id = ?');
-            $stmt->execute([$plan['id'], $cycle, $amount, $subscription['id']]);
+            $contractedUsers = $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : 999;
+            $stmt = $pdo->prepare('UPDATE subscriptions SET plan_id = ?, ciclo = ?, quantidade_usuarios_contratados = ?, valor_contratado = ?, updated_at = NOW() WHERE id = ?');
+            $stmt->execute([$plan['id'], $cycle, $contractedUsers, $amount, $subscription['id']]);
 
             $stmt = $pdo->prepare('INSERT INTO subscription_events (subscription_id, tenant_id, tipo_evento, origem, payload) VALUES (?, ?, ?, ?, ?)');
             $stmt->execute([
@@ -648,6 +662,12 @@ try {
                     'plan_code' => $plan['codigo'],
                     'plan_name' => $plan['nome'],
                     'cycle' => $cycle,
+                    'quantity_users' => $contractedUsers,
+                    'limits' => [
+                        'users' => $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : null,
+                        'anvis_monthly' => $plan['limite_anvis_mensal'] !== null ? (int) $plan['limite_anvis_mensal'] : null,
+                        'active_projects' => $plan['limite_projetos_ativos'] !== null ? (int) $plan['limite_projetos_ativos'] : null,
+                    ],
                     'admin_user' => $admin['login'],
                 ], JSON_UNESCAPED_UNICODE),
             ]);

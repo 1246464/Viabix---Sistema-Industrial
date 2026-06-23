@@ -102,7 +102,9 @@ function signupDefaultPlan() {
     global $pdo;
 
     $stmt = $pdo->prepare(
-        "SELECT id, codigo, nome
+        "SELECT id, codigo, nome, preco_mensal, preco_anual,
+                limite_usuarios, limite_anvis_mensal, limite_projetos_ativos,
+                permite_modulo_anvi, permite_modulo_projetos, permite_exportacao, permite_api, permite_sso
          FROM plans
          WHERE status = 'ativo'
          ORDER BY CASE codigo WHEN 'starter' THEN 1 WHEN 'pro' THEN 2 ELSE 3 END, nome ASC
@@ -117,7 +119,9 @@ function signupPlanByCode($planCode) {
     global $pdo;
 
     $stmt = $pdo->prepare(
-        "SELECT id, codigo, nome
+        "SELECT id, codigo, nome, preco_mensal, preco_anual,
+                limite_usuarios, limite_anvis_mensal, limite_projetos_ativos,
+                permite_modulo_anvi, permite_modulo_projetos, permite_exportacao, permite_api, permite_sso
          FROM plans
          WHERE status = 'ativo' AND codigo = ?
          LIMIT 1"
@@ -201,6 +205,7 @@ try {
     $subscriptionId = generateUUID();
     $slug = signupUniqueSlug(signupSlugify($companyName));
     $trialDays = 14;
+    $contractedUsers = $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : 999;
     $now = new DateTimeImmutable('now');
     $trialUntil = $now->modify('+' . $trialDays . ' days')->format('Y-m-d H:i:s');
     $nowFormatted = $now->format('Y-m-d H:i:s');
@@ -250,7 +255,7 @@ try {
         $subscriptionId,
         $tenantId,
         $plan['id'],
-        1,
+        $contractedUsers,
         0,
         $nowFormatted,
         $trialUntil,
@@ -269,6 +274,11 @@ try {
         'sistema',
         json_encode([
             'plan_code' => $plan['codigo'],
+            'plan_limits' => [
+                'usuarios' => $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : null,
+                'anvis_mensal' => $plan['limite_anvis_mensal'] !== null ? (int) $plan['limite_anvis_mensal'] : null,
+                'projetos_ativos' => $plan['limite_projetos_ativos'] !== null ? (int) $plan['limite_projetos_ativos'] : null,
+            ],
             'trial_days' => $trialDays,
             'signup_email' => $email,
         ], JSON_UNESCAPED_UNICODE),
@@ -354,6 +364,19 @@ try {
             'plan_name' => $plan['nome'],
             'trial_days' => $trialDays,
             'trial_ate' => $trialUntil,
+            'quantity_users' => $contractedUsers,
+            'limits' => [
+                'users' => $plan['limite_usuarios'] !== null ? (int) $plan['limite_usuarios'] : null,
+                'anvis_monthly' => $plan['limite_anvis_mensal'] !== null ? (int) $plan['limite_anvis_mensal'] : null,
+                'active_projects' => $plan['limite_projetos_ativos'] !== null ? (int) $plan['limite_projetos_ativos'] : null,
+            ],
+            'features' => [
+                'modulo_anvi' => (bool) $plan['permite_modulo_anvi'],
+                'modulo_projetos' => (bool) $plan['permite_modulo_projetos'],
+                'exportacao' => (bool) $plan['permite_exportacao'],
+                'api' => (bool) $plan['permite_api'],
+                'sso' => (bool) $plan['permite_sso'],
+            ],
         ],
     ]);
 } catch (PDOException $e) {

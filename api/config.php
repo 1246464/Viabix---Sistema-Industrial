@@ -675,6 +675,11 @@ function viabixGetTenantContext($tenantId) {
         'plan_id' => null,
         'plan_code' => null,
         'plan_name' => null,
+        'limits' => [
+            'users' => null,
+            'anvis_monthly' => null,
+            'active_projects' => null,
+        ],
         'features' => [
             'modulo_anvi' => true,
             'modulo_projetos' => true,
@@ -717,6 +722,9 @@ function viabixGetTenantContext($tenantId) {
             p.id AS plan_id,
             p.codigo AS plan_code,
             p.nome AS plan_name,
+            p.limite_usuarios,
+            p.limite_anvis_mensal,
+            p.limite_projetos_ativos,
             p.permite_modulo_anvi,
             p.permite_modulo_projetos,
             p.permite_exportacao,
@@ -751,6 +759,11 @@ function viabixGetTenantContext($tenantId) {
     $context['plan_id'] = $subscription['plan_id'];
     $context['plan_code'] = $subscription['plan_code'];
     $context['plan_name'] = $subscription['plan_name'];
+    $context['limits'] = [
+        'users' => $subscription['limite_usuarios'] !== null ? (int) $subscription['limite_usuarios'] : null,
+        'anvis_monthly' => $subscription['limite_anvis_mensal'] !== null ? (int) $subscription['limite_anvis_mensal'] : null,
+        'active_projects' => $subscription['limite_projetos_ativos'] !== null ? (int) $subscription['limite_projetos_ativos'] : null,
+    ];
     $context['features'] = [
         'modulo_anvi' => (bool) $subscription['permite_modulo_anvi'],
         'modulo_projetos' => (bool) $subscription['permite_modulo_projetos'],
@@ -810,6 +823,11 @@ function viabixPopulateSession($user, $tenantContext = []) {
     $_SESSION['plan_id'] = $tenantContext['plan_id'] ?? null;
     $_SESSION['plan_code'] = $tenantContext['plan_code'] ?? null;
     $_SESSION['plan_name'] = $tenantContext['plan_name'] ?? null;
+    $_SESSION['limits'] = $tenantContext['limits'] ?? [
+        'users' => null,
+        'anvis_monthly' => null,
+        'active_projects' => null,
+    ];
     $_SESSION['features'] = $tenantContext['features'] ?? [
         'modulo_anvi' => true,
         'modulo_projetos' => true,
@@ -1462,6 +1480,7 @@ function viabixGetCurrentSubscriptionRecord($tenantId) {
     $stmt = $pdo->prepare(
         "SELECT s.*, p.codigo AS plan_code, p.nome AS plan_name,
                 p.preco_mensal, p.preco_anual,
+                p.limite_usuarios, p.limite_anvis_mensal, p.limite_projetos_ativos,
                 p.permite_modulo_anvi, p.permite_modulo_projetos,
                 p.permite_exportacao, p.permite_api, p.permite_sso
          FROM subscriptions s
@@ -1483,6 +1502,79 @@ function viabixGetCurrentSubscriptionRecord($tenantId) {
     $stmt->execute([$tenantId]);
 
     return $stmt->fetch() ?: null;
+}
+
+/**
+ * Valida limites comerciais do plano atual para recursos que crescem por tenant.
+ * Retorna allowed=true quando o plano não tem limite definido para o recurso.
+ */
+function viabixCheckPlanQuota($tenantId, $resource) {
+    global $pdo;
+
+    $resource = (string) $resource;
+    $subscription = viabixGetCurrentSubscriptionRecord($tenantId);
+    if (!$tenantId || !$subscription) {
+        return [
+            'allowed' => true,
+            'limit' => null,
+            'used' => 0,
+            'resource' => $resource,
+            'message' => null,
+        ];
+    }
+
+    $limitColumn = null;
+    $table = null;
+    $where = 'tenant_id = ?';
+
+    if ($resource === 'anvis_monthly') {
+        $limitColumn = 'limite_anvis_mensal';
+        $table = 'anvis';
+        $dateColumn = viabixHasColumn('anvis', 'data_criacao')
+            ? 'data_criacao'
+            : (viabixHasColumn('anvis', 'created_at') ? 'created_at' : null);
+        if ($dateColumn) {
+            $where .= " AND {$dateColumn} >= DATE_FORMAT(NOW(), '%Y-%m-01')";
+        }
+    } elseif ($resource === 'active_projects') {
+        $limitColumn = 'limite_projetos_ativos';
+        $table = 'projetos';
+        if (viabixHasColumn('projetos', 'status')) {
+            $where .= " AND status NOT IN ('concluido', 'concluído', 'cancelado', 'cancelada', 'arquivado', 'arquivada')";
+        }
+    } elseif ($resource === 'users') {
+        $limitColumn = 'limite_usuarios';
+        $table = 'usuarios';
+        if (viabixHasColumn('usuarios', 'ativo')) {
+            $where .= ' AND ativo = 1';
+        }
+    }
+
+    if (!$limitColumn || !$table || !viabixHasTable($table) || !viabixHasColumn($table, 'tenant_id')) {
+        return [
+            'allowed' => true,
+            'limit' => null,
+            'used' => 0,
+            'resource' => $resource,
+            'message' => null,
+        ];
+    }
+
+    $limit = $subscription[$limitColumn] !== null ? (int) $subscription[$limitColumn] : null;
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM {$table} WHERE {$where}");
+    $stmt->execute([$tenantId]);
+    $used = (int) $stmt->fetchColumn();
+    $allowed = $limit === null || $used < $limit;
+
+    return [
+        'allowed' => $allowed,
+        'limit' => $limit,
+        'used' => $used,
+        'resource' => $resource,
+        'plan_code' => $subscription['plan_code'] ?? null,
+        'plan_name' => $subscription['plan_name'] ?? null,
+        'message' => $allowed ? null : 'Limite do plano atingido.',
+    ];
 }
 
 /**

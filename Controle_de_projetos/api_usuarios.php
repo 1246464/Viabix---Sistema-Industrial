@@ -84,6 +84,24 @@ try {
                 exit;
             }
 
+            if ($tenantAware && $currentTenantId && function_exists('viabixCheckPlanQuota')) {
+                $quota = viabixCheckPlanQuota($currentTenantId, 'users');
+                if (!$quota['allowed']) {
+                    http_response_code(403);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => sprintf(
+                            'Seu plano %s permite %s usuário(s). Você já usa %s.',
+                            $quota['plan_name'] ?? 'atual',
+                            $quota['limit'],
+                            $quota['used']
+                        ),
+                        'quota' => $quota,
+                    ]);
+                    exit;
+                }
+            }
+
             // SECURITY FIX: Inserir com tenant_id se disponível
             if ($tenantAware && $currentTenantId) {
                 $stmt = $pdo->prepare("INSERT INTO usuarios (tenant_id, username, senha, nome, nivel) VALUES (?, ?, ?, ?, ?)");

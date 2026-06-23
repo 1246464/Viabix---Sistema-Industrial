@@ -641,15 +641,18 @@
         const planCatalog = {
             starter: {
                 name: 'Starter',
-                description: 'Entrada para equipes menores, com ANVI, projetos e exportação padrão.'
+                description: 'Entrada para equipes menores, com ANVI, projetos e exportação padrão.',
+                limits: '3 usuários · 30 ANVIs/mês · 20 projetos ativos'
             },
             pro: {
                 name: 'Pro',
-                description: 'Plano mais equilibrado para operação comercial em escala, com API liberada e maior capacidade.'
+                description: 'Plano mais equilibrado para operação comercial em escala, com API liberada e maior capacidade.',
+                limits: '15 usuários · ANVIs ilimitadas · projetos ilimitados'
             },
             enterprise: {
                 name: 'Enterprise',
-                description: 'Conta pensada para operação corporativa, com usuários ilimitados, SSO e suporte dedicado.'
+                description: 'Conta pensada para operação corporativa, com usuários ilimitados, SSO e suporte dedicado.',
+                limits: 'Usuários ilimitados · ANVIs ilimitadas · SSO'
             }
         };
 
@@ -659,7 +662,7 @@
 
             planInput.value = normalizedPlan;
             selectedPlanBox.querySelector('strong').textContent = `Plano selecionado para o trial: ${plan.name}`;
-            selectedPlanDescription.textContent = plan.description;
+            selectedPlanDescription.textContent = `${plan.description} Limites do trial: ${plan.limits}.`;
             document.querySelectorAll('.plan-choice').forEach((button) => {
                 button.classList.toggle('active', button.dataset.plan === normalizedPlan);
             });

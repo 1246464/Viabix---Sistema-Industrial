@@ -479,6 +479,25 @@ try {
                 
             } else {
                 // Inserir nova
+                if ($tenantAwareAnvis) {
+                    $quota = viabixCheckPlanQuota($tenant_id, 'anvis_monthly');
+                    if (!$quota['allowed']) {
+                        http_response_code(403);
+                        echo json_encode([
+                            'success' => false,
+                            'error' => 'Limite mensal de ANVIs atingido',
+                            'message' => sprintf(
+                                'Seu plano %s permite %s ANVI(s) por mês. Você já usou %s.',
+                                $quota['plan_name'] ?? 'atual',
+                                $quota['limit'],
+                                $quota['used']
+                            ),
+                            'quota' => $quota,
+                        ]);
+                        exit;
+                    }
+                }
+
                 $nova_versao = 1;
                 
                 $insertValues = [

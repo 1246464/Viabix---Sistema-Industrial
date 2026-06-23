@@ -513,6 +513,7 @@
                 <div class="detail-section">
                     <h3>Status operacional</h3>
                     <div class="detail-actions">
+                        <button type="button" onclick="updateTenantStatus('${tenant.id}', 'trial', 'trial', 14)">Reabrir trial 14 dias</button>
                         <button type="button" onclick="updateTenantStatus('${tenant.id}', 'ativo', 'ativa')">Ativar conta</button>
                         <button type="button" onclick="updateTenantStatus('${tenant.id}', 'suspenso', 'suspensa')">Suspender conta</button>
                         <button type="button" onclick="updateTenantStatus('${tenant.id}', 'inadimplente', 'inadimplente')">Marcar inadimplência</button>
@@ -722,14 +723,19 @@
             renderTenantDetail(data);
         }
 
-        async function updateTenantStatus(tenantId, tenantStatus, subscriptionStatus) {
+        async function updateTenantStatus(tenantId, tenantStatus, subscriptionStatus, trialDays = null) {
             hideAlert();
             try {
+                const payload = { tenant_id: tenantId, tenant_status: tenantStatus, subscription_status: subscriptionStatus };
+                if (trialDays) {
+                    payload.trial_days = trialDays;
+                }
+
                 const response = await fetch('api/admin_saas.php?action=update_status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.viabixCsrfToken || '' },
                     credentials: 'include',
-                    body: JSON.stringify({ tenant_id: tenantId, tenant_status: tenantStatus, subscription_status: subscriptionStatus })
+                    body: JSON.stringify(payload)
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) {

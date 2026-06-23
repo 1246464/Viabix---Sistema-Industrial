@@ -69,6 +69,11 @@ echo json_encode([
             'name' => $subscription['plan_name'],
             'monthly_price' => (float) $subscription['preco_mensal'],
             'annual_price' => (float) $subscription['preco_anual'],
+            'limits' => [
+                'users' => $subscription['limite_usuarios'] !== null ? (int) $subscription['limite_usuarios'] : null,
+                'anvis_monthly' => $subscription['limite_anvis_mensal'] !== null ? (int) $subscription['limite_anvis_mensal'] : null,
+                'active_projects' => $subscription['limite_projetos_ativos'] !== null ? (int) $subscription['limite_projetos_ativos'] : null,
+            ],
             'features' => [
                 'modulo_anvi' => (bool) $subscription['permite_modulo_anvi'],
                 'modulo_projetos' => (bool) $subscription['permite_modulo_projetos'],
