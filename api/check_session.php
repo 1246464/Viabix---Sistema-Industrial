@@ -19,7 +19,7 @@ viabixHandleCorsPreflight(
 
 // Iniciar sessao apenas se nao estiver ativa
 if (session_status() === PHP_SESSION_NONE) {
-    session_name('viabix_session');
+    session_name(defined('SESSION_NAME') ? SESSION_NAME : 'viabix_session');
     session_start();
 }
 

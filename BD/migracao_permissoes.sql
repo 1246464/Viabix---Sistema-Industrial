@@ -12,8 +12,8 @@ USE viabix_db;
 -- 1. TABELA: ROLES (Papéis padrão do sistema)
 -- =======================================================
 CREATE TABLE IF NOT EXISTS roles (
-    id VARCHAR(36) PRIMARY KEY,
-    tenant_id VARCHAR(36) NOT NULL,
+    id CHAR(36) PRIMARY KEY,
+    tenant_id CHAR(36) NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     is_default BOOLEAN DEFAULT FALSE,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS roles (
 -- 2. TABELA: PERMISSIONS (Permissões disponíveis)
 -- =======================================================
 CREATE TABLE IF NOT EXISTS permissions (
-    id VARCHAR(36) PRIMARY KEY,
+    id CHAR(36) PRIMARY KEY,
     resource VARCHAR(100) NOT NULL,
     action VARCHAR(100) NOT NULL,
     description VARCHAR(255),
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS permissions (
 -- =======================================================
 CREATE TABLE IF NOT EXISTS role_permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    role_id VARCHAR(36) NOT NULL,
-    permission_id VARCHAR(36) NOT NULL,
+    role_id CHAR(36) NOT NULL,
+    permission_id CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE KEY uk_role_permission (role_id, permission_id),
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 -- =======================================================
 CREATE TABLE IF NOT EXISTS user_roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    role_id VARCHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    role_id CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE KEY uk_user_role (user_id, role_id),
@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS user_roles (
 -- Permite dar/remover permissões individuais sem mudar role
 CREATE TABLE IF NOT EXISTS user_custom_permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    permission_id VARCHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    permission_id CHAR(36) NOT NULL,
     grant_type ENUM('grant', 'deny') DEFAULT 'grant',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -96,8 +96,8 @@ CREATE TABLE IF NOT EXISTS user_custom_permissions (
 -- =======================================================
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id VARCHAR(36) NOT NULL,
-    user_id VARCHAR(36),
+    tenant_id CHAR(36) NOT NULL,
+    user_id CHAR(36),
     action VARCHAR(100) NOT NULL,
     details JSON,
     affected_resource_id VARCHAR(100),
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE TABLE IF NOT EXISTS security_events (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     event_type VARCHAR(100) NOT NULL,
-    user_id VARCHAR(36),
+    user_id CHAR(36),
     ip_address VARCHAR(45),
     details JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

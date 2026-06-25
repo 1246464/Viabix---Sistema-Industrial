@@ -31,7 +31,7 @@ header('Cache-Control: no-cache');
 header('Connection: keep-alive');
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_name('viabix_session');
+    session_name(defined('SESSION_NAME') ? SESSION_NAME : 'viabix_session');
     session_start();
 }
 

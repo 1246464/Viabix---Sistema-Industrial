@@ -8,7 +8,7 @@ require_once __DIR__ . '/../api/config.php';
 
 // Iniciar sessão com nome padronizado Viabix
 if (session_status() === PHP_SESSION_NONE) {
-    session_name('viabix_session');
+    session_name(defined('SESSION_NAME') ? SESSION_NAME : 'viabix_session');
     session_start();
 }
 

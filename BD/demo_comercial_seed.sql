@@ -58,9 +58,18 @@ VALUES (
 )
 ON DUPLICATE KEY UPDATE dados = VALUES(dados), volume_mensal = VALUES(volume_mensal), atualizado_por = VALUES(atualizado_por);
 
-INSERT INTO projetos (tenant_id, dados)
+INSERT INTO projetos (tenant_id, anvi_id, cliente, nome, segmento, codigo, fase, status, progresso, orcamento, dados)
 VALUES (
     @tenant_id,
+    @anvi_id,
+    'Montadora Aurora',
+    'Industrializacao para-brisa panoramico',
+    'Automotivo',
+    'PRJ-DEMO-2026-001',
+    'Planejamento',
+    'em-andamento',
+    38.00,
+    7900000.00,
     JSON_OBJECT(
         'projectName', 'Industrializacao para-brisa panoramico',
         'cliente', 'Montadora Aurora',

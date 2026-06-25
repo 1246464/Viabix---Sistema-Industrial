@@ -1,7 +1,9 @@
 /*
- * Viabix shared interface layer.
- * This file intentionally uses common selectors plus a few !important rules
- * because older modules still keep large inline style blocks.
+ * Viabix shared interface tokens.
+ *
+ * Keep this file intentionally conservative: the older screens still have
+ * their own large style blocks. Global selectors here must not override page
+ * layouts such as home, signup, ANVI or Controle de Projetos.
  */
 :root {
     --vb-font: "Inter", "Sora", "Segoe UI", Arial, sans-serif;
@@ -26,210 +28,59 @@ html {
     color-scheme: light;
 }
 
-body {
-    font-family: var(--vb-font) !important;
-    color: var(--vb-ink) !important;
-    background:
-        linear-gradient(180deg, rgba(244, 247, 242, 0.98), rgba(233, 241, 235, 0.98)) !important;
-    letter-spacing: 0 !important;
+.vb-surface {
+    background: var(--vb-panel);
+    border: 1px solid var(--vb-line);
+    border-radius: var(--vb-radius);
+    box-shadow: var(--vb-shadow-soft);
 }
 
-a {
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
+.vb-muted {
+    color: var(--vb-muted);
 }
 
-.shell,
-.container {
-    width: min(1280px, calc(100% - 32px));
+.vb-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--vb-radius);
+    border: 1px solid var(--vb-primary);
+    background: linear-gradient(135deg, var(--vb-primary-2), var(--vb-primary));
+    color: #ffffff;
+    font: inherit;
+    letter-spacing: 0;
+    text-decoration: none;
 }
 
-.topbar {
-    background: rgba(255, 255, 255, 0.94) !important;
-    border-bottom: 1px solid rgba(15, 63, 47, 0.08) !important;
-    box-shadow: var(--vb-shadow-soft) !important;
+.vb-action-secondary {
+    border-color: rgba(15, 63, 47, 0.16);
+    background: rgba(15, 63, 47, 0.08);
+    color: var(--vb-primary);
 }
 
-header,
-.header {
-    background: linear-gradient(135deg, var(--vb-primary), #13352d) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: var(--vb-shadow-soft) !important;
+.vb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
-.brand,
-.logo,
-.header .logo {
-    letter-spacing: 0 !important;
+.vb-badge-success {
+    background: #e7f4ea;
+    color: var(--vb-success);
 }
 
-.card,
-.panel,
-.plan-card,
-.metric,
-.summary-card,
-.hero-card,
-.lifecycle-step,
-.modal-content {
-    border-radius: var(--vb-radius) !important;
-    border: 1px solid var(--vb-line) !important;
-    box-shadow: var(--vb-shadow-soft) !important;
+.vb-badge-warning {
+    background: #fff6df;
+    color: var(--vb-warning);
 }
 
-.card,
-.panel,
-.plan-card,
-.metric,
-.summary-card,
-.lifecycle-step {
-    background: var(--vb-panel) !important;
-}
-
-.card:hover,
-.plan-card:hover,
-.summary-card:hover {
-    transform: none !important;
-    box-shadow: var(--vb-shadow) !important;
-}
-
-.card-header {
-    border-radius: var(--vb-radius) var(--vb-radius) 0 0 !important;
-    background: linear-gradient(135deg, var(--vb-primary), var(--vb-primary-2)) !important;
-    border-bottom: 2px solid var(--vb-accent) !important;
-}
-
-button,
-.btn,
-.pay-button,
-.outline-button,
-.primary-action a,
-.topbar a,
-.back-link,
-.cta,
-.inline-action,
-input[type="submit"] {
-    border-radius: var(--vb-radius) !important;
-    letter-spacing: 0 !important;
-}
-
-.btn-primary,
-.pay-button,
-.toolbar button,
-.detail-actions button,
-.inline-action,
-button.primary,
-button[type="submit"] {
-    background: linear-gradient(135deg, var(--vb-primary-2), var(--vb-primary)) !important;
-    border-color: var(--vb-primary) !important;
-    color: #ffffff !important;
-}
-
-.outline-button,
-.back-link,
-.topbar a {
-    background: rgba(15, 63, 47, 0.08) !important;
-    color: var(--vb-primary) !important;
-}
-
-input,
-select,
-textarea {
-    border-radius: var(--vb-radius) !important;
-    border-color: var(--vb-line) !important;
-    font-family: var(--vb-font) !important;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-    border-color: var(--vb-primary-2) !important;
-    box-shadow: 0 0 0 3px rgba(31, 107, 83, 0.14) !important;
-    outline: none !important;
-}
-
-table {
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-}
-
-th {
-    color: var(--vb-muted) !important;
-    letter-spacing: 0.04em !important;
-}
-
-td,
-th {
-    border-color: #edf2ee !important;
-}
-
-.badge,
-.pill,
-.status-chip,
-.tag {
-    border-radius: 999px !important;
-    letter-spacing: 0 !important;
-}
-
-.badge.ativo,
-.badge.ativa,
-.badge.processado,
-.badge.confirmado,
-.badge.paga,
-.pill.active {
-    background: #e7f4ea !important;
-    color: var(--vb-success) !important;
-}
-
-.badge.trial,
-.badge.pendente,
-.pill.warn,
-.status-chip.warn {
-    background: #fff6df !important;
-    color: var(--vb-warning) !important;
-}
-
-.badge.erro,
-.badge.falhou,
-.badge.vencida,
-.badge.cancelada,
-.badge.cancelado,
-.badge.inadimplente,
-.badge.suspenso,
-.badge.suspensa,
-.alert.error {
-    background: #fdecea !important;
-    color: var(--vb-danger) !important;
-}
-
-.muted,
-.metric span,
-.summary-card span,
-.lifecycle-step span,
-.plan-card p {
-    color: var(--vb-muted) !important;
-}
-
-.layout,
-.hero,
-.grid,
-.ops-grid,
-.metrics,
-.summary-grid,
-.ops-summary,
-.plan-grid,
-.lifecycle {
-    gap: 16px !important;
-}
-
-@media (max-width: 760px) {
-    .shell,
-    .container {
-        width: min(100% - 20px, 1280px);
-    }
-
-    .topbar,
-    header,
-    .header {
-        border-radius: 0 !important;
-    }
+.vb-badge-danger {
+    background: #fdecea;
+    color: var(--vb-danger);
 }

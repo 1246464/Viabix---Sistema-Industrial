@@ -9,9 +9,14 @@ viabix-android/.gradle/
 viabix-android/app/build/
 viabix-android/build/
 viabix-android/local.properties
+viabix-android/gradle-*/
+viabix-android/gradle/gradle-*/
 viabix-android/gradle-*.zip
 viabix-android/*.zip
 viabix-android/*.hprof
+downloads/*.apk
+*.apk
+*.jar
 *.hprof
 gradle-*.zip
 

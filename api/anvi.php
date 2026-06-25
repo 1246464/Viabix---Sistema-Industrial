@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Gerenciamento de ANVIs - Sistema Viabix
  * VERSÃO SIMPLIFICADA - SEM PROCEDURE

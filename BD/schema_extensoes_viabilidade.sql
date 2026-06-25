@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS projeto_etapas (
     data_inicio_real DATE,
     data_fim_real DATE,
     percentual_completo INT NOT NULL DEFAULT 0 COMMENT 'Percentual de conclusão (0-100)',
-    responsavel_id BIGINT,
+    responsavel_id CHAR(36) NULL,
     status ENUM('planejada', 'em_andamento', 'concluida', 'cancelada') NOT NULL DEFAULT 'planejada',
     observacoes TEXT,
     
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS projeto_alocacoes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     projeto_id BIGINT NOT NULL,
-    usuario_id CHAR(36) NOT NULL,
+    usuario_id CHAR(36) NULL,
     papel VARCHAR(100) NOT NULL COMMENT 'Ex: Developer, PM, QA',
     horas_planejadas DECIMAL(8, 2) NOT NULL COMMENT 'Horas/semana planejadas',
     horas_reais DECIMAL(8, 2) COMMENT 'Horas/semana reais',
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS projeto_historico_custos (
     orcamento_novo DECIMAL(14, 2),
     custo_real_anterior DECIMAL(14, 2),
     custo_real_novo DECIMAL(14, 2),
-    usuario_id CHAR(36) NOT NULL,
+    usuario_id CHAR(36) NULL,
     motivo TEXT,
     
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,

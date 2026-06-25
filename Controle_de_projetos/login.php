@@ -5,7 +5,8 @@
  */
 
 // Iniciar sessão com nome padronizado
-session_name('viabix_session');
+require_once __DIR__ . '/../bootstrap_env.php';
+session_name(viabix_env('SESSION_NAME', 'viabix_session'));
 session_start();
 
 // Se já estiver logado, redirecionar para o módulo apropriado

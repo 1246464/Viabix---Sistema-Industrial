@@ -1641,7 +1641,7 @@
             }
         }
     </style>
-    <link href="assets/css/viabix-theme.css" rel="stylesheet">
+    <link href="assets/css/viabix-theme.css?v=20260625" rel="stylesheet">
 </head>
 <body>
 
@@ -2559,25 +2559,32 @@
         });
 
         async function loadStats() {
+            const statTargets = {
+                anvisTotal: 'anvis_total',
+                projetosTotal: 'projetos_total',
+                usuariosTotal: 'usuarios_total',
+                lideresTotal: 'lideres_total',
+                anvisRecentes: 'anvis_recentes'
+            };
+            const setStats = (values = {}) => {
+                Object.entries(statTargets).forEach(([elementId, dataKey]) => {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.textContent = values[dataKey] || 0;
+                    }
+                });
+            };
+
             try {
                 const data = await ViabixApiCore.getPublicStats();
                 if (!data._ok || !data.success) {
                     throw new Error(data.message || 'Erro ao carregar estatísticas');
                 }
 
-                document.getElementById('anvisTotal').textContent = data.anvis_total || 0;
-                document.getElementById('projetosTotal').textContent = data.projetos_total || 0;
-                document.getElementById('usuariosTotal').textContent = data.usuarios_total || 0;
-                document.getElementById('lideresTotal').textContent = data.lideres_total || 0;
-                document.getElementById('anvisRecentes').textContent = data.anvis_recentes || 0;
+                setStats(data);
             } catch (e) {
                 console.error('Erro ao carregar estatísticas:', e);
-                // Valores padrão caso haja erro
-                document.getElementById('anvisTotal').textContent = '0';
-                document.getElementById('projetosTotal').textContent = '0';
-                document.getElementById('usuariosTotal').textContent = '0';
-                document.getElementById('lideresTotal').textContent = '0';
-                document.getElementById('anvisRecentes').textContent = '0';
+                setStats();
             }
         }
 
@@ -2585,7 +2592,6 @@
         checkSessionStatus();
         loadStats();
     </script>
-    <script src="js/anvi-api-core.js"></script>
     <script src="chat-widget.js"></script>
 </body>
 </html>

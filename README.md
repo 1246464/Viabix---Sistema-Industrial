@@ -265,6 +265,8 @@ O repositorio contem:
 - `api/database.sql`: schema operacional principal usado no ambiente atual
 - `BD/viabix_saas_multitenant.sql`: desenho da estrutura SaaS multi-tenant
 - `BD/migracao_para_saas_fase1.sql`: migracao inicial para tenancy e billing
+- `scripts/db_homolog_migrate.php`: executor seguro para montar banco limpo de homologacao
+- `tests/db_homolog_validate.php`: validacao minima do contrato de banco esperado
 
 Resumo da estrategia:
 
@@ -272,6 +274,8 @@ Resumo da estrategia:
 2. adicionar `tenant_id` nas tabelas operacionais
 3. criar tenancy, assinatura e cobranca
 4. mover a aplicacao para filtros obrigatorios por tenant
+
+Para homologacao local, veja `docs/DATABASE_HOMOLOGATION.md`.
 
 ## Solucao de problemas
 

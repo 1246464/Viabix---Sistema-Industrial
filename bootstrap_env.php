@@ -1,18 +1,18 @@
 <?php
 
 if (!function_exists('viabix_put_env')) {
-    function viabix_put_env($name, $value) {
+    function viabix_put_env($name, $value, $overwrite = false) {
         $normalizedValue = (string) $value;
 
         $_ENV[$name] = $normalizedValue;
         $_SERVER[$name] = $normalizedValue;
 
-        if (getenv($name) === false) {
+        if ($overwrite || getenv($name) === false) {
             putenv($name . '=' . $normalizedValue);
         }
     }
 
-    function viabix_load_env_file($filePath) {
+    function viabix_load_env_file($filePath, $overwrite = false) {
         if (!is_file($filePath) || !is_readable($filePath)) {
             return;
         }
@@ -37,7 +37,11 @@ if (!function_exists('viabix_put_env')) {
             $name = trim(substr($trimmedLine, 0, $separatorPosition));
             $value = trim(substr($trimmedLine, $separatorPosition + 1));
 
-            if ($name === '' || getenv($name) !== false || isset($_ENV[$name]) || isset($_SERVER[$name])) {
+            if (!$overwrite && ($name === '' || getenv($name) !== false || isset($_ENV[$name]) || isset($_SERVER[$name]))) {
+                continue;
+            }
+
+            if ($overwrite && $name === '') {
                 continue;
             }
 
@@ -50,7 +54,7 @@ if (!function_exists('viabix_put_env')) {
                 }
             }
 
-            viabix_put_env($name, $value);
+            viabix_put_env($name, $value, $overwrite);
         }
     }
 
@@ -63,7 +67,7 @@ if (!function_exists('viabix_put_env')) {
 
         $rootDir = __DIR__;
         viabix_load_env_file($rootDir . DIRECTORY_SEPARATOR . '.env');
-        viabix_load_env_file($rootDir . DIRECTORY_SEPARATOR . '.env.local');
+        viabix_load_env_file($rootDir . DIRECTORY_SEPARATOR . '.env.local', true);
 
         $loaded = true;
     }
