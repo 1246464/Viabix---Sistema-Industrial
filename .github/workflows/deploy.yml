@@ -24,6 +24,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
+    env:
+      DROPLET_IP: ${{ secrets.DROPLET_IP }}
 
     steps:
       - name: Checkout
@@ -34,6 +36,7 @@ jobs:
           find api -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Deploy through server release script
+        if: env.DROPLET_IP != ''
         uses: appleboy/ssh-action@v1.0.3
         env:
           GITHUB_SHA: ${{ github.sha }}
