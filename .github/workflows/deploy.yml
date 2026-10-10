@@ -15,7 +15,7 @@ on:
         options:
           - production
           - staging
-
+          
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
@@ -41,6 +41,7 @@ jobs:
           host: ${{ secrets.DROPLET_IP }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          passphrase: ${{ secrets.DROPLET_SSH_PASSPHRASE }}
           port: ${{ secrets.DROPLET_SSH_PORT || 22 }}
           script_stop: true
           envs: GITHUB_SHA,GITHUB_REF_NAME
@@ -62,3 +63,4 @@ jobs:
               bash "$APP_DIR/deploy/digitalocean-preflight-check.sh"
             fi
             bash /tmp/viabix-release.sh
+
