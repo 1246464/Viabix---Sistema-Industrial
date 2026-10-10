@@ -8,10 +8,10 @@ HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
 BACKUP_SCRIPT="${BACKUP_SCRIPT:-$APP_DIR/deploy/backup-viabix.sh}"
 DEPLOY_LOG="${DEPLOY_LOG:-/var/log/viabix/deploy.log}"
 LOCK_FILE="${LOCK_FILE:-/tmp/viabix-deploy.lock}"
-PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.2-fpm}"
+PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')-fpm}"
 WEB_SERVICE="${WEB_SERVICE:-apache2}"
 RUN_COMPOSER="${RUN_COMPOSER:-auto}"
-RUN_INDEX_DEPLOY="${RUN_INDEX_DEPLOY:-true}"
+RUN_INDEX_DEPLOY="${RUN_INDEX_DEPLOY:-false}"
 
 mkdir -p "$(dirname "$DEPLOY_LOG")"
 
@@ -35,7 +35,7 @@ if [[ "${1:-}" == "--rollback" ]]; then
   log "Rollback manual solicitado para $ROLLBACK_REF"
   run git fetch --all --prune
   run git checkout --force "$ROLLBACK_REF"
-  run git clean -fd --exclude=.env --exclude=logs --exclude=uploads
+  run git clean -fd --exclude=.env --exclude=logs --exclude=uploads --exclude=Controle_de_projetos/config.php --exclude=api/list_users.php
   if command -v systemctl >/dev/null 2>&1; then
     systemctl reload "$PHP_FPM_SERVICE" >/dev/null 2>&1 || true
     systemctl reload "$WEB_SERVICE" >/dev/null 2>&1 || true
@@ -69,7 +69,7 @@ rollback_to_previous() {
 
   log "Deploy falhou. Voltando para $PREVIOUS_SHORT."
   git checkout --force "$PREVIOUS_REF" >>"$DEPLOY_LOG" 2>&1 || true
-  git clean -fd --exclude=.env --exclude=logs --exclude=uploads >>"$DEPLOY_LOG" 2>&1 || true
+  git clean -fd --exclude=.env --exclude=logs --exclude=uploads --exclude=Controle_de_projetos/config.php --exclude=api/list_users.php >>"$DEPLOY_LOG" 2>&1 || true
   if command -v systemctl >/dev/null 2>&1; then
     systemctl reload "$PHP_FPM_SERVICE" >>"$DEPLOY_LOG" 2>&1 || true
     systemctl reload "$WEB_SERVICE" >>"$DEPLOY_LOG" 2>&1 || true
@@ -93,7 +93,7 @@ fi
 run git fetch --all --prune
 run git checkout --force "$TARGET_REF"
 run git reset --hard "$TARGET_REF"
-run git clean -fd --exclude=.env --exclude=logs --exclude=uploads
+run git clean -fd --exclude=.env --exclude=logs --exclude=uploads --exclude=Controle_de_projetos/config.php --exclude=api/list_users.php
 NEW_REF="$(git rev-parse --short HEAD)"
 
 if [[ "$RUN_COMPOSER" == "true" || ("$RUN_COMPOSER" == "auto" && -f composer.lock) ]]; then
@@ -118,9 +118,8 @@ if command -v systemctl >/dev/null 2>&1; then
 fi
 
 if [[ -z "$HEALTHCHECK_URL" ]]; then
-  APP_URL="$(grep -E '^APP_URL=' "$APP_DIR/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
-  APP_URL="${APP_URL%/}"
-  HEALTHCHECK_URL="${APP_URL:-http://127.0.0.1}/api/healthcheck.php?scope=ready"
+  # Validate this server even while public DNS/TLS are being recovered.
+  HEALTHCHECK_URL="http://127.0.0.1/api/healthcheck.php?scope=ready"
 fi
 
 log "Validando healthcheck: $HEALTHCHECK_URL"
@@ -137,4 +136,4 @@ for attempt in 1 2 3 4 5; do
 done
 
 log "Healthcheck nao recuperou apos 5 tentativas."
-exit 1
+false # Trigger the ERR trap and automatic rollback.

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 APP_DIR="${APP_DIR:-/var/www/viabix}"
 ENV_FILE="${ENV_FILE:-$APP_DIR/.env}"
@@ -35,6 +36,7 @@ MYSQLDUMP_ARGS=(
   --user="$DB_USER" \
   --password="$DB_PASS" \
   --single-transaction \
+  --no-tablespaces \
   --quick \
   --routines \
   --triggers
@@ -54,6 +56,7 @@ fi
 tar \
   --exclude='.git' \
   --exclude='node_modules' \
+  --exclude='viabix-android' \
   --exclude='logs/*.log' \
   --exclude='BD/*.sql' \
   -czf "$APP_BACKUP_FILE" \
