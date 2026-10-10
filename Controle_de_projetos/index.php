@@ -1540,6 +1540,7 @@ echo $nivel_texto[$usuario['nivel']] ?? $usuario['nivel'];
 <script src="../assets/js/projects-reports.js"></script>
 <script src="../assets/js/projects-control.js"></script>
 
+<script src="../assets/js/cookie-notice.js" defer></script>
 </body>
 </html>
 

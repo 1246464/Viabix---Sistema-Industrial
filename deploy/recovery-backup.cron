@@ -1,0 +1,2 @@
+# Daily backup at 05:00 UTC (02:00 America/Sao_Paulo).
+0 5 * * * root /usr/local/sbin/viabix-backup >> /var/log/viabix/backup.log 2>&1

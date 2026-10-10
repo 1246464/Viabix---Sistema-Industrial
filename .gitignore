@@ -17,6 +17,7 @@ viabix-android/*.hprof
 downloads/*.apk
 *.apk
 *.jar
+!viabix-android/gradle/wrapper/gradle-wrapper.jar
 *.hprof
 gradle-*.zip
 
@@ -61,3 +62,6 @@ criar_anvi.sh
 Controle_de_projetos/setup.php
 Controle_de_projetos/simple_test.php
 Controle_de_projetos/*.ps1
+
+# Local recovery database copies must never be committed.
+logs/recovery-backups/

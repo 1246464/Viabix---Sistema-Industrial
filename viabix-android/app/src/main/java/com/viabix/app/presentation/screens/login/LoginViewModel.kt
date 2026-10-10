@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.viabix.app.data.api.RetrofitClient
+import com.viabix.app.data.api.friendlyError
+import com.viabix.app.data.api.friendlyConnectionError
 import com.viabix.app.utils.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +45,7 @@ class LoginViewModel @Inject constructor(
 
         viewModelScope.launch {
             _loginState.update { it.copy(isLoading = true, error = null) }
-            Log.d("LoginViewModel", "Tentando login para: $email")
+            Log.d("LoginViewModel", "Tentando autenticar usuário")
 
             try {
                 val apiService = RetrofitClient.getApiService()
@@ -53,28 +55,20 @@ class LoginViewModel @Inject constructor(
 
                 if (response.isSuccessful) {
                     val body = response.body()
-                    val token = body?.get("token") as? String
+                    val token = body?.token
                     if (!token.isNullOrEmpty()) {
                         Log.d("LoginViewModel", "Token recebido com sucesso")
                         tokenManager.saveToken(token)
                         
-                        val tenant = body["tenant"] as? Map<String, Any>
-                        val tenantIdRaw = tenant?.get("id") ?: body["tenant_id"]
-                        val tenantIdStr = when (tenantIdRaw) {
-                            is String -> tenantIdRaw
-                            is Double -> tenantIdRaw.toInt().toString()
-                            null -> ""
-                            else -> tenantIdRaw.toString()
-                        }
+                        val tenantIdStr = body.tenant?.id.orEmpty()
                         if (tenantIdStr.isNotBlank() && tenantIdStr != "null") {
                             tokenManager.saveTenantId(tenantIdStr)
                         }
 
                         // Salvar dados do usuário
-                        val user = body["user"] as? Map<String, Any>
-                        val userName = user?.get("nome") as? String ?: "Usuário"
-                        val userLogin = user?.get("login") as? String ?: email
-                        val userLevel = user?.get("nivel") as? String ?: "user"
+                        val userName = body.user?.nome?.ifBlank { "Usuário" } ?: "Usuário"
+                        val userLogin = body.user?.login?.ifBlank { email } ?: email
+                        val userLevel = body.user?.nivel?.ifBlank { "user" } ?: "user"
                         tokenManager.saveUserData(userName, userLogin, userLevel)
 
                         _loginState.update { it.copy(isLoading = false, isLoggedIn = true, error = null) }
@@ -84,11 +78,16 @@ class LoginViewModel @Inject constructor(
                     }
                 } else {
                     Log.e("LoginViewModel", "Erro no login: ${response.code()}")
-                    _loginState.update { it.copy(isLoading = false, error = "Credenciais inválidas") }
+                    _loginState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = response.friendlyError("Credenciais inválidas")
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Exceção no login: ${e.message}", e)
-                _loginState.update { it.copy(isLoading = false, error = "Falha na conexão") }
+                _loginState.update { it.copy(isLoading = false, error = e.friendlyConnectionError("fazer login")) }
             }
         }
     }

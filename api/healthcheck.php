@@ -61,7 +61,6 @@ viabixHealthcheckAdd(
     ($appEnv === 'production' && $appDebug) ? 'warning' : 'ok',
     [
         'app_env' => $appEnv,
-        'debug' => $appDebug,
         'env_file_present' => is_file($envFile),
         'session_secure' => $sessionSecure,
         'sentry_configured' => viabix_env('SENTRY_DSN', '') !== '',
@@ -85,8 +84,6 @@ try {
     $databaseStarted = microtime(true);
     $pdo->query('SELECT 1')->fetchColumn();
     viabixHealthcheckAdd($checks, $overallStatus, 'database', 'ok', [
-        'host' => $dbHost,
-        'database' => $dbName,
         'latency_ms' => round((microtime(true) - $databaseStarted) * 1000, 2),
     ]);
 
@@ -119,7 +116,6 @@ foreach ($logDirs as $name => $path) {
     $exists = is_dir($path);
     $writable = $exists && is_writable($path);
     viabixHealthcheckAdd($checks, $overallStatus, $name, $writable ? 'ok' : 'warning', [
-        'path' => $path,
         'exists' => $exists,
         'writable' => $writable,
     ]);
@@ -140,7 +136,6 @@ if ($redisEnabled && extension_loaded('redis')) {
         $redis->select($redisDb);
         $redis->ping();
         viabixHealthcheckAdd($checks, $overallStatus, 'redis', 'ok', [
-            'host' => $redisHost,
             'db' => $redisDb,
         ]);
     } catch (Throwable $exception) {

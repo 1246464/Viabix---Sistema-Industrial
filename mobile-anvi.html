@@ -339,15 +339,21 @@
     // ============================
 
     function getTokenFromUrl() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('token') || params.get('jwt_token') || params.get('auth_token') || null;
+        const url = new URL(window.location.href);
+        const token = url.searchParams.get('token') || url.searchParams.get('jwt_token') || url.searchParams.get('auth_token') || null;
+        if (token) {
+            url.searchParams.delete('token');
+            url.searchParams.delete('jwt_token');
+            url.searchParams.delete('auth_token');
+            window.history.replaceState({}, document.title, url.toString());
+        }
+        return token;
     }
 
     function storeToken(token) {
         if (!token) return;
         localStorage.setItem('jwt_token', token);
         sessionStorage.setItem('jwt_token', token);
-        document.cookie = `jwt_token=${encodeURIComponent(token)};path=/`;
     }
 
     function obterToken() {
@@ -759,5 +765,6 @@
     console.log('[MOBILE-ANVI] Script carregado, aguardando DOMContentLoaded...');
 </script>
 
+<script src="assets/js/cookie-notice.js" defer></script>
 </body>
 </html>

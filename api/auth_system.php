@@ -275,6 +275,42 @@ function viabixHasPermission($resource, $action, $user = null) {
 }
 
 /**
+ * Converte os níveis persistidos no schema legado/SaaS para os papéis usados
+ * pelo catálogo VIABIX_ROLES.
+ */
+function viabixPermissionRole($level) {
+    $level = strtolower(trim((string) $level));
+    $map = [
+        'admin' => 'admin',
+        'owner' => 'admin',
+        'suporte' => 'admin',
+        'editor' => 'editor',
+        'usuario' => 'editor',
+        'lider' => 'editor',
+        'financeiro' => 'editor',
+        'visualizador' => 'visualizador',
+        'visitante' => 'visitante',
+    ];
+
+    return $map[$level] ?? 'visitante';
+}
+
+/**
+ * Monta o contexto esperado por viabixHasPermission a partir do usuário
+ * autenticado por sessão ou JWT.
+ */
+function viabixPermissionContext(array $user): array {
+    $role = viabixPermissionRole($user['role'] ?? $user['nivel'] ?? null);
+
+    return [
+        'id' => $user['id'] ?? null,
+        'tenant_id' => $user['tenant_id'] ?? null,
+        'role' => $role,
+        'permissions' => viabixLoadUserPermissionsFromDb($user['id'] ?? null, $role),
+    ];
+}
+
+/**
  * Exigir permissão e sair se não tiver.
  * Use no começo de endpoints sensíveis.
  *
@@ -345,40 +381,36 @@ function viabixGetUserPermissions($user = null) {
  * @return bool True se tenant está ativo
  */
 function viabixValidateTenantAccess($tenant_id) {
-    global $pdo;
-
-    if (!$pdo || !$tenant_id) {
+    if (!$tenant_id || !function_exists('viabixGetTenantContext') || !function_exists('viabixCanAccessTenant')) {
         return false;
     }
 
     try {
-        // Verificar status do tenant e assinatura
-        $stmt = $pdo->prepare("
-            SELECT t.status, s.status AS subscription_status, s.fim_vigencia
-            FROM tenants t
-            LEFT JOIN subscriptions s ON s.tenant_id = t.id AND s.status IN ('ativa', 'trial')
-            WHERE t.id = ?
-            LIMIT 1
-        ");
-        $stmt->execute([$tenant_id]);
-        $result = $stmt->fetch();
-
-        if (!$result) {
-            return false;
-        }
-
-        // Tenant pode estar: trial, ativo
-        $tenant_active = in_array($result['status'], ['trial', 'ativo', 'trial_expirado']);
-        
-        // Se não tem subscription ativa, pode estar em trial
-        $subscription_ok = ($result['subscription_status'] === null) || 
-                          ($result['subscription_status'] === 'trial' && $result['fim_vigencia'] > date('Y-m-d'));
-
-        return $tenant_active && $subscription_ok;
+        [$allowed] = viabixCanAccessTenant(viabixGetTenantContext($tenant_id));
+        return (bool) $allowed;
     } catch (Exception $e) {
         viabix_sentry_exception($e, 'error');
         return false;
     }
+}
+
+/**
+ * Exige tenant identificado e coluna tenant_id na tabela operacional. Endpoints
+ * SaaS devem falhar fechados em vez de consultar dados globais como fallback.
+ */
+function viabixRequireTenantScopedTable(string $table, $tenantId): void {
+    if (!empty($tenantId) && function_exists('viabixHasColumn') && viabixHasColumn($table, 'tenant_id')) {
+        return;
+    }
+
+    http_response_code(503);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Isolamento de empresa indisponível. Contate o administrador do sistema.',
+        'error_code' => 'tenant_scope_unavailable',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 /**

@@ -1,138 +1,86 @@
-# Integração Dashboard Viabilidade - Android
+# Aplicativo Android nativo Viabix
 
-## ✅ O que foi criado
+O aplicativo usa Kotlin, Jetpack Compose e Retrofit. Os modulos internos nao
+sao carregados em WebView: a interface e renderizada pelo Android e somente os
+dados trafegam pela API PHP.
 
-Implementei a integração do novo endpoint `/api/dashboard_viabilidade_simple.php` no app Android Viabix.
+## Fluxos nativos atuais
 
-### Arquivos criados em `viabix-android/app/src/main/java/com/viabix/app/`:
+- login com JWT e persistencia segura do contexto do usuario;
+- dashboard operacional;
+- lista paginada, busca, criacao e edicao de ANVIs, incluindo resumo financeiro e validacoes de viabilidade;
+- exclusao de ANVI com confirmacao;
+- dashboard de viabilidade aberto pelo identificador da ANVI;
+- lista paginada de projetos com busca, criacao e edicao;
+- planejamento nativo das sete etapas do projeto, com calendario Android, duracao e calculo automatico de status;
+- recursos de Ferramental e Try-out, numeros e quantidades editaveis no app;
+- checklist APQP completo por etapa, com respostas, observacoes e indicador de progresso;
+- assistentes contextuais de preenchimento, central de pendencias e alertas de consistencia;
+- exclusao de projeto com confirmacao;
+- assinatura, limites do plano e historico de faturas;
+- abertura externa da URL oficial do gateway somente quando existe pagamento.
 
-1. **presentation/screens/viabilidade/ViabilidadeUiState.kt**
-   - Data classes para os dados de viabilidade
-   - Estrutura: `AnviData`, `AnaliseData`, `ViabilidadeData`, `Compatibilidade`
+## Endpoints consumidos
 
-2. **presentation/screens/viabilidade/ViabilidadeViewModel.kt**
-   - ViewModel que faz a requisição ao novo endpoint
-   - Gerencia estados de loading/error
-   - Função: `loadViabilidadeData(anviId: String)`
+- `POST /api/login.php`
+- `GET /api/estatisticas.php`
+- `GET|DELETE /api/anvi.php`
+- `GET /api/dashboard_viabilidade_simple.php`
+- `POST /Controle_de_projetos/api_mysql.php`
+- `GET /api/subscription_current.php`
+- `GET /api/billing_invoices.php`
 
-3. **presentation/screens/viabilidade/ViabilidadeScreens.kt**
-   - UI completa com Jetpack Compose + Material Design 3
-   - 5 cards detalhados:
-     - Input para ANVI ID
-     - Informações do ANVI
-     - Score de Viabilidade Geral (92.1/100 com status)
-     - Análise Detalhada (Financeiro, Planejamento, Qualidade, Recursos)
-     - Compatibilidades por Área
-   - Tema verde (#2ecc71) padrão VIABIX
+As chamadas protegidas recebem `Authorization: Bearer <token>`. Operacoes feitas
+com JWT nao dependem de cookies nem de CSRF, enquanto o acesso web continua
+protegido por CSRF.
 
-4. **data/api/RetrofitClient.kt**
-   - Atualizado com novo endpoint
-   - Interface: `ViabixApiServiceWithViabilidade`
-   - Inclui: login, anvi_list, dashboard_viabilidade
+O JWT e criptografado com AES/GCM por uma chave nao exportavel do Android
+Keystore. Instalacoes anteriores sao migradas automaticamente na primeira
+leitura. O backup de dados do aplicativo fica desativado para evitar que uma
+sessao seja restaurada em outro dispositivo.
 
-5. **data/api/ViabilidadeApiService.kt**
-   - Interface específica para endpoints de viabilidade
-   - Função helper para obter o serviço
+## URL da API
 
-## 🔧 Como integrar ao projeto existente
+Por padrao o aplicativo usa `https://viabix.com.br/`. Para compilar uma variante
+contra outro ambiente, defina `VIABIX_API_BASE_URL` como propriedade Gradle ou
+variavel de ambiente. A URL deve ser absoluta e terminar com `/`:
 
-### Passo 1: Copiar os arquivos criados
-Os arquivos já estão em:
-```
-c:\xampp\htdocs\ANVI\viabix-android\app\src\main\java\com\viabix\app\
-```
-
-### Passo 2: Atualizar a interface ViabixApiService
-Se você já tem um `ViabixApiService.kt` existente, adicione este método:
-
-```kotlin
-@GET("api/dashboard_viabilidade_simple.php")
-suspend fun getDashboardViabilidade(
-    @Query("anvi_id") anviId: String
-): Response<DashboardViabilidadeResponse>
+```powershell
+.\gradlew.bat -PVIABIX_API_BASE_URL=http://10.0.2.2/ANVI/ :app:assembleDebug
 ```
 
-### Passo 3: Atualizar RetrofitClient.kt
-Certifique-se que o `getApiService()` retorna a interface correta que inclui o novo endpoint.
+HTTP sem TLS e aceito apenas no build `debug`, permitindo o uso do servidor
+local pelo emulador. O build `release` bloqueia trafego em texto puro.
 
-### Passo 4: Atualizar Navigation
-Adicione a rota no seu `NavHost.kt`:
+Os formularios de edicao carregam e reenviam o documento JSON completo. A ANVI
+permite editar margem, custos, receitas, investimento e validacoes. O projeto
+permite editar as datas e a duracao das etapas KOM, Ferramental, CAD+BOM+FT,
+Try-out, Entrega, PSW e Handover, alem dos recursos e checklists APQP. Campos
+que ainda nao aparecem no app, como historico detalhado e capability, sao
+preservados durante a gravacao.
 
-```kotlin
-composable<Screen.ViabilidadeDashboard> { backStackEntry ->
-    val viabilidadeViewModel: ViabilidadeViewModel = hiltViewModel()
-    ViabilidadeDashboardScreen(
-        viewModel = viabilidadeViewModel,
-        onNavigateBack = { navController.popBackStack() }
-    )
-}
-```
+## Compilacao
 
-### Passo 5: Compilar e Testar
+Use JDK 17 ou 21:
 
 ```bash
 cd viabix-android
-./gradlew clean build
-./gradlew assembleDebug
+./gradlew testDebugUnitTest assembleDebug
 ```
 
-## 📱 Como testar no app
+No Windows:
 
-1. Faça login normalmente
-2. Navegue para o Dashboard de Viabilidade
-3. Digite um ANVI ID válido: `ANVI-20260509234642-001`
-4. Clique em "Carregar Análise"
-5. Os dados reais virão do servidor
-
-## 🎨 Features implementadas
-
-✅ Requisição real ao endpoint `/api/dashboard_viabilidade_simple.php`  
-✅ Layout responsivo com Jetpack Compose  
-✅ Tratamento de erros e loading states  
-✅ Tema verde padrão VIABIX  
-✅ Cards com dados de análise detalhada  
-✅ Scores visuais com círculos coloridos  
-✅ Compatibilidades por área com ícones  
-✅ Recomendações personalizadas  
-
-## 🔐 Autenticação
-
-O app já usa JWT token (via `TokenManager`) que é adicionado automaticamente em todas as requisições:
-- Header: `Authorization: Bearer <token>`
-- O endpoint funcionará apenas para usuários autenticados
-
-## 📊 Dados exibidos
-
-```
-📋 ANVI
-- ID, Número, Revisão, Cliente, Projeto, Status, Data
-
-👍 Viabilidade Geral  
-- Score (0-100)
-- Status (VIÁVEL/INVIÁVEL)
-- Recomendação
-
-🔬 Análise Detalhada
-- Financeiro: Investimento, ROI, Payback
-- Planejamento: Fases, Duração
-- Qualidade: Cobertura de Testes, Score Código
-- Recursos: Equipe, Especialistas
-
-✅ Compatibilidades
-- Por Área (Financeiro, Planejamento, Qualidade, Recursos)
-- Status (Compatível/Incompatível)
-- Detalhes
+```powershell
+cd viabix-android
+.\gradlew.bat --no-daemon :app:testDebugUnitTest :app:assembleDebug
 ```
 
-## 🚀 Próximos passos opcionais
+O APK de desenvolvimento e gerado em
+`app/build/outputs/apk/debug/app-debug.apk`.
 
-1. **Cache offline**: Implementar Room Database para cachear dados
-2. **Refresh**: Adicionar pull-to-refresh
-3. **Detalhes**: Clicar em um card para ver mais informações
-4. **Histórico**: Mostrar múltiplos ANVIs
+## Proximas evolucoes
 
----
-
-**Data de criação**: 09/05/2026  
-**Status**: Pronto para compilar e testar  
-**Endpoint**: https://viabix.com.br/api/dashboard_viabilidade_simple.php
+O recorte atual prioriza operacao segura sem depender das telas web. As proximas
+evolucoes recomendadas sao modo offline com Room, historico de replanejamento,
+capabilidade e checkout nativo de planos. Room ja esta disponivel nas
+dependencias para essa futura estrategia offline.

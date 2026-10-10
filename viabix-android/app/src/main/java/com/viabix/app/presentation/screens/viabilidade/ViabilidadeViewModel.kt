@@ -3,6 +3,8 @@ package com.viabix.app.presentation.screens.viabilidade
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.viabix.app.data.api.RetrofitClient
+import com.viabix.app.data.api.friendlyConnectionError
+import com.viabix.app.data.api.friendlyError
 import com.viabix.app.utils.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,13 +51,13 @@ class ViabilidadeViewModel @Inject constructor(
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Erro ao carregar dados: ${response.code()}"
+                        error = response.friendlyError("Não foi possível carregar a análise de viabilidade.")
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Erro desconhecido"
+                    error = e.friendlyConnectionError("carregar a análise de viabilidade")
                 )
             }
         }

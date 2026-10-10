@@ -52,6 +52,7 @@ try {
 
     $pdo = getConnection();
     $tenantId = getCurrentTenantId();
+    $permissionUser = viabixPermissionContext($authenticatedUser);
     $tenantAwareProjects = tenantFilterEnabled($pdo, 'projetos');
     $tenantAwareLeaders = tenantFilterEnabled($pdo, 'lideres');
     $tenantAwareChanges = tenantFilterEnabled($pdo, 'mudancas');
@@ -119,7 +120,39 @@ try {
     $action = $_POST['action'] ?? '';
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-    if ($method !== 'GET') {
+    $projectInput = json_decode($_POST['project'] ?? '', true);
+    $permissionMap = [
+        'testConnection' => ['configuracoes', 'view'],
+        'getLeaders' => ['projetos', 'view'],
+        'getProjects' => ['projetos', 'view'],
+        'getProject' => ['projetos', 'view'],
+        'saveProject' => ['projetos', !empty($projectInput['id']) ? 'update' : 'create'],
+        'deleteProject' => ['projetos', 'delete'],
+        'saveLeader' => ['projetos', 'update'],
+        'deleteLeader' => ['projetos', 'delete'],
+    ];
+
+    if (isset($permissionMap[$action])) {
+        [$resource, $permissionAction] = $permissionMap[$action];
+        viabixRequirePermission($resource, $permissionAction, $permissionUser);
+    }
+
+    if (in_array($action, ['getProjects', 'getProject', 'saveProject', 'deleteProject'], true)) {
+        viabixRequireTenantScopedTable('projetos', $tenantId);
+        $tenantAwareProjects = true;
+    }
+    if (in_array($action, ['getLeaders', 'saveLeader', 'deleteLeader'], true)) {
+        viabixRequireTenantScopedTable('lideres', $tenantId);
+        $tenantAwareLeaders = true;
+    }
+    if (in_array($action, ['saveProject', 'deleteProject', 'saveLeader', 'deleteLeader'], true)) {
+        viabixRequireTenantScopedTable('mudancas', $tenantId);
+        $tenantAwareChanges = true;
+    }
+
+    // Requisições autenticadas por cookie precisam de CSRF. O app nativo usa
+    // Bearer JWT e não está sujeito ao envio automático de cookies do navegador.
+    if ($method !== 'GET' && ($authenticatedUser['source'] ?? '') !== 'jwt') {
         try {
             viabixValidateCsrfTokenWithInput($_POST);
         } catch (RuntimeException $e) {
@@ -207,6 +240,39 @@ try {
             ]);
             break;
 
+        case 'getProject':
+            $id = (int)($_POST['projectId'] ?? 0);
+            if ($id <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID inválido']);
+                break;
+            }
+
+            $stmt = $pdo->prepare(
+                'SELECT id, dados, created_at, updated_at
+                 FROM projetos
+                 WHERE id = ? AND tenant_id = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([$id, $tenantId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Projeto não encontrado']);
+                break;
+            }
+
+            $project = json_decode($row['dados'], true);
+            if (!is_array($project)) {
+                $project = [];
+            }
+            $project['id'] = (int)$row['id'];
+            $project['created_at'] = $row['created_at'] ?? null;
+            $project['updated_at'] = $row['updated_at'] ?? null;
+
+            echo json_encode(['success' => true, 'data' => $project], JSON_UNESCAPED_UNICODE);
+            break;
+
         case 'saveProject':
             $data = json_decode($_POST['project'] ?? '', true);
 
@@ -218,6 +284,8 @@ try {
                 break;
             }
 
+            $clientUpdatedAt = $data['updated_at'] ?? null;
+
             // Remover campos de data que são gerenciados pelo MySQL
             unset($data['created_at']);
             unset($data['updated_at']);
@@ -226,6 +294,21 @@ try {
 
             if (!empty($data['id'])) {
                 $id = (int)$data['id'];
+                if ($clientUpdatedAt) {
+                    $versionStmt = $pdo->prepare(
+                        'SELECT updated_at FROM projetos WHERE id = ? AND tenant_id = ? LIMIT 1'
+                    );
+                    $versionStmt->execute([$id, $tenantId]);
+                    $currentUpdatedAt = $versionStmt->fetchColumn();
+                    if ($currentUpdatedAt && (string)$currentUpdatedAt !== (string)$clientUpdatedAt) {
+                        http_response_code(409);
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'O projeto foi atualizado por outro usuário. Recarregue os dados antes de salvar.',
+                        ], JSON_UNESCAPED_UNICODE);
+                        break;
+                    }
+                }
                 if ($tenantAwareProjects) {
                     $stmt = $pdo->prepare("UPDATE projetos SET dados=? WHERE id=? AND tenant_id=?");
                     $stmt->execute([$json, $id, $tenantId]);

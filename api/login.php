@@ -160,6 +160,14 @@ try {
     session_regenerate_id(true);
 
     $tenantContext = viabixGetTenantContext($user['tenant_id'] ?? null);
+    if (viabixHasTable('tenants') && empty($tenantContext['tenant_id'])) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Usuário sem empresa vinculada. Contate o administrador.',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     [$canAccess, $accessMessage] = viabixCanAccessTenant($tenantContext);
 
     if (!$canAccess) {

@@ -17,10 +17,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun ViabilidadeDashboardScreen(
     viewModel: ViabilidadeViewModel = hiltViewModel(),
+    initialAnviId: String = "",
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var anviInput by remember { mutableStateOf("") }
+    var anviInput by remember(initialAnviId) { mutableStateOf(initialAnviId) }
+
+    LaunchedEffect(initialAnviId) {
+        if (initialAnviId.isNotBlank()) {
+            viewModel.loadViabilidadeData(initialAnviId)
+        }
+    }
 
     Column(
         modifier = Modifier

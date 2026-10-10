@@ -16,6 +16,10 @@
       "Viabix\\": "src/"
     }
   },
+  "scripts": {
+    "test": "@php tests/run.php",
+    "test:db": "@php tests/run.php --with-db"
+  },
   "config": {
     "platform": {
       "php": "8.2"

@@ -34,10 +34,13 @@ try {
         'message' => 'Estatísticas carregadas com sucesso'
     ];
     $tenantId = viabixCurrentTenantId();
-    $tenantAwareAnvis = viabixHasColumn('anvis', 'tenant_id') && $tenantId;
-    $tenantAwareProjetos = viabixHasColumn('projetos', 'tenant_id') && $tenantId;
-    $tenantAwareUsuarios = viabixHasColumn('usuarios', 'tenant_id') && $tenantId;
-    $tenantAwareLideres = viabixHasColumn('lideres', 'tenant_id') && $tenantId;
+    foreach (['anvis', 'projetos', 'usuarios', 'lideres'] as $tenantTable) {
+        viabixRequireTenantScopedTable($tenantTable, $tenantId);
+    }
+    $tenantAwareAnvis = true;
+    $tenantAwareProjetos = true;
+    $tenantAwareUsuarios = true;
+    $tenantAwareLideres = true;
     $leadersHasActive = viabixHasColumn('lideres', 'ativo');
     $projectsHasStatusColumn = viabixHasColumn('projetos', 'status');
     $anvisHasResponsavel = viabixHasColumn('anvis', 'responsavel');

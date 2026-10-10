@@ -645,5 +645,6 @@ $csrfToken = viabixGetCsrfToken();
             });
         }
     </script>
+<script src="../assets/js/cookie-notice.js" defer></script>
 </body>
 </html>

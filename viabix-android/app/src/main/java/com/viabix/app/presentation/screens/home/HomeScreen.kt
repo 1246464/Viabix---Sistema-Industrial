@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -153,7 +152,7 @@ fun HomeScreen(
     onNavigateToANVI: () -> Unit,
     onNavigateToProjetos: () -> Unit,
     onNavigateToFaturamento: () -> Unit = {},
-    onOpenUrl: (String) -> Unit = {}
+    onNavigateAction: (String) -> Unit = {}
 ) {
     val userName by viewModel.userName.collectAsState()
     val userLogin by viewModel.userLogin.collectAsState()
@@ -198,9 +197,6 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { Log.d("HomeScreen", "Configurações clicado") }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White)
-                    }
                     IconButton(onClick = {
                         Log.d("HomeScreen", "Botão Sair clicado")
                         onLogout()
@@ -262,7 +258,7 @@ fun HomeScreen(
                 OperationalDashboardCard(
                     state = dashboardState,
                     onRefresh = viewModel::loadDashboard,
-                    onOpenUrl = onOpenUrl
+                    onNavigateAction = onNavigateAction
                 )
             }
 
@@ -503,7 +499,7 @@ fun ModuleCardWithFeatures(
 fun OperationalDashboardCard(
     state: DashboardHomeState,
     onRefresh: () -> Unit,
-    onOpenUrl: (String) -> Unit
+    onNavigateAction: (String) -> Unit
 ) {
     val primaryGreen = Color(0xFF0a3d2e)
     val stats = state.stats
@@ -603,13 +599,13 @@ fun OperationalDashboardCard(
                     InsightSection(
                         title = "Atencao hoje",
                         items = operacional?.atencao_hoje.orEmpty().take(3),
-                        onOpenUrl = onOpenUrl
+                        onNavigateAction = onNavigateAction
                     )
 
                     InsightSection(
                         title = "Fila de prioridades",
                         items = operacional?.prioridades.orEmpty().take(3),
-                        onOpenUrl = onOpenUrl
+                        onNavigateAction = onNavigateAction
                     )
 
                     TrendSection(operacional?.tendencias.orEmpty().take(3))
@@ -692,7 +688,7 @@ fun HealthSection(health: DashboardHealth) {
 fun InsightSection(
     title: String,
     items: List<DashboardInsight>,
-    onOpenUrl: (String) -> Unit
+    onNavigateAction: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -706,7 +702,7 @@ fun InsightSection(
             Text("Nenhum item no momento.", fontSize = 12.sp, color = Color.Gray)
         } else {
             items.forEach { item ->
-                InsightRow(item, onOpenUrl)
+                InsightRow(item, onNavigateAction)
             }
         }
     }
@@ -715,7 +711,7 @@ fun InsightSection(
 @Composable
 fun InsightRow(
     item: DashboardInsight,
-    onOpenUrl: (String) -> Unit
+    onNavigateAction: (String) -> Unit
 ) {
     val statusColor = when (item.status.orEmpty().lowercase()) {
         "critico" -> Color(0xFFC62828)
@@ -727,7 +723,7 @@ fun InsightRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !item.actionUrl.isNullOrBlank()) {
-                item.actionUrl?.let(onOpenUrl)
+                item.actionUrl?.let(onNavigateAction)
             },
         shape = RoundedCornerShape(8.dp),
         color = Color(0xFFFAFAFA)

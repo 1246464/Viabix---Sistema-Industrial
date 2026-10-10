@@ -42,6 +42,18 @@ try {
     // Verificar se tabela tem coluna tenant_id
     $tenantAware = schemaHasColumn($pdo, 'usuarios', 'tenant_id');
 
+    if (!$currentTenantId || !$tenantAware) {
+        http_response_code(503);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Escopo da empresa indisponível. Atualize a sessão e tente novamente.',
+            'error' => 'tenant_scope_unavailable'
+        ]);
+        exit;
+    }
+
+    $tenantAware = true;
+
     switch ($action) {
         case 'list':
             // SECURITY FIX: Filtrar por tenant_id se disponível

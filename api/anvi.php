@@ -51,7 +51,8 @@ if (!$tenant_id && viabixHasColumn('usuarios', 'tenant_id')) {
     }
 }
 $anvisHasTenantId = viabixHasColumn('anvis', 'tenant_id');
-$tenantAwareAnvis = $anvisHasTenantId && $tenant_id;
+viabixRequireTenantScopedTable('anvis', $tenant_id);
+$tenantAwareAnvis = true;
 $anvisHasDadosFinanceiros = viabixHasColumn('anvis', 'dados_financeiros');
 
 function viabixFloatValue($value): float
@@ -281,6 +282,15 @@ function viabixBuildAnviUpdate(PDO $pdo, array $values, string $id, ?string $ten
 
 // Verificar método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
+$permissionActions = [
+    'GET' => 'view',
+    'PUT' => 'update',
+    'PATCH' => 'update',
+    'DELETE' => 'delete',
+];
+if (isset($permissionActions[$method])) {
+    viabixRequirePermission('anvis', $permissionActions[$method], viabixPermissionContext($user));
+}
 
 if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && $anvisHasTenantId && !$tenant_id) {
     http_response_code(403);
@@ -388,6 +398,14 @@ try {
                 echo json_encode(['success' => false, 'message' => 'ID, Nº ANVI e Revisão são obrigatórios']);
                 exit;
             }
+
+            $permissionUser = viabixPermissionContext($user);
+            if (
+                !viabixHasPermission('anvis', 'create', $permissionUser)
+                && !viabixHasPermission('anvis', 'update', $permissionUser)
+            ) {
+                viabixRequirePermission('anvis', 'create', $permissionUser);
+            }
             
             $id = $input['id'];
             $numero = $input['numero'];
@@ -439,6 +457,11 @@ try {
             
             // Verificar se a ANVI já existe pelo ID
             $existenteSelect = viabixHasColumn('anvis', 'versao') ? 'id, versao' : 'id, 1 AS versao';
+            if (viabixHasColumn('anvis', 'bloqueado_por')) {
+                $existenteSelect .= ', bloqueado_por, bloqueado_em';
+            } else {
+                $existenteSelect .= ', NULL AS bloqueado_por, NULL AS bloqueado_em';
+            }
             if ($tenantAwareAnvis) {
                 $stmt = $pdo->prepare("SELECT {$existenteSelect} FROM anvis WHERE id = ? AND tenant_id = ?");
                 $stmt->execute([$id, $tenant_id]);
@@ -447,6 +470,37 @@ try {
                 $stmt->execute([$id]);
             }
             $existente = $stmt->fetch();
+            viabixRequirePermission(
+                'anvis',
+                $existente ? 'update' : 'create',
+                $permissionUser
+            );
+
+            if ($existente && !empty($existente['bloqueado_por']) && $existente['bloqueado_por'] !== $user_id) {
+                $lockTimestamp = strtotime((string)($existente['bloqueado_em'] ?? '')) ?: 0;
+                if ($lockTimestamp > time() - 1800) {
+                    http_response_code(409);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Esta ANVI está sendo editada por outro usuário. Tente novamente mais tarde.',
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+            }
+
+            if (
+                $existente
+                && array_key_exists('versao', $input)
+                && (int)$input['versao'] !== (int)$existente['versao']
+            ) {
+                http_response_code(409);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'A ANVI foi atualizada por outro usuário. Recarregue os dados antes de salvar.',
+                    'current_version' => (int)$existente['versao'],
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             
             if ($existente) {
                 // Atualizar existente

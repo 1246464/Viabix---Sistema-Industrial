@@ -55,6 +55,16 @@ try {
     $tenantId = getCurrentTenantId();
     $tenantAwareChanges = tenantFilterEnabled($pdo, 'mudancas');
 
+    if (!$tenantId || !$tenantAwareChanges) {
+        http_response_code(503);
+        sendSSE('error', [
+            'message' => 'Escopo da empresa indisponível. Atualize a sessão e tente novamente.'
+        ]);
+        exit;
+    }
+
+    $tenantAwareChanges = true;
+
     // ID da última mudança que o cliente viu
     $lastChangeId = isset($_GET['lastId']) ? (int)$_GET['lastId'] : 0;
 

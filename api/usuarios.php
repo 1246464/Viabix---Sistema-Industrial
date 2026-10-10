@@ -38,7 +38,8 @@ $tenant_id = $current_user['tenant_id'];
 // Verificar método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
 $tenant_id = viabixCurrentTenantId();
-$tenantAwareUsuarios = viabixHasColumn('usuarios', 'tenant_id') && $tenant_id;
+viabixRequireTenantScopedTable('usuarios', $tenant_id);
+$tenantAwareUsuarios = true;
 
 if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && ($current_user['source'] ?? '') !== 'jwt') {
     viabixValidateCsrfMiddleware();

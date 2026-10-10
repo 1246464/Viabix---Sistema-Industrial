@@ -10,6 +10,7 @@ O projeto foi preparado para operacao SaaS, com sessao compartilhada, tenancy, o
 ## Estado atual
 
 - Aplicacao web em PHP + MySQL
+- Aplicativo Android nativo em Kotlin e Jetpack Compose, sem WebView para os modulos internos
 - Ambiente local compativel com XAMPP
 - Direcao de produto: SaaS centralizado
 - App desktop: opcional no futuro, sem mudar o backend principal
@@ -27,6 +28,15 @@ O projeto foi preparado para operacao SaaS, com sessao compartilhada, tenancy, o
 - acompanhamento de projetos industriais
 - fluxo operacional por etapas
 - integracao com ANVI para abrir projeto a partir de uma analise
+
+### Android nativo
+
+- login e dashboard em Jetpack Compose
+- listagem, busca, detalhamento e exclusao de ANVIs
+- listagem, progresso e exclusao de projetos
+- consulta nativa de assinatura, limites do plano e faturas
+- autenticacao Bearer JWT em todas as chamadas protegidas
+- paginas web internas nao sao carregadas dentro do aplicativo
 
 ### SaaS
 
@@ -276,6 +286,28 @@ Resumo da estrategia:
 4. mover a aplicacao para filtros obrigatorios por tenant
 
 Para homologacao local, veja `docs/DATABASE_HOMOLOGATION.md`.
+
+## Testes
+
+Execute a suíte rápida, sem dependência de banco:
+
+```bash
+php tests/run.php
+```
+
+Ela valida a sintaxe de todos os arquivos PHP dos módulos principais e os
+contratos críticos de autenticação, CSRF, tenancy, billing, webhook, healthcheck
+e integração do frontend. O mesmo comando é executado pelo pipeline antes do
+deploy.
+
+Para incluir o contrato do banco de homologação:
+
+```bash
+php tests/run.php --with-db --db=viabix_homolog
+```
+
+Também é possível executar pelos scripts do Composer com `composer test` e
+`composer test:db`.
 
 ## Solucao de problemas
 

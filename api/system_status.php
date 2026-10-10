@@ -119,6 +119,14 @@ function viabixStatusRecentErrors(int $limit = 8): array {
 
 try {
     $user = viabixRequireAuthenticatedSession();
+    if (viabixNormalizeUserLevel($user['nivel'] ?? null) !== 'admin') {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Diagnóstico disponível apenas para administradores.',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     $tenantId = $user['tenant_id'] ?? viabixCurrentTenantId();
 
     viabixStatusAdd($checks, $summary, $overallStatus, 'session', 'Sessao e login', 'ok', 'Login ativo e reconhecido pelo sistema.', [

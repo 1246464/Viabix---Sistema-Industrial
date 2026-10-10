@@ -29,9 +29,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: PHP syntax check
-        run: |
-          find api -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: PHP syntax and critical contract tests
+        run: php tests/run.php
 
       - name: Deploy through server release script
         uses: appleboy/ssh-action@v1.0.3

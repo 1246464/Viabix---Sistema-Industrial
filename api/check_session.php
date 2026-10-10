@@ -49,7 +49,8 @@ if ($user && isset($_SESSION['user_id'])) {
         
         // SECURITY: Validar tenant_id da sessão
         $tenant_id = viabixCurrentTenantId();
-        $tenantAware = viabixHasColumn('usuarios', 'tenant_id') && $tenant_id;
+        viabixRequireTenantScopedTable('usuarios', $tenant_id);
+        $tenantAware = true;
         
         $select = 'id, login, nome, nivel, ultimo_acesso';
         if ($tenantAware) {

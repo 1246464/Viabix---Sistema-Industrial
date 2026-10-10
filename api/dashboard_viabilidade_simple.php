@@ -3,6 +3,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/config.php';
 
+$authenticatedUser = viabixRequireAuthenticatedSession();
+
 function viabixDvHasColumn(string $table, string $column): bool {
     return function_exists('viabixHasColumn') ? viabixHasColumn($table, $column) : false;
 }
@@ -129,10 +131,14 @@ try {
     }
     
     // Get ANVI data (tenant filtered from session)
-    $tenant_id = function_exists('viabixCurrentTenantId') ? viabixCurrentTenantId() : ($_SESSION['tenant_id'] ?? null);
+    $tenant_id = $authenticatedUser['tenant_id'] ?? viabixCurrentTenantId();
     if (!$tenant_id) {
         http_response_code(401);
         exit(json_encode(['erro' => 'Sessão expirada ou tenant não identificado']));
+    }
+    viabixRequireTenantScopedTable('anvis', $tenant_id);
+    if (viabixHasTable('projetos')) {
+        viabixRequireTenantScopedTable('projetos', $tenant_id);
     }
     
     $select = [
