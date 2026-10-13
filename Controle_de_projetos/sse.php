@@ -29,6 +29,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
+header('X-Accel-Buffering: no');
 
 if (session_status() === PHP_SESSION_NONE) {
     session_name(defined('SESSION_NAME') ? SESSION_NAME : 'viabix_session');
@@ -41,6 +42,10 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Liberar o bloqueio antes do stream para não bloquear as demais requisições.
+$tenantId = getCurrentTenantId();
+session_write_close();
+
 // Função para enviar evento SSE
 function sendSSE($data) {
     echo "data: " . json_encode($data) . "\n\n";
@@ -52,12 +57,12 @@ function sendSSE($data) {
 
 try {
     $pdo = getConnection();
-    $tenantId = getCurrentTenantId();
     $tenantAwareChanges = tenantFilterEnabled($pdo, 'mudancas');
 
     if (!$tenantId || !$tenantAwareChanges) {
         http_response_code(503);
-        sendSSE('error', [
+        sendSSE([
+            'type' => 'error',
             'message' => 'Escopo da empresa indisponível. Atualize a sessão e tente novamente.'
         ]);
         exit;
@@ -72,16 +77,10 @@ try {
     $startTime = time();
     $maxDuration = 60; // 60 segundos, depois reconecta
 
-    while (time() - $startTime < $maxDuration) {
+    $stmt = $pdo->prepare("SELECT id, tipo, item_id, data_hora FROM mudancas WHERE tenant_id = ? AND id > ? ORDER BY id ASC LIMIT 100");
 
-        // Busca mudanças novas
-        if ($tenantAwareChanges) {
-            $stmt = $pdo->prepare("SELECT * FROM mudancas WHERE tenant_id = ? AND id > ? ORDER BY id ASC LIMIT 10");
-            $stmt->execute([$tenantId, $lastChangeId]);
-        } else {
-            $stmt = $pdo->prepare("SELECT * FROM mudancas WHERE id > ? ORDER BY id ASC LIMIT 10");
-            $stmt->execute([$lastChangeId]);
-        }
+    while (time() - $startTime < $maxDuration && !connection_aborted()) {
+        $stmt->execute([$tenantId, $lastChangeId]);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

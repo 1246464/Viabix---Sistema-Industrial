@@ -141,6 +141,9 @@ try {
         viabixRequireTenantScopedTable('projetos', $tenant_id);
     }
     
+    // Não manter a sessão bloqueada durante consultas e cálculos da análise.
+    session_write_close();
+
     $select = [
         'a.id',
         viabixDvSelectColumn('anvis', 'numero', "''", 'a'),

@@ -242,6 +242,21 @@ let lastChangeId = 0;
 let reconnectTimeout = null;
 let ignoreSyncUntil = 0; // Timestamp para ignorar sincronização após salvar localmente
 
+let syncRefreshTimer = null;
+let syncLeadersPending = false;
+
+function scheduleRealtimeRefresh(includeLeaders) {
+    syncLeadersPending = syncLeadersPending || includeLeaders;
+    if (syncRefreshTimer) return;
+    syncRefreshTimer = setTimeout(() => {
+        syncRefreshTimer = null;
+        const refreshLeaders = syncLeadersPending;
+        syncLeadersPending = false;
+        if (refreshLeaders) loadLeadersFromMySQL();
+        else loadProjectsFromMySQL();
+    }, 250);
+}
+
 function initRealtimeSync() {
     if (eventSource) {
         eventSource.close();
@@ -272,11 +287,9 @@ function initRealtimeSync() {
             
             // Processar mudanças
             if (data.type === 'projeto_criado' || data.type === 'projeto_atualizado' || data.type === 'projeto_excluido') {
-                console.log('Sincronizando projetos...', data.type);
-                loadProjectsFromMySQL();
+                scheduleRealtimeRefresh(false);
             } else if (data.type === 'lider_criado' || data.type === 'lider_atualizado' || data.type === 'lider_excluido') {
-                console.log('Sincronizando líderes...', data.type);
-                loadLeadersFromMySQL();
+                scheduleRealtimeRefresh(true);
             }
             
         } catch (e) {
@@ -303,7 +316,7 @@ function initRealtimeSync() {
 // ==============================================
 // ATUALIZAÇÃO AUTOMÁTICA DE STATUS
 // ==============================================
-function autoUpdateTaskStatuses() {
+function autoUpdateTaskStatuses(render = true) {
     if (!projects || projects.length === 0) {
         console.log('Verificação automática: nenhum projeto carregado ainda');
         return;
@@ -337,7 +350,7 @@ function autoUpdateTaskStatuses() {
     });
     
     // Se houve mudanças, atualizar a interface
-    if (hasChanges) {
+    if (hasChanges && render) {
         console.log(`✓ ${updatedCount} projeto(s) atualizado(s) automaticamente`);
         updateProjectsTable();
         updateSummary();

@@ -2,6 +2,12 @@
 let anviSuggestionMap = new Map();
 let efficiencyChart = null;
 let riskReturnChart = null;
+let suggestionController = null;
+let suggestionVersion = 0;
+let analysisController = null;
+let analysisVersion = 0;
+let analysisPendingId = null;
+let analysisPendingPromise = null;
 
 const demoPortfolio = [
     {
@@ -106,7 +112,7 @@ function normalizarPortfolio(lista) {
             numero: item.numero || item.nome || item.id || `ANVI-${index + 1}`,
             cliente: item.cliente || 'Cliente demo',
             projeto: item.projeto || item.produto || 'Projeto em análise',
-            score: Math.max(42, Math.min(94, Number(baseScore))),
+            score: Math.max(0, Math.min(100, Number(baseScore))),
             margem: Number(item.margem ?? (24 - index * 2.8)),
             payback: Number(item.payback ?? (16 + index * 4)),
             eficiencia: Number(item.eficiencia ?? (82 - index * 4)),
@@ -138,7 +144,7 @@ function sugestaoParaANVI(item) {
     };
 }
 
-function renderizarPortfolio(lista) {
+function renderizarPortfolio(lista, selecionada = null) {
     const dados = normalizarPortfolio(lista);
     const total = dados.length;
     const mediaScore = total ? dados.reduce((acc, item) => acc + item.score, 0) / total : 0;
@@ -171,7 +177,7 @@ function renderizarPortfolio(lista) {
         `;
     }).join('');
 
-    renderizarGraficosPortfolio(dados);
+    renderizarGraficosPortfolio(dados, selecionada);
 }
 
 function selecionarAnviRadar(numero) {
@@ -223,15 +229,15 @@ function renderizarGraficosPortfolio(dados, selecionada = null) {
         }]
     };
 
-    if (efficiencyChart) efficiencyChart.destroy();
-    if (riskReturnChart) riskReturnChart.destroy();
-
     const efficiencyCtx = document.getElementById('efficiencyChart');
     const riskCtx = document.getElementById('riskReturnChart');
 
     if (!window.Chart || !efficiencyCtx || !riskCtx) return;
 
-    efficiencyChart = new Chart(efficiencyCtx, {
+    if (efficiencyChart) {
+        efficiencyChart.data = efficiencyData;
+        efficiencyChart.update('none');
+    } else efficiencyChart = new Chart(efficiencyCtx, {
         type: 'bar',
         data: efficiencyData,
         options: {
@@ -242,7 +248,10 @@ function renderizarGraficosPortfolio(dados, selecionada = null) {
         }
     });
 
-    riskReturnChart = new Chart(riskCtx, {
+    if (riskReturnChart) {
+        riskReturnChart.data = riskData;
+        riskReturnChart.update('none');
+    } else riskReturnChart = new Chart(riskCtx, {
         type: 'bubble',
         data: riskData,
         options: {
@@ -280,7 +289,7 @@ function atualizarInteligenciaComAnalise(data) {
         score: Number(data.viabilidade?.score_geral || 0),
         margem: Number(indicadores.margem_esperada_pct || 0),
         payback: Number(indicadores.payback_meses || 0),
-        eficiencia: Number(scores.execucao || scores.planejamento || 0),
+        eficiencia: Number(scores.execucao ?? scores.planejamento ?? 0),
         projetos: data.projeto_vinculado ? 1 : 0,
         risco: Math.max(0, 100 - Number(scores.risco || 0)),
         execucao: Number(scores.execucao || 0),
@@ -288,7 +297,7 @@ function atualizarInteligenciaComAnalise(data) {
         riscoScore: Number(scores.risco || 0)
     };
     const portfolio = [atual, ...demoPortfolio.filter(item => item.numero !== atual.numero)].slice(0, 5);
-    renderizarPortfolio(portfolio);
+    renderizarPortfolio(portfolio, atual);
 }
 
 function renderizarPrioridades(decisao) {
@@ -382,10 +391,10 @@ function renderizarProjetoVinculado(projeto) {
 function renderizarSugestoesANVI(lista) {
     const datalist = document.getElementById('anviSuggestions');
     anviSuggestionMap = new Map();
-    datalist.innerHTML = '';
+    const fragment = document.createDocumentFragment();
 
     (Array.isArray(lista) ? lista : []).forEach(item => {
-        const value = item.numero || item.id;
+        const value = item.nome || item.numero || item.id;
         if (!value) return;
 
         const option = document.createElement('option');
@@ -394,24 +403,33 @@ function renderizarSugestoesANVI(lista) {
             .join(' · ');
         option.value = value;
         option.label = detalhes ? `${item.nome} · ${detalhes}` : item.nome;
-        datalist.appendChild(option);
+        fragment.appendChild(option);
         anviSuggestionMap.set(value, item);
     });
+    datalist.replaceChildren(fragment);
 }
 
-function buscarSugestoesANVI(termo = '') {
-    fetch(`api/anvis_sugestoes.php?q=${encodeURIComponent(termo)}&limit=15`)
-        .then(response => response.ok ? response.json() : null)
-        .then(data => {
-            if (data?.success) {
-                const lista = data.data || [];
-                renderizarSugestoesANVI(lista);
-                if (!termo) {
-                    renderizarPortfolio(lista.length ? lista : demoPortfolio);
-                }
-            }
-        })
-        .catch(() => {});
+async function buscarSugestoesANVI(termo = '') {
+    const version = ++suggestionVersion;
+    if (suggestionController) suggestionController.abort();
+    suggestionController = new AbortController();
+    try {
+        const response = await fetch(`api/anvis_sugestoes.php?q=${encodeURIComponent(termo)}&limit=15`, {
+            signal: suggestionController.signal
+        });
+        if (version !== suggestionVersion) return;
+        if (response.status === 401) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const data = response.ok ? await response.json() : null;
+        if (version === suggestionVersion && data?.success) {
+            // Autocomplete não fornece indicadores; não substituir gráficos da análise.
+            renderizarSugestoesANVI(data.data || []);
+        }
+    } catch (error) {
+        if (error.name !== 'AbortError') console.error('Erro ao buscar sugestões:', error);
+    }
 }
 
 function renderizarIndicadoresFinanceiros(indicadores, alertas) {
@@ -485,11 +503,11 @@ function renderizarComparativoRevisoes(comparativo) {
 
 function renderizarAnalise(analise) {
     const container = document.getElementById('analiseContainer');
-    container.innerHTML = '';
+    let html = '';
 
     if (analise.financeiro) {
         const fin = analise.financeiro;
-        container.innerHTML += `
+        html += `
             <div class="analise-item financeiro">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -518,7 +536,7 @@ function renderizarAnalise(analise) {
                 <p><strong>Pontualidade:</strong> ${formatarPercentual(plan.pontualidade_pct)}</p>
             `
             : '';
-        container.innerHTML += `
+        html += `
             <div class="analise-item planejamento">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -537,7 +555,7 @@ function renderizarAnalise(analise) {
 
     if (analise.qualidade) {
         const qual = analise.qualidade;
-        container.innerHTML += `
+        html += `
             <div class="analise-item qualidade">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -555,7 +573,7 @@ function renderizarAnalise(analise) {
 
     if (analise.execucao) {
         const exec = analise.execucao;
-        container.innerHTML += `
+        html += `
             <div class="analise-item planejamento">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -574,7 +592,7 @@ function renderizarAnalise(analise) {
 
     if (analise.prazo) {
         const prazo = analise.prazo;
-        container.innerHTML += `
+        html += `
             <div class="analise-item qualidade">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -593,7 +611,7 @@ function renderizarAnalise(analise) {
 
     if (analise.risco) {
         const risco = analise.risco;
-        container.innerHTML += `
+        html += `
             <div class="analise-item financeiro">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -612,7 +630,7 @@ function renderizarAnalise(analise) {
 
     if (analise.recursos) {
         const rec = analise.recursos;
-        container.innerHTML += `
+        html += `
             <div class="analise-item recursos">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center">
@@ -627,11 +645,12 @@ function renderizarAnalise(analise) {
             </div>
         `;
     }
+    container.innerHTML = html;
 }
 
 function renderizarCompatibilidades(compatibilidades) {
     const container = document.getElementById('compatibilidadesContainer');
-    container.innerHTML = '';
+    let html = '';
 
     if (!compatibilidades || compatibilidades.length === 0) {
         container.innerHTML = '<p class="text-muted">Nenhuma compatibilidade registrada</p>';
@@ -642,7 +661,7 @@ function renderizarCompatibilidades(compatibilidades) {
         const classe = comp.status === 'compativel' ? 'compativel' : 'incompativel';
         const icone = comp.status === 'compativel' ? 'check-circle text-success' : 'times-circle text-danger';
         
-        container.innerHTML += `
+        html += `
             <div class="compatibilidade-item ${classe}">
                 <div class="row align-items-center">
                     <div class="col-md-2 text-center">
@@ -659,53 +678,49 @@ function renderizarCompatibilidades(compatibilidades) {
             </div>
         `;
     });
+    container.innerHTML = html;
 }
 
 function exibirErro(mensagem) {
     document.getElementById('status').style.display = 'none';
-    document.getElementById('resultsContainer').style.display = 'none';
     document.getElementById('errorContainer').classList.add('show');
-    document.getElementById('errorMessage').textContent = mensagem;
+    const anteriorVisivel = document.getElementById('resultsContainer').style.display === 'block';
+    document.getElementById('errorMessage').textContent = mensagem + (anteriorVisivel ? ' A análise anterior continua exibida abaixo.' : '');
 }
 
 function carregarAnalise() {
-    const anviId = document.getElementById('anviInput').value.trim();
-
-    if (!anviId) {
+    const input = document.getElementById('anviInput').value.trim();
+    const anviId = String(anviSuggestionMap.get(input)?.id || input);
+    if (analysisPendingPromise && analysisPendingId === anviId) return analysisPendingPromise;
+    const version = ++analysisVersion;
+    if (analysisController) analysisController.abort();
+    if (!input) {
+        analysisPendingId = null;
+        analysisPendingPromise = null;
+        document.getElementById('resultsContainer').setAttribute('aria-busy', 'false');
         exibirErro('Por favor, digite um ID do ANVI válido.');
-        return;
+        return Promise.resolve();
     }
-
-    // Show loading
-    document.getElementById('status').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border mb-3" role="status">
-                <span class="sr-only">Carregando...</span>
-            </div>
-            <p>Carregando dados do ANVI...</p>
-        </div>
-    `;
+    analysisController = new AbortController();
+    analysisPendingId = anviId;
+    document.getElementById('status').textContent = 'Carregando análise... Os resultados anteriores permanecem visíveis até a atualização.';
     document.getElementById('status').style.display = 'block';
-    document.getElementById('resultsContainer').style.display = 'none';
+    document.getElementById('resultsContainer').setAttribute('aria-busy', 'true');
     document.getElementById('errorContainer').classList.remove('show');
-
-    // Fetch data
-    fetch(`api/dashboard_viabilidade_simple.php?anvi_id=${encodeURIComponent(anviId)}&t=${Date.now()}`)
-        .then(async response => {
-            const data = await response.json().catch(() => null);
-            if (!response.ok) {
-                throw new Error(data?.erro || 'Erro ao buscar dados');
-            }
-            return data;
-        })
-        .then(data => {
-            console.log('Dados recebidos:', data);
-            
-            if (!data || !data.anvi) {
-                exibirErro('Dados inválidos recebidos do servidor.');
+    analysisPendingPromise = (async () => {
+        try {
+            const response = await fetch(`api/dashboard_viabilidade_simple.php?anvi_id=${encodeURIComponent(anviId)}`, {
+                signal: analysisController.signal,
+                cache: 'no-store'
+            });
+            if (version !== analysisVersion) return;
+            if (response.status === 401) {
+                window.location.href = 'login.html';
                 return;
             }
-
+            const data = await response.json();
+            if (version !== analysisVersion) return;
+            if (!response.ok || !data?.anvi) throw new Error(data?.erro || 'Não foi possível carregar a análise. Tente novamente.');
             // Hide loading and show results
             document.getElementById('status').style.display = 'none';
             document.getElementById('errorContainer').classList.remove('show');
@@ -723,21 +738,25 @@ function carregarAnalise() {
             renderizarComparativoRevisoes(data.comparativo_revisoes || {});
 
             // Render analysis
-            if (data.analise) {
-                renderizarAnalise(data.analise);
-            }
+            renderizarAnalise(data.analise || {});
 
             // Render compatibilities
-            if (data.compatibilidades) {
-                renderizarCompatibilidades(data.compatibilidades);
-            }
+            renderizarCompatibilidades(data.compatibilidades || []);
 
             atualizarInteligenciaComAnalise(data);
-        })
-        .catch(erro => {
-            console.error('Erro:', erro);
-            exibirErro(erro.message || 'Erro desconhecido ao carregar dados.');
-        });
+        } catch (error) {
+            if (version !== analysisVersion || error.name === 'AbortError') return;
+            exibirErro(error.message || 'Erro ao carregar dados. Tente novamente.');
+        } finally {
+            if (version === analysisVersion) {
+                analysisPendingPromise = null;
+                analysisPendingId = null;
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('resultsContainer').setAttribute('aria-busy', 'false');
+            }
+        }
+    })();
+    return analysisPendingPromise;
 }
 
 // Allow Enter key to load analysis
@@ -749,6 +768,9 @@ document.getElementById('anviInput').addEventListener('keypress', function(e) {
 
 document.getElementById('anviInput').addEventListener('input', function(e) {
     clearTimeout(anviSuggestionTimer);
+    ++suggestionVersion;
+    if (suggestionController) suggestionController.abort();
+    if (anviSuggestionMap.has(e.target.value.trim())) return;
     anviSuggestionTimer = setTimeout(() => {
         buscarSugestoesANVI(e.target.value.trim());
     }, 250);

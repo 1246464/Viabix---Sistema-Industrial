@@ -187,73 +187,68 @@ function loadLeadersFromMySQL() {
     });
 }
 
+let projectsLoadInFlight = false;
+let projectsReloadRequested = false;
+
 function loadProjectsFromMySQL() {
-    $.ajax({
-        url: 'api_mysql.php',
-        type: 'POST',
-        data: {
-            action: 'getProjects'
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                projects = response.data;
-                
-                console.log('✓ Projetos carregados do MySQL:', projects.length);
-                
-                // Garantir que cada projeto tenha a estrutura correta
+    if (projectsLoadInFlight) {
+        projectsReloadRequested = true;
+        return;
+    }
+    projectsLoadInFlight = true;
+    const loadedProjects = new Map();
+
+    function finish() {
+        projectsLoadInFlight = false;
+        if (projectsReloadRequested) {
+            projectsReloadRequested = false;
+            loadProjectsFromMySQL();
+        }
+    }
+
+    function loadPage(page) {
+        $.ajax({
+            url: 'api_mysql.php',
+            type: 'POST',
+            data: { action: 'getProjects', page, limit: 100 },
+            dataType: 'json',
+            success: function(response) {
+                if (!response.success || !Array.isArray(response.data)) {
+                    updateMysqlStatus('disconnected', response.message || 'Resposta inválida');
+                    finish();
+                    return;
+                }
+                response.data.forEach(project => loadedProjects.set(project.id, project));
+                if (page < Number(response.total_pages || 1)) {
+                    loadPage(page + 1);
+                    return;
+                }
+                // Publicar apenas após todas as páginas: falhas preservam a tela atual.
+                projects = Array.from(loadedProjects.values());
                 projects.forEach(p => {
                     if (!p.tasks) p.tasks = {};
-                    
-                    // CRITICAL FIX: Converter array vazio em objeto
-                    if (!p.apqp || Array.isArray(p.apqp)) {
-                        console.warn(`⚠️ Projeto ${p.id}: apqp é array ou null, convertendo para objeto`);
-                        p.apqp = {};
-                    }
-                    
+                    if (!p.apqp || Array.isArray(p.apqp)) p.apqp = {};
                     if (!p.capability) p.capability = { characteristics: [] };
-                    
-                    // Log dos dados APQP se existirem
-                    if (p.apqp && Object.keys(p.apqp).length > 0) {
-                        console.log(`  📋 Projeto "${p.name}" (ID: ${p.id}) possui dados APQP nas fases:`, Object.keys(p.apqp));
-                        // Mostrar quantas respostas em cada fase
-                        Object.keys(p.apqp).forEach(phase => {
-                            const answersCount = Object.keys(p.apqp[phase].answers || {}).length;
-                            console.log(`     - ${phase}: ${answersCount} respostas`);
-                        });
-                    }
                 });
-                
-                nextProjectId = projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1;
-                
-                // Verificar e atualizar status de tarefas vencidas imediatamente
-                autoUpdateTaskStatuses();
-                
+                nextProjectId = projects.reduce((max, p) => Math.max(max, Number(p.id)), 0) + 1;
+                autoUpdateTaskStatuses(false);
                 updateProjectsTable();
                 updateSummary();
                 abrirProjetoInicialDaUrl();
                 updateMysqlStatus('connected', 'Dados carregados com sucesso');
-            } else {
-                console.error('Erro ao carregar projetos:', response.message);
-                updateMysqlStatus('disconnected', response.message);
-                
-                // Fallback para dados vazios
-                projects = [];
-                updateProjectsTable();
-                updateSummary();
+                finish();
+            },
+            error: function(xhr, status, error) {
+                if (handleApiSessionError(xhr)) {
+                    projectsReloadRequested = false;
+                } else {
+                    updateMysqlStatus('disconnected', error);
+                }
+                finish();
             }
-        },
-        error: function(xhr, status, error) {
-            if (handleApiSessionError(xhr)) return;
-            console.error('Erro AJAX ao carregar projetos:', error);
-            updateMysqlStatus('disconnected', error);
-            
-            // Fallback para dados vazios
-            projects = [];
-            updateProjectsTable();
-            updateSummary();
-        }
-    });
+        });
+    }
+    loadPage(1);
 }
 
 // ==============================================

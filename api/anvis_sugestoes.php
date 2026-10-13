@@ -21,6 +21,8 @@ try {
     }
 
     $tenantId = function_exists('viabixCurrentTenantId') ? viabixCurrentTenantId() : ($_SESSION['tenant_id'] ?? null);
+    viabixRequireTenantScopedTable('anvis', $tenantId);
+    session_write_close();
     $q = trim((string) ($_GET['q'] ?? ''));
     $limit = min(25, max(5, (int) ($_GET['limit'] ?? 12)));
     $availableForProject = ($_GET['available_for_project'] ?? '') === '1';

@@ -37,6 +37,8 @@ try {
     foreach (['anvis', 'projetos', 'usuarios', 'lideres'] as $tenantTable) {
         viabixRequireTenantScopedTable($tenantTable, $tenantId);
     }
+    // As consultas abaixo são somente leitura; liberar outras requisições da sessão.
+    session_write_close();
     $tenantAwareAnvis = true;
     $tenantAwareProjetos = true;
     $tenantAwareUsuarios = true;
@@ -125,24 +127,6 @@ try {
         }
     }
 
-    // Contar ANVIs
-    if ($tenantAwareAnvis) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM anvis WHERE tenant_id = ?");
-        $stmt->execute([$tenantId]);
-    } else {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM anvis");
-    }
-    $stats['anvis'] = $stmt->fetch()['total'] ?? 0;
-    
-    // Contar Projetos
-    if ($tenantAwareProjetos) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM projetos WHERE tenant_id = ?");
-        $stmt->execute([$tenantId]);
-    } else {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM projetos");
-    }
-    $stats['projetos'] = $stmt->fetch()['total'] ?? 0;
-    
     // Contar Usuários ativos
     if ($tenantAwareUsuarios) {
         $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM usuarios WHERE ativo = 1 AND tenant_id = ?");
@@ -215,7 +199,9 @@ try {
             GROUP BY status
         ");
     }
-    $stats['anvis_por_status'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stats['anvis_por_status'] = array_column($statusRows, 'total', 'status');
+    $stats['anvis'] = array_sum(array_column($statusRows, 'total'));
     
     // Projetos por status
     if ($projectsHasStatusColumn) {
@@ -251,49 +237,10 @@ try {
             );
         }
     }
-    $stats['projetos_por_status'] = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stats['projetos_por_status'] = array_column($statusRows, 'total', 'status');
+    $stats['projetos'] = array_sum(array_column($statusRows, 'total'));
     
-    // ANVIs criadas nos últimos N dias
-    if ($tenantAwareAnvis) {
-        $stmt = $pdo->prepare(
-            "SELECT COUNT(*) as total
-             FROM anvis
-             WHERE tenant_id = ?
-               AND {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
-        );
-        $stmt->execute([$tenantId]);
-    } else {
-        $stmt = $pdo->query(" 
-            SELECT COUNT(*) as total 
-            FROM anvis 
-            WHERE {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
-        ");
-    }
-    $stats['anvis_recentes'] = $stmt->fetch()['total'] ?? 0;
-    
-    // Projetos atualizados nos últimos N dias
-    $projectActivityColumn = $projectUpdatedColumn ?: $projectCreatedColumn;
-    if ($projectActivityColumn) {
-        if ($tenantAwareProjetos) {
-            $stmt = $pdo->prepare(
-                "SELECT COUNT(*) as total
-                 FROM projetos
-                 WHERE tenant_id = ?
-                   AND {$projectActivityColumn} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)"
-            );
-            $stmt->execute([$tenantId]);
-        } else {
-            $stmt = $pdo->query("
-                SELECT COUNT(*) as total
-                FROM projetos
-                WHERE {$projectActivityColumn} >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
-            ");
-        }
-        $stats['projetos_recentes'] = $stmt->fetch()['total'] ?? 0;
-    } else {
-        $stats['projetos_recentes'] = 0;
-    }
-
     $tenantParam = $tenantId ? [$tenantId] : [];
     $anviScope = $tenantAwareAnvis ? 'tenant_id = ?' : '1 = 1';
     $projetoScope = $tenantAwareProjetos ? 'tenant_id = ?' : '1 = 1';
@@ -308,17 +255,8 @@ try {
     $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
     $anvisParadas = (int) ($stmt->fetch()['total'] ?? 0);
 
-    $anvisSemProjeto = 0;
-    if ($anvisHasProjetoId) {
-        $stmt = $pdo->prepare(
-            "SELECT COUNT(*) as total
-             FROM anvis
-             WHERE {$anviScope}
-               AND projeto_id IS NULL"
-        );
-        $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
-        $anvisSemProjeto = (int) ($stmt->fetch()['total'] ?? 0);
-    }
+    // Vínculos e total já foram calculados para a mesma empresa.
+    $anvisSemProjeto = $anvisHasProjetoId ? max(0, $stats['anvis'] - $stats['vinculos']) : 0;
 
     $projetosParados = 0;
     if ($projectUpdatedColumn) {
@@ -559,6 +497,7 @@ try {
 
     $stmt = $pdo->prepare(
         "SELECT
+            SUM(CASE WHEN {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL {$period} DAY) THEN 1 ELSE 0 END) as recentes,
             SUM(CASE WHEN {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as ultimos_7,
             SUM(CASE WHEN {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as ultimos_30,
             SUM(CASE WHEN {$anviProjetoIdExpr} IS NOT NULL AND {$anviCreatedExpr} >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as vinculos_7,
@@ -568,13 +507,16 @@ try {
     );
     $stmt->execute($tenantAwareAnvis ? $tenantParam : []);
     $trendAnvis = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $stats['anvis_recentes'] = (int) ($trendAnvis['recentes'] ?? 0);
 
+    $stats['projetos_recentes'] = 0;
     $projetos7 = 0;
     $projetos30 = 0;
     $projectTrendColumn = $projectUpdatedColumn ?: $projectCreatedColumn;
     if ($projectTrendColumn) {
         $stmt = $pdo->prepare(
             "SELECT
+                SUM(CASE WHEN {$projectTrendColumn} >= DATE_SUB(NOW(), INTERVAL {$period} DAY) THEN 1 ELSE 0 END) as recentes,
                 SUM(CASE WHEN {$projectTrendColumn} >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as ultimos_7,
                 SUM(CASE WHEN {$projectTrendColumn} >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as ultimos_30
              FROM projetos
@@ -582,6 +524,7 @@ try {
         );
         $stmt->execute($tenantAwareProjetos ? $tenantParam : []);
         $trendProjetos = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $stats['projetos_recentes'] = (int) ($trendProjetos['recentes'] ?? 0);
         $projetos7 = (int) ($trendProjetos['ultimos_7'] ?? 0);
         $projetos30 = (int) ($trendProjetos['ultimos_30'] ?? 0);
     }
